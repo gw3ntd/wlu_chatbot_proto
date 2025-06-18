@@ -93,12 +93,12 @@ The purpose of this ER design is to allow us to track data about how students, a
 For our central database, we will use [PostgreSQL](https://www.postgresql.org/). To store vector embeddings, we could use the the [pgvector](https://github.com/pgvector/pgvector/) extension. Alternatively, the vector storage could be offloaded to a specialized vector database like [ChromaDB](https://www.trychroma.com/). The choice for how to store the vectors is yet to be made.
 
 To simplify integration of the database into our Python code, we will use [SQLAlchemy](https://www.sqlalchemy.org/). SQLAlchemy provides an Object Relational Mapping (ORM) for the database, making code easier to read than it would be were it to be riddled with SQL queries. 
-Everyone one the team should get comfortable with SQLAlchemy in Python because accessing the database is vital to all aspects of this project.
+Everyone on the team should get comfortable with SQLAlchemy in Python because accessing the database is vital to all aspects of this project.
 
 
 ## Web Design
 
-Students, assistnats (ULAs), and instructors will interface with the chatbot system through a website. Users should be authenticated via a login procedure that links our users to students and faculty at UC Riverside.
+Students, assistants (ULAs), and instructors will interface with the chatbot system through a website. Users should be authenticated via a login procedure that links our users to students and faculty at UC Riverside.
 
 The chat interface is the central offering of this system. We want something that looks like any of the other chatbots out there, like Gemini, where the student can start a new conversation, write a message, and see past messages from himself and from the chatbot/ULAs. Additionally, the student should have a button/option to request help from a ULA. A ULA should be granted access to any conversation where help from a ULA was requested. The ULA should be able to enter the conversation and leave messages for the student.
 
