@@ -90,7 +90,7 @@ The purpose of this ER design is to allow us to track data about how students, a
 
 ### Technologies
 
-For our central database, we will use [PosgreSQL](https://www.postgresql.org/). To store vector embeddings, we could use the the [pgvector](https://github.com/pgvector/pgvector/) extension. Alternatively, the vector storage could be offloaded to a specialized vector database like [ChromaDB](https://www.trychroma.com/). The choice for how to store the vectors is yet to be made.
+For our central database, we will use [PostgreSQL](https://www.postgresql.org/). To store vector embeddings, we could use the the [pgvector](https://github.com/pgvector/pgvector/) extension. Alternatively, the vector storage could be offloaded to a specialized vector database like [ChromaDB](https://www.trychroma.com/). The choice for how to store the vectors is yet to be made.
 
 To simplify integration of the database into our Python code, we will use [SQLAlchemy](https://www.sqlalchemy.org/). SQLAlchemy provides an Object Relational Mapping (ORM) for the database, making code easier to read than it would be were it to be riddled with SQL queries. 
 Everyone one the team should get comfortable with SQLAlchemy in Python because accessing the database is vital to all aspects of this project.
