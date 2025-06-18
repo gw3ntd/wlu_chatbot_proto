@@ -32,4 +32,4 @@ We are to develop a chatbot system that has the following features:
 
 Here is how an interaction might go for a student using the chatbot.
 
-![student-interaction-flowchart](student-interaction.svg)
+![student-interaction-flowchart](student-interaction.png)
