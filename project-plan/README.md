@@ -17,7 +17,7 @@ ULA offers peer tutoring for undergraduates in computer-science courses. ULA is 
 
 We want to develop an AI-powered system to help meet the learning needs of more students by assisting the ULAs.
 
-This document reflects developing plan for the project and is changeable. We may, for example, decide to use a technology other than what is mentioned herein for a component.
+This document reflects a developing plan for the project and is changeable. We may, for example, decide to use a technology other than what is mentioned herein for a component.
 
 ## The Project
 
