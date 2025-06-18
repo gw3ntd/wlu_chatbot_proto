@@ -2,7 +2,7 @@
 
 **Objective**: Develop a generative-AI-powered tutor with a web interface to answer student questions about course materials and logistics, with an ability to elevate to a human tutor for difficult questions and an ability to compose reports from tutor-student interactions.
 
-**Technology Keywords**: *Retreival Augmented Generation, Language Model, Web Development, Data Management, API Integration.*
+**Keywords**: *Retreival Augmented Generation, Language Model, Web Development, Data Management, API Integration.*
 
 ## Introduction
 Universities across the nation are integrating generative-AI into their pedagicial tool belts. Some have developed specialized generative-AI systems for more specialized use. For example,
@@ -30,6 +30,14 @@ We are to develop a chatbot system that has the following features:
 * The system should be able to generate a report for the instructor across all interactions to learn what students needed help with for any given course.
 
 
+### Interaction Diagram
 Here is how an interaction might go for a student using the chatbot.
 
 ![student-interaction-flowchart](student-interaction.png)
+
+
+## Database Schema
+
+Refer the the following Entity Relationship (ER) diagram. Rectangles are entities, diamonds are relationships, and ovals are attributes. All of the attributes for each entity and relation are not included and this diagram only gives a rough estimate of what our final schema may be. An arrow indicates a one-to-many relation, where the arrow points to the "one".
+
+![database-schema](data-model.png)
