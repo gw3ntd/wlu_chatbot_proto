@@ -111,6 +111,8 @@ This website should be well styled to align with the existent [ULA landing page]
 
 [Flask](https://flask.palletsprojects.com/en/stable/) is a light-weight web-application framework for Python. Since Python is the language of choice for all things machine learning and data science, using Python also for our web-development increases uniformity for easier integration, as opposed to using any of the many Javascript frameworks. We are using Flask because the our feature set is not large enough to warrant a more heavy-duty framework like Django. Flask provides all of the needed functions for setting up routing, managing HTML with templates, and serving static files.
 
+Our campus uses Google authentication for campus-wide accounts, including emails. We want to use UCR email accounts as credentials to access the chatbot, so we should look into integrating a [Google login into our Flask application](https://realpython.com/flask-google-login/).
+
 ## Language Model API
 
 There are many different API services for getting access to state-of-the-art language models. There are OpenAI, Gemini, Claude, and more. While we may begin using one API, we do not want to be overly coupled with any specific service. We therefore want to develop an internal API service for getting completions from a language model. Being thus decoupled would allow us to change vendors to meet developing needs or to use emergent abilities of another provider, all without modifying code elsewhere in our library, so long as our developed API remains consistent.
