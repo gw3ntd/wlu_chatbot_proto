@@ -1,6 +1,6 @@
 # AI Tutor
 
-**Objective**: Develop a generative-AI-powered tutor with a web interface to answer student questions about course materials and logistics, with an ability to elevate to a human tutor for difficult questions and an ability to compose reports from tutor-student interactions.
+**Objective**: Implement an LLM based AI tutor and the web interface for interacting with it. The interface will enable students to elevate their sessions to a human tutor for a human to human messaging that will help answer questions and verify the information given by the AI tutor.
 
 **Keywords**: *Retreival Augmented Generation, Language Model, Web Development, Data Management, API Integration.*
 
