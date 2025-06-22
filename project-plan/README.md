@@ -1,6 +1,6 @@
 # AI Tutor
 
-**Objective**: Implement an LLM based AI tutor and the web interface for interacting with it. The interface will enable students to elevate their sessions to a human tutor for a human to human messaging that will help answer questions and verify the information given by the AI tutor.
+**Objective**: Implement an LLM based AI tutor and the web interface for interacting with it. The interface will enable students to elevate their sessions to a human tutor for human-to-human messaging that will help answer questions and verify the information given by the AI tutor.
 
 **Keywords**: *Retreival Augmented Generation, Language Model, Web Development, Data Management, API Integration.*
 
