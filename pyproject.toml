@@ -13,6 +13,11 @@ dependencies = [
     "sphinx>=8.2.3",
 ]
 
+[tool.setuptools.packages.find]
+include = [
+    "ucr_chatbot*"
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
@@ -36,6 +41,7 @@ select = [
     "D101",
     "D102",
     "D103",
+    "D105",
     "N",
     "F"
 ]
