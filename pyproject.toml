@@ -5,6 +5,37 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "coverage>=7.9.1",
     "flask>=3.1.1",
+    "pyright>=1.1.402",
     "pytest>=8.4.1",
+    "ruff>=0.12.1",
+    "sphinx>=8.2.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["ucr_chatbot"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+include = [
+    "ucr_chatbot",
+]
+
+[tool.ruff]
+include = [
+    "ucr_chatbot/**.py"
+]
+
+[tool.ruff.lint]
+select = [
+    "D101",
+    "D102",
+    "D103",
+    "N",
+    "F"
 ]
