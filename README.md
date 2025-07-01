@@ -19,3 +19,7 @@ then you can use
 ```bash
 uv run flask --app ucr_chatbot run
 ```
+
+## See Also
+- [CONTRIBUTING.md](https://github.com/joshua-zingale/ucr-chatbot-pathway-program/blob/master/CONTRIBUTING.md)
+- [Project Outline](https://joshua-zingale.github.io/ucr-chatbot-pathway-program/project-plan/)
