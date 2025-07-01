@@ -22,6 +22,12 @@ uv run coverage run -m pytest # Run tests while tracking coverage
 uv run coverage report # Get coverage statistics
 ```
 
+or, in the root directory, you can use code review script that runs all of the tests and checks:
+
+```bash
+uv run review_code.py
+```
+
 Run these before submitting a pull request.
 Everything should pass and the coverage should be good, definitely above 80%, with higher being better.
 
