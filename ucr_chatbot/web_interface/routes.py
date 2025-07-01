@@ -1,9 +1,9 @@
 from flask import (
-    Blueprint, 
-    render_template, 
-    url_for, 
-    redirect, # type: ignore
-    )
+    Blueprint,
+    render_template,
+    url_for,
+    redirect,  # type: ignore
+)
 
 bp = Blueprint("routes", __name__)
 
