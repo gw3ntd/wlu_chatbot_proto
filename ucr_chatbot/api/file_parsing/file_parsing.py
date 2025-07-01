@@ -1,4 +1,4 @@
-from io import BufferedReader
+from io import BufferedIOBase
 from pathlib import Path
 
 
@@ -30,5 +30,5 @@ def parse_file(path: str) -> str:
             raise InvalidFileExtensionError(extension)
 
 
-def _parse_pdf(pdf_file: BufferedReader) -> str:
+def _parse_pdf(pdf_file: BufferedIOBase) -> str:
     return "pdf text"
