@@ -31,4 +31,5 @@ def parse_file(path: str) -> str:
 
 
 def _parse_pdf(pdf_file: BufferedIOBase) -> str:
+    # Test edit
     return "pdf text"
