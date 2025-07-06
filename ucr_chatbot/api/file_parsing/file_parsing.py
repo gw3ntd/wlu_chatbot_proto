@@ -1,4 +1,5 @@
 from io import BufferedIOBase
+from io import BytesIO
 from pathlib import Path
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -6,6 +7,7 @@ from pydub.silence import split_on_silence
 import os
 import tempfile
 from typing import List
+from pypdf import PdfReader
 
 
 class FileParsingError(ValueError):
@@ -204,8 +206,17 @@ def _parse_pdf(pdf_file: BufferedIOBase) -> str:
     :param path: A file path to the file to be parsed.
     :return: A textual representation of the pdf file.
     """
-    # Test edit
-    return "pdf text"
+    reader = PdfReader(BytesIO(pdf_file.read()))
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+
+    text = text.replace("\n","")
+    text = text.replace("  ", " ")
+    if text[0] == ' ':
+        text = text[1:]
+
+    return text.rstrip()
 
 def _parse_md(md_file: BufferedIOBase) -> str:
     """Parses a markdown file into text
@@ -214,7 +225,6 @@ def _parse_md(md_file: BufferedIOBase) -> str:
     :return: A textual representation of the markdown file.
     """
     raw_string = str(md_file.read())
-    new_string = raw_string.replace("b\'","")
-    new_string = new_string.replace("\\r\\n","\n")
-    new_string = new_string.replace("\\","")
-    return new_string[:-1]
+    new_string = raw_string.replace("\\r\\n","\n")
+    new_string = new_string.replace("\\\'","\'")
+    return new_string[2:-1]
