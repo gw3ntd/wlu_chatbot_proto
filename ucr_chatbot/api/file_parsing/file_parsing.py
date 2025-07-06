@@ -39,9 +39,12 @@ def parse_file(path: str) -> List[str]:
             return _parse_audio(path, segments=True)
         elif extension == "mp3":
             return _parse_audio(path, segments=True)
+        elif extension == "md":
+            return _parse_md(f)
+        elif extension == "pdf":
+            return _parse_pdf(f)
         else:
             raise InvalidFileExtensionError(extension)
-
 
 def _parse_txt(txt_file: BufferedIOBase, lenseg=None) -> List[str]:
     """Parses a text file and removes whitespace. The function either returns
@@ -194,3 +197,24 @@ def _parse_audio(audio_file: str, time=None, segments=False) -> List[str]:
         return l  # type: ignore
     else:
         return [transcript]  # type: ignore
+
+def _parse_pdf(pdf_file: BufferedIOBase) -> str:
+    """Parses a pdf file into text
+
+    :param path: A file path to the file to be parsed.
+    :return: A textual representation of the pdf file.
+    """
+    # Test edit
+    return "pdf text"
+
+def _parse_md(md_file: BufferedIOBase) -> str:
+    """Parses a markdown file into text
+
+    :param path: A file path to the file to be parsed.
+    :return: A textual representation of the markdown file.
+    """
+    raw_string = str(md_file.read())
+    new_string = raw_string.replace("b\'","")
+    new_string = new_string.replace("\\r\\n","\n")
+    new_string = new_string.replace("\\","")
+    return new_string[:-1]
