@@ -1,16 +1,17 @@
 import os
 import google.generativeai as genai
 import ollama
-from typing import Generator, Optional, List
+from typing import Generator, List
 
 # --- Configuration ---
 # Use environment variables to set the mode and API key.
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
-MODE = os.environ.get("LLM_MODE", "testing") # Defaults to testing mode
+MODE = os.environ.get("LLM_MODE", "testing")  # Defaults to testing mode
 
 # This global client will be instantiated in main() as either a Gemini or Ollama client.
 client = None
+
 
 def main():
     """Initializes the global client based on the current mode."""
@@ -21,6 +22,7 @@ def main():
     else:
         client = Ollama()
         print("Running in Testing Mode (Ollama)")
+
 
 def get_response_from_prompt(prompt: str, max_tokens: int = 2048) -> str:
     """Gets a response by calling the currently configured global client.
@@ -43,10 +45,13 @@ def stream_response_from_prompt(
     """
     yield from client.stream_response(prompt, max_tokens)
 
+
 # --- Client Classes ---
+
 
 class Gemini:
     """A class representation of the Gemini 1.5 Pro API."""
+
     def __init__(self, key: str):
         if not key:
             raise ValueError("A Gemini API key is required for production mode.")
@@ -65,14 +70,18 @@ class Gemini:
         response = self.model.generate_content(prompt, generation_config=config)
         return response.text
 
-    def stream_response(self, prompt: str, max_tokens: int = 2048) -> Generator[str, None, None]:
+    def stream_response(
+        self, prompt: str, max_tokens: int = 2048
+    ) -> Generator[str, None, None]:
         """Streams a response from the Gemini model."""
         config = {
             "temperature": self.temp,
             "max_output_tokens": max_tokens,
             "stop_sequences": self.stop_sequences,
         }
-        response = self.model.generate_content(prompt, generation_config=config, stream=True)
+        response = self.model.generate_content(
+            prompt, generation_config=config, stream=True
+        )
         for part in response:
             yield part.text
 
@@ -87,12 +96,15 @@ class Gemini:
         if not isinstance(stop, list):
             raise TypeError("Stop sequences must be a list of strings.")
         if len(stop) > 5:
-            raise ValueError("The list of stop sequences cannot contain more than 5 items.")
+            raise ValueError(
+                "The list of stop sequences cannot contain more than 5 items."
+            )
         self.stop_sequences = stop
 
 
 class Ollama:
     """A class representation for a local Ollama API."""
+
     def __init__(self, model: str = "gemma:2b", host: str = "http://localhost:11434"):
         self.model = model
         self.temp = 0.7
@@ -101,20 +113,36 @@ class Ollama:
             self.client = ollama.Client(host=host)
             self.client.list()
         except Exception:
-            raise ConnectionError(f"Could not connect to Ollama at {host}. Please ensure Ollama is running.")
+            raise ConnectionError(
+                f"Could not connect to Ollama at {host}. Please ensure Ollama is running."
+            )
 
     def get_response(self, prompt: str, max_tokens: int = 2048) -> str:
         """Gets a single response from the Ollama model."""
-        options = {"temperature": self.temp, "num_predict": max_tokens, "stop": self.stop_sequences}
-        response = self.client.generate(model=self.model, prompt=prompt, stream=False, options=options)
-        return response.get('response', '')
+        options = {
+            "temperature": self.temp,
+            "num_predict": max_tokens,
+            "stop": self.stop_sequences,
+        }
+        response = self.client.generate(
+            model=self.model, prompt=prompt, stream=False, options=options
+        )
+        return response.get("response", "")
 
-    def stream_response(self, prompt: str, max_tokens: int = 2048) -> Generator[str, None, None]:
+    def stream_response(
+        self, prompt: str, max_tokens: int = 2048
+    ) -> Generator[str, None, None]:
         """Streams a response from the Ollama model."""
-        options = {"temperature": self.temp, "num_predict": max_tokens, "stop": self.stop_sequences}
-        stream = self.client.generate(model=self.model, prompt=prompt, stream=True, options=options)
+        options = {
+            "temperature": self.temp,
+            "num_predict": max_tokens,
+            "stop": self.stop_sequences,
+        }
+        stream = self.client.generate(
+            model=self.model, prompt=prompt, stream=True, options=options
+        )
         for chunk in stream:
-            yield chunk.get('response', '')
+            yield chunk.get("response", "")
 
     def set_temp(self, temp: float) -> None:
         """Sets the generation temperature for the model."""
