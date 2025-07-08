@@ -23,10 +23,7 @@ class InvalidFileExtensionError(FileParsingError):
         self.__init__(f'Cannot interpret file with extension "{extension}"')
 
 
-# type: ignore
-
-
-def parse_file(path: str) -> List[str]:
+def parse_file(path: str) -> list[str]:  
     """Parses a file into text.
 
     :param path: A file path to the file to be parsed.
@@ -42,9 +39,9 @@ def parse_file(path: str) -> List[str]:
         elif extension == "mp3":
             return _parse_audio(path, segments=True)
         elif extension == "md":
-            return _parse_md(f)
+            return _parse_md(f, 1000)
         elif extension == "pdf":
-            return _parse_pdf(f)
+            return _parse_pdf(f, 1000)
         else:
             raise InvalidFileExtensionError(extension)
 
@@ -200,31 +197,97 @@ def _parse_audio(audio_file: str, time=None, segments=False) -> List[str]:
     else:
         return [transcript]  # type: ignore
 
-def _parse_pdf(pdf_file: BufferedIOBase) -> str:
+def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
     """Parses a pdf file into text
 
     :param path: A file path to the file to be parsed.
-    :return: A textual representation of the pdf file.
+    :param chars_per_seg: approximate amount of max characters per segment, with a bit of overlap between
+    :return: A list of segments of the textural representation of the pdf file.
     """
     reader = PdfReader(BytesIO(pdf_file.read()))
     text = ""
     for page in reader.pages:
         text += page.extract_text()
 
-    text = text.replace("\n","")
+    text = text.replace("\n", "")
     text = text.replace("  ", " ")
-    if text[0] == ' ':
+    if text[0] == " ":
         text = text[1:]
 
-    return text.rstrip()
+    total_text = text.rstrip()
 
-def _parse_md(md_file: BufferedIOBase) -> str:
+    # Initial split of text by sentences
+    sentences = total_text.split(".")
+    if sentences[-1] == "":
+        sentences.pop(-1)
+    for i in range(len(sentences)):
+        sentences[i] += "."
+
+    # Making sure no sentence is too long or document doesn't us proper sentences (like a slide deck)
+    for i, sentence in enumerate(sentences):
+        if len(sentence) > chars_per_seg:
+            temp_sentence = sentence
+            sentences.pop(i)
+            for j in range(0, len(temp_sentence), chars_per_seg):
+                sentences.append(temp_sentence[j : j + chars_per_seg])
+
+    # Combining into larger sections, about chars_per_split
+    segments: list[str] = []
+    curr_segment = ""
+    for i, sentence in enumerate(sentences):
+        if (len(curr_segment) + len(sentence)) < chars_per_seg:
+            curr_segment += " " + sentence
+        else:
+            segments.append(curr_segment)
+            curr_segment = sentences[i - 1]
+
+    for segment in segments:
+        print(segment)
+        print("------------------------------------")
+
+    return segments
+
+
+def _parse_md(md_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
     """Parses a markdown file into text
 
     :param path: A file path to the file to be parsed.
-    :return: A textual representation of the markdown file.
+    :param chars_per_seg: approximate amount of max characters per segment, with a bit of overlap between
+    :return: A list of segments of the textual representation of the markdown file.
     """
     raw_string = str(md_file.read())
-    new_string = raw_string.replace("\\r\\n","\n")
-    new_string = new_string.replace("\\\'","\'")
-    return new_string[2:-1]
+    new_string = raw_string.replace("\\r\\n", "\n")
+    new_string = new_string.replace("\\'", "'")
+
+    total_text = new_string[2:-1]
+
+    # Split by sections in markdown
+    sections = total_text.split("#")
+    for i, section in enumerate(sections):
+        if section == "":
+            sections.pop(i)
+
+    # Making sure no sentence is too long or document doesn't us proper sentences (like a slide deck)
+    for i, section in enumerate(sections):
+        if len(section) > chars_per_seg:
+            temp_section = section
+            sections.pop(i)
+            for j in range(0, len(temp_section), chars_per_seg):
+                sections.append(temp_section[j : j + chars_per_seg])
+
+    # Combining into larger sections, about chars_per_split
+    segments: list[str] = []
+    curr_segment = ""
+    for i, section in enumerate(sections):
+        if (len(curr_segment) + len(section)) < chars_per_seg:
+            curr_segment += section
+        else:
+            segments.append(curr_segment)
+            curr_segment = sections[i - 1]
+    segments.append(curr_segment)
+
+    for segment in segments:
+        print(segment)
+        print("------------------------------------")
+
+    return segments
