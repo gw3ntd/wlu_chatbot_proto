@@ -50,13 +50,13 @@ def stream_response_from_prompt(
 
 
 class Gemini:
-    """A class representation of the Gemini 1.5 Pro API."""
+    """A class representation of the Gemini 2.5 Pro API."""
 
     def __init__(self, key: str):
         if not key:
             raise ValueError("A Gemini API key is required for production mode.")
         genai.configure(api_key=key)
-        self.model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+        self.model = genai.GenerativeModel(model_name="gemini-2.5-pro")
         self.temp = 1.0
         self.stop_sequences = []
 
