@@ -36,7 +36,7 @@ def generate():
 
     # Get optional LLM parameters, with sensible defaults
     temperature = params.get("temperature", 0.4)
-    max_tokens = params.get("max_tokens", 1024)
+    max_tokens = params.get("max_tokens", 3000)
 
     if not prompt:
         return jsonify({"error": "Missing 'prompt' in request"}), 400

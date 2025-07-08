@@ -24,7 +24,7 @@ def main():
         print("Running in Testing Mode (Ollama)")
 
 
-def get_response_from_prompt(prompt: str, max_tokens: int = 2048) -> str:
+def get_response_from_prompt(prompt: str, max_tokens: int = 3000) -> str:
     """Gets a response by calling the currently configured global client.
 
     :param prompt: The prompt to feed into the language model.
@@ -35,7 +35,7 @@ def get_response_from_prompt(prompt: str, max_tokens: int = 2048) -> str:
 
 
 def stream_response_from_prompt(
-    prompt: str, max_tokens: int = 2048
+    prompt: str, max_tokens: int = 3000
 ) -> Generator[str, None, None]:
     """Streams a response by calling the currently configured global client.
 
@@ -60,7 +60,7 @@ class Gemini:
         self.temp = 1.0
         self.stop_sequences = []
 
-    def get_response(self, prompt: str, max_tokens: int = 2048) -> str:
+    def get_response(self, prompt: str, max_tokens: int = 3000) -> str:
         """Gets a response from the Gemini model."""
         config = {
             "temperature": self.temp,
@@ -71,7 +71,7 @@ class Gemini:
         return response.text
 
     def stream_response(
-        self, prompt: str, max_tokens: int = 2048
+        self, prompt: str, max_tokens: int = 3000
     ) -> Generator[str, None, None]:
         """Streams a response from the Gemini model."""
         config = {
@@ -117,7 +117,7 @@ class Ollama:
                 f"Could not connect to Ollama at {host}. Please ensure Ollama is running."
             )
 
-    def get_response(self, prompt: str, max_tokens: int = 2048) -> str:
+    def get_response(self, prompt: str, max_tokens: int = 3000) -> str:
         """Gets a single response from the Ollama model."""
         options = {
             "temperature": self.temp,
@@ -130,7 +130,7 @@ class Ollama:
         return response.get("response", "")
 
     def stream_response(
-        self, prompt: str, max_tokens: int = 2048
+        self, prompt: str, max_tokens: int = 3000
     ) -> Generator[str, None, None]:
         """Streams a response from the Ollama model."""
         options = {
