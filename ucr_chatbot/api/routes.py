@@ -62,8 +62,7 @@ def generate():
         # Define a generator function to format the stream as Server-Sent Events (SSE)
         def stream_generator():
             for chunk in stream_response_from_prompt(
-                prompt=prompt_with_context,
-                max_tokens=max_tokens
+                prompt=prompt_with_context, max_tokens=max_tokens
             ):
                 # Format each chunk as a Server-Sent Event
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
@@ -71,15 +70,16 @@ def generate():
         return Response(stream_generator(), mimetype="text/event-stream")
     else:
         response_text = get_response_from_prompt(
-            prompt=prompt_with_context,
-            max_tokens=max_tokens
+            prompt=prompt_with_context, max_tokens=max_tokens
         )
-        
+
         # Dynamically create the list of source IDs
         sources = [{"segment_id": s.segment_id} for s in segments]
-        
-        return jsonify({
-            "text": response_text,
-            "sources": sources,
-            "conversation_id": conversation_id,
-        })
+
+        return jsonify(
+            {
+                "text": response_text,
+                "sources": sources,
+                "conversation_id": conversation_id,
+            }
+        )
