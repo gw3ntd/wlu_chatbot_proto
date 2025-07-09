@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, Response
-from .language_model import get_response_from_prompt, stream_response_from_prompt
 from .context_retrieval import retriever
-from .language_model import client as client
+from .language_model.response import client as client
 import json
 
 bp = Blueprint("routes", __name__)
@@ -30,23 +29,15 @@ def generate():
     params = request.get_json()
     if not params:
         return jsonify({"error": "Invalid JSON"}), 400
-
     prompt = params.get("prompt")
+    if not prompt:
+        return jsonify({"error": "Missing 'prompt' in request"}), 400
+    
     conversation_id = params.get("conversation_id")
     stream = params.get("stream", False)
-
     temperature = params.get("temperature", 1.0)
     max_tokens = params.get("max_tokens", 3000)
     stop_sequences = params.get("stop_sequences", [])
-
-    try:
-        client.set_temp(temperature)
-        client.set_stop_sequences(stop_sequences)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-
-    if not prompt:
-        return jsonify({"error": "Missing 'prompt' in request"}), 400
 
     # 2. Retrieve context from your context_retrieval module
     segments = retriever.get_segments_for(prompt, num_segments=3)
@@ -57,21 +48,24 @@ def generate():
 
     prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt)
 
+    generation_params = {
+        "prompt": prompt_with_context,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "stop_sequences": stop_sequences
+    }
+
+
     # 3. Call the appropriate language model function with all parameters
     if stream:
         # Define a generator function to format the stream as Server-Sent Events (SSE)
         def stream_generator():
-            for chunk in stream_response_from_prompt(
-                prompt=prompt_with_context, max_tokens=max_tokens
-            ):
+            for chunk in client.stream_response(**generation_params):
                 # Format each chunk as a Server-Sent Event
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
-
         return Response(stream_generator(), mimetype="text/event-stream")
     else:
-        response_text = get_response_from_prompt(
-            prompt=prompt_with_context, max_tokens=max_tokens
-        )
+        response_text = client.get_response(**generation_params)
 
         # Dynamically create the list of source IDs
         sources = [{"segment_id": s.segment_id} for s in segments]
