@@ -22,7 +22,7 @@ def client(app):
 
 # --- Comprehensive Test Cases ---
 
-def test_genreate_non_stream_response(client, monkeypatch):
+def test_generate_non_stream_response(client, monkeypatch):
     """
     Tests a successful non-streaming POST request to /generate.
     """
