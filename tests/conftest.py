@@ -1,4 +1,5 @@
 from ucr_chatbot import create_app
+from flask import Flask
 import pytest
 @pytest.fixture
 def app():
@@ -9,5 +10,5 @@ def app():
     yield app
 
 @pytest.fixture
-def client(app):
+def client(app: Flask):
     return app.test_client()
