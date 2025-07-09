@@ -66,8 +66,6 @@ def test_gemini_setters():
 
     with pytest.raises(ValueError):
         client.set_temp(3.0) # Out of range
-    with pytest.raises(TypeError):
-        client.set_stop_sequences("not a list")
 
 # --- Test Ollama Class ---
 

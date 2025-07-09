@@ -21,7 +21,7 @@ def embed_text(text: str) -> Sequence[float]:
     global client
 
     response = client.embeddings(model="nomic-embed-text", prompt=text)
-    embedding = response['embedding']
-    embed: Sequence[float] = list(embedding) if not isinstance(embedding, list) else embedding
+    embedding = response["embedding"]
+    embed = list(embedding)
 
     return embed

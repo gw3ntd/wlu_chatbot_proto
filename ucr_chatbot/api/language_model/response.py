@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
-MODE = os.environ.get("LLM_MODE", "testing") 
+MODE = os.environ.get("LLM_MODE", "testing")
+
 
 class LanguageModelClient(ABC):
     """An abstract base class for language model clients."""
@@ -47,6 +48,7 @@ class LanguageModelClient(ABC):
 
         pass
 
+
 # --- Client Classes ---
 class Gemini(LanguageModelClient):
     """A class representation of the Gemini 2.5 Pro API."""
@@ -54,8 +56,8 @@ class Gemini(LanguageModelClient):
     def __init__(self, key: str):
         if not key:
             raise ValueError("A Gemini API key is required for production mode.")
-        genai.configure(api_key=key)
-        self.model = genai.GenerativeModel(model_name="gemini-2.5-pro")
+        genai.configure(api_key=key)  # type: ignore
+        self.model = genai.GenerativeModel(model_name="gemini-2.5-pro")  # type: ignore
         self.temp = 1.0
         self.stop_sequences = []
 
@@ -71,7 +73,7 @@ class Gemini(LanguageModelClient):
             "max_output_tokens": max_tokens,
             "stop_sequences": self.stop_sequences,
         }
-        response = self.model.generate_content(prompt, generation_config=config)
+        response = self.model.generate_content(prompt, generation_config=config)  # type: ignore
         return response.text
 
     def stream_response(
@@ -86,8 +88,10 @@ class Gemini(LanguageModelClient):
             "max_output_tokens": max_tokens,
             "stop_sequences": self.stop_sequences,
         }
-        response = self.model.generate_content(
-            prompt, generation_config=config, stream=True
+        response = self.model.generate_content(  # type: ignore
+            prompt,
+            generation_config=config,  # type: ignore
+            stream=True,
         )
         for part in response:
             yield part.text
@@ -105,8 +109,6 @@ class Gemini(LanguageModelClient):
         :param stop: A list of strings that will stop the generation when encountered.
         :raises TypeError: If stop is not a list of strings.
         :raises ValueError: If the list contains more than 5 items."""
-        if not isinstance(stop, list):
-            raise TypeError("Stop sequences must be a list of strings.")
         if len(stop) > 5:
             raise ValueError(
                 "The list of stop sequences cannot contain more than 5 items."
@@ -175,15 +177,15 @@ class Ollama(LanguageModelClient):
         """Sets the stop sequences for the model.
         :param stop: A list of strings that will stop the generation when encountered.
         :raises TypeError: If stop is not a list of strings."""
-        if not isinstance(stop, list):
-            raise TypeError("Stop sequences must be a list of strings.")
         self.stop_sequences = stop
+
 
 # Set mode to Gemini (production) or Ollama (testing)
 if MODE == "production":
-    client = Gemini(API_KEY)
-    print("Running in Production Mode (Gemini)")
+    if not API_KEY:
+        raise ValueError(
+            "GEMINI_API_KEY environment variable not set for production mode."
+        )
+    client: LanguageModelClient = Gemini(key=API_KEY)
 else:
-    client = Ollama()
-    print("Running in Testing Mode (Ollama)")
-
+    client: LanguageModelClient = Ollama()

@@ -32,7 +32,7 @@ def generate():
     prompt = params.get("prompt")
     if not prompt:
         return jsonify({"error": "Missing 'prompt' in request"}), 400
-    
+
     conversation_id = params.get("conversation_id")
     stream = params.get("stream", False)
     temperature = params.get("temperature", 1.0)
@@ -52,20 +52,20 @@ def generate():
         "prompt": prompt_with_context,
         "max_tokens": max_tokens,
         "temperature": temperature,
-        "stop_sequences": stop_sequences
+        "stop_sequences": stop_sequences,
     }
-
 
     # 3. Call the appropriate language model function with all parameters
     if stream:
         # Define a generator function to format the stream as Server-Sent Events (SSE)
         def stream_generator():
-            for chunk in client.stream_response(**generation_params):
+            for chunk in client.stream_response(**generation_params):  # type: ignore
                 # Format each chunk as a Server-Sent Event
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
+
         return Response(stream_generator(), mimetype="text/event-stream")
     else:
-        response_text = client.get_response(**generation_params)
+        response_text = client.get_response(**generation_params)  # type: ignore
 
         # Dynamically create the list of source IDs
         sources = [{"segment_id": s.segment_id} for s in segments]

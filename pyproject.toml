@@ -21,6 +21,8 @@ dependencies = [
     "pyright>=1.1.402",
     "speechrecognition>=3.14.3",
     "pydub>=0.25.1",
+    "google-generativeai>=0.8.5",
+    "ollama>=0.5.1",
 ]
 
 [tool.setuptools.packages.find]
