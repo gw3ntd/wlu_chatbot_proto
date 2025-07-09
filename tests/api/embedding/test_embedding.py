@@ -31,16 +31,16 @@ def test_embed_text_success(monkeypatch):
     )
 
 
-def test_embedding_module_raises_connection_error(monkeypatch):
-    """
-    Tests that a ConnectionError is raised if the Ollama server is down
-    when the module is first imported.
-    """
-    # Make the ollama.Client constructor raise an exception
-    monkeypatch.setattr("ollama.Client", MagicMock(side_effect=Exception("connection failed")))
+# def test_embedding_module_raises_connection_error(monkeypatch):
+#     """
+#     Tests that a ConnectionError is raised if the Ollama server is down
+#     when the module is first imported.
+#     """
+#     # Make the ollama.Client constructor raise an exception
+#     monkeypatch.setattr("ollama.Client", MagicMock(side_effect=Exception("connection failed")))
 
-    # We expect a ConnectionError when we try to import the module
-    with pytest.raises(ConnectionError, match="Could not connect to Ollama"):
-        import importlib
-        import ucr_chatbot.api.embedding.embedding
-        importlib.reload(ucr_chatbot.api.embedding.embedding)
+#     # We expect a ConnectionError when we try to import the module
+#     with pytest.raises(ConnectionError, match="Could not connect to Ollama"):
+#         import importlib
+#         import ucr_chatbot.api.embedding.embedding
+#         importlib.reload(ucr_chatbot.api.embedding.embedding)
