@@ -25,11 +25,11 @@ If the context is not relevant, than you should tell the student, "I cannot find
 def generate():
     """Takes a JSON object with a prompt and responds with a JSON object containing a textual answer to the prompt."""
 
-    kwargs: dict[str, str] = request.get_json()  # type: ignore
+    kwargs: dict[str, str] = request.get_json()
 
-    prompt = str(kwargs["prompt"])  # type: ignore
-    conversation_id = int(kwargs["conversation_id"])  # type: ignore
-    stream = bool(kwargs.get("stream", False))  # type: ignore
+    prompt = str(kwargs["prompt"])
+    conversation_id = int(kwargs["conversation_id"])
+    stream = bool(kwargs.get("stream", False))
 
     segments = retriever.get_segments_for(prompt, num_segments=3)
 
