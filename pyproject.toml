@@ -55,8 +55,3 @@ select = [
     "N",
     "F"
 ]
-
-[tool.uv.workspace]
-members = [
-    "ucr_chatbot/api/file_parsing",
-]
