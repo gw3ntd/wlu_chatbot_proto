@@ -22,10 +22,6 @@ jobs:
       run: |
         pip install uv
 
-    - name: Install dependencies with uv
-      run: |
-        uv pip install -r requirements.txt
-
     - name: Run code review script
       run: |
         python review_code.py
