@@ -14,8 +14,47 @@ else:
     client = Ollama()
     print("Running in Testing Mode (Ollama)")
 
+class LanguageModelClient(ABC):
+    """An abstract base class for language model clients."""
+
+    @abstractmethod
+    def get_response(self, prompt: str, max_tokens: int = 3000) -> str:
+        """Gets a single, complete response from the language model.
+
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :return: The completion from the language model.
+        """
+        pass
+
+    @abstractmethod
+    def stream_response(
+        self, prompt: str, max_tokens: int = 3000
+    ) -> Generator[str, None, None]:
+        """Streams a response from the language model.
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :return: A generator yielding parts of the response."""
+        pass
+
+    @abstractmethod
+    def set_temp(self, temp: float) -> None:
+        """Sets the generation temperature for the model.
+        :param temp: The temperature for generation, between 0.0 and 2.0.
+        :raises ValueError: If the temperature is not in the valid range."""
+        pass
+
+    @abstractmethod
+    def set_stop_sequences(self, stop: List[str]) -> None:
+        """Sets the stop sequences for the model.
+        :param stop: A list of strings that will stop the generation when encountered.
+        :raises TypeError: If stop is not a list of strings.
+        :raises ValueError: If the list contains more than 5 items."""
+
+        pass
+
 # --- Client Classes ---
-class Gemini:
+class Gemini(LanguageModelClient):
     """A class representation of the Gemini 2.5 Pro API."""
 
     def __init__(self, key: str):
@@ -44,7 +83,10 @@ class Gemini:
     def stream_response(
         self, prompt: str, max_tokens: int = 3000
     ) -> Generator[str, None, None]:
-        """Streams a response from the Gemini model."""
+        """Streams a response from the Gemini model.
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :yields: A generator yielding parts of the response."""
         config = {
             "temperature": self.temp,
             "max_output_tokens": max_tokens,
@@ -57,13 +99,18 @@ class Gemini:
             yield part.text
 
     def set_temp(self, temp: float) -> None:
-        """Sets the generation temperature for the model."""
+        """Sets the generation temperature for the model.
+        :param temp: The temperature for generation, between 0.0 and 2.0.
+        :raises ValueError: If the temperature is not in the valid range."""
         if not (0.0 <= temp <= 2.0):
             raise ValueError("Temperature must be between 0.0 and 2.0.")
         self.temp = temp
 
     def set_stop_sequences(self, stop: List[str]) -> None:
-        """Sets the stop sequences for the model."""
+        """Sets the stop sequences for the model.
+        :param stop: A list of strings that will stop the generation when encountered.
+        :raises TypeError: If stop is not a list of strings.
+        :raises ValueError: If the list contains more than 5 items."""
         if not isinstance(stop, list):
             raise TypeError("Stop sequences must be a list of strings.")
         if len(stop) > 5:
@@ -73,10 +120,14 @@ class Gemini:
         self.stop_sequences = stop
 
 
-class Ollama:
+class Ollama(LanguageModelClient):
     """A class representation for a local Ollama API."""
 
     def __init__(self, model: str = "gemma:2b", host: str = "http://localhost:11434"):
+        """Initializes the Ollama client with the specified model and host.
+        :param model: The name of the Ollama model to use.
+        :param host: The host URL for the Ollama API.
+        :raises ConnectionError: If the Ollama client cannot connect to the specified host."""
         self.model = model
         self.temp = 0.7
         self.stop_sequences = None
@@ -89,7 +140,10 @@ class Ollama:
             )
 
     def get_response(self, prompt: str, max_tokens: int = 3000) -> str:
-        """Gets a single response from the Ollama model."""
+        """Gets a single response from the Ollama model.
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :return: A string containing the model's complete response."""
         options = {
             "temperature": self.temp,
             "num_predict": max_tokens,
@@ -103,7 +157,10 @@ class Ollama:
     def stream_response(
         self, prompt: str, max_tokens: int = 3000
     ) -> Generator[str, None, None]:
-        """Streams a response from the Ollama model."""
+        """Streams a response from the Ollama model.
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :yields: A generator yielding parts of the response."""
         options = {
             "temperature": self.temp,
             "num_predict": max_tokens,
@@ -116,11 +173,14 @@ class Ollama:
             yield chunk.get("response", "")
 
     def set_temp(self, temp: float) -> None:
-        """Sets the generation temperature for the model."""
+        """Sets the generation temperature for the model.
+        param temp: The temperature for generation, between 0.0 and 2.0."""
         self.temp = temp
 
     def set_stop_sequences(self, stop: List[str]) -> None:
-        """Sets the stop sequences for the model."""
+        """Sets the stop sequences for the model.
+        :param stop: A list of strings that will stop the generation when encountered.
+        :raises TypeError: If stop is not a list of strings."""
         if not isinstance(stop, list):
             raise TypeError("Stop sequences must be a list of strings.")
         self.stop_sequences = stop
