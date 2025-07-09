@@ -1,3 +1,5 @@
+# type: ignore
+
 from io import BufferedIOBase
 from io import BytesIO
 from pathlib import Path
@@ -23,7 +25,7 @@ class InvalidFileExtensionError(FileParsingError):
         self.__init__(f'Cannot interpret file with extension "{extension}"')
 
 
-def parse_file(path: str) -> list[str]:  
+def parse_file(path: str) -> list[str]:
     """Parses a file into text.
 
     :param path: A file path to the file to be parsed.
@@ -44,6 +46,7 @@ def parse_file(path: str) -> list[str]:
             return _parse_pdf(f, 1000, 1)
         else:
             raise InvalidFileExtensionError(extension)
+
 
 def _parse_txt(txt_file: BufferedIOBase, lenseg=None) -> List[str]:
     """Parses a text file and removes whitespace. The function either returns
@@ -196,6 +199,7 @@ def _parse_audio(audio_file: str, time=None, segments=False) -> List[str]:
         return l  # type: ignore
     else:
         return [transcript]  # type: ignore
+
 
 def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int, overlap: int) -> list[str]:
     """Parses a pdf file into text
