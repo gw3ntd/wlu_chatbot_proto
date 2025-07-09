@@ -41,7 +41,7 @@ def parse_file(path: str) -> list[str]:
         elif extension == "md":
             return _parse_md(f, 1000)
         elif extension == "pdf":
-            return _parse_pdf(f, 1000)
+            return _parse_pdf(f, 1000, 1)
         else:
             raise InvalidFileExtensionError(extension)
 
@@ -197,11 +197,12 @@ def _parse_audio(audio_file: str, time=None, segments=False) -> List[str]:
     else:
         return [transcript]  # type: ignore
 
-def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
+def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int, overlap: int) -> list[str]:
     """Parses a pdf file into text
 
     :param path: A file path to the file to be parsed.
     :param chars_per_seg: approximate amount of max characters per segment, with a bit of overlap between
+    :param overlap: how many sentences should overlap per section
     :return: A list of segments of the textural representation of the pdf file.
     """
     reader = PdfReader(BytesIO(pdf_file.read()))
@@ -225,7 +226,7 @@ def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
 
     # Making sure no sentence is too long or document doesn't us proper sentences (like a slide deck)
     for i, sentence in enumerate(sentences):
-        if len(sentence) > chars_per_seg:
+        if len(sentence) > (chars_per_seg/2):
             temp_sentence = sentence
             sentences.pop(i)
             for j in range(0, len(temp_sentence), chars_per_seg):
@@ -236,14 +237,16 @@ def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
     curr_segment = ""
     for i, sentence in enumerate(sentences):
         if (len(curr_segment) + len(sentence)) < chars_per_seg:
-            curr_segment += " " + sentence
+            curr_segment += sentence
         else:
             segments.append(curr_segment)
-            curr_segment = sentences[i - 1]
+            curr_segment = ""
+            for k in range(overlap,0,-1):
+                curr_segment += sentences[i - k]
 
-    for segment in segments:
-        print(segment)
-        print("------------------------------------")
+    # for segment in segments:
+    #     print(segment)
+    #     print("------------------------------------")
 
     return segments
 
@@ -286,8 +289,8 @@ def _parse_md(md_file: BufferedIOBase, chars_per_seg: int) -> list[str]:
             curr_segment = sections[i - 1]
     segments.append(curr_segment)
 
-    for segment in segments:
-        print(segment)
-        print("------------------------------------")
+    # for segment in segments:
+    #     print(segment)
+    #     print("------------------------------------")
 
     return segments
