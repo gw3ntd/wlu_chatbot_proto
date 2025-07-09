@@ -1,0 +1,11 @@
+[project]
+name = "file-parsing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydub>=0.25.1",
+    "pyright>=1.1.402",
+    "speechrecognition>=3.14.3",
+]
