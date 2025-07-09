@@ -1,7 +1,10 @@
 from typing import Sequence
 from ollama import Client
-
+from ..language_model.response import MODE
 OLLAMA_URL = "localhost:11434"
+
+if MODE == "testing":
+    client = None
 
 try:
     client = Client(host=OLLAMA_URL)
