@@ -184,3 +184,25 @@ class Ollama(LanguageModelClient):
         if not isinstance(stop, list):
             raise TypeError("Stop sequences must be a list of strings.")
         self.stop_sequences = stop
+
+# --- Public API Functions ---
+
+def get_response_from_prompt(prompt: str, max_tokens: int = 3000) -> str:
+    """Gets a response from the language model based on the provided prompt.
+    
+    :param prompt: The prompt to feed into the language model.
+    :param kwargs: Additional parameters like max_tokens, temperature, etc.
+    :return: The completion from the language model."""
+    return client.get_response(prompt, max_tokens)
+
+def stream_response_from_prompt(
+    prompt: str, max_tokens: int = 3000
+) -> Generator[str, None, None]:
+    """Streams a response from the language model based on the provided prompt.
+    
+    :param prompt: The prompt to feed into the language model.
+    :param max_tokens: The maximal number of tokens to generate.
+    :yields: A generator yielding parts of the response."""
+    yield from client.stream_response(prompt, max_tokens)
+
+
