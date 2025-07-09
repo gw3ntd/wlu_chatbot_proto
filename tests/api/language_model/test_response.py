@@ -1,109 +1,137 @@
-# We recommend installing an extension to run python tests.
+import pytest
+from unittest.mock import MagicMock, patch
 
+# Adjust the import path to match your project structure
+from ucr_chatbot.api.response import (
+    LanguageModelClient,
+    Gemini,
+    Ollama,
+)
 
-def test_stream_response_from_prompt_return_type():
-    """Tests that the streaming function returns an iterable of strings."""
-    stream = stream_response_from_prompt("Where did you come from?")
-    assert isinstance(stream, Iterable)
-    for s in stream:
-        assert isinstance(s, str)
-    # The stream is lazy, so we don't iterate here in this simple test.
+# --- Test Gemini Class ---
 
-# --- Comprehensive Mocked Tests ---
+@pytest.fixture
+def mock_gemini_env(monkeypatch):
+    """A pytest fixture to set up a mocked Gemini environment."""
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    # Mock the actual API call within the google library
+    with patch("google.generativeai.GenerativeModel") as mock_model:
+        # yield the mock so we can inspect it in tests
+        yield mock_model
 
-def test_get_response_in_testing_mode(monkeypatch):
-    """
-    Ensures the function calls the Ollama client in 'testing' mode.
-    """
-    # Create a fake Ollama client
-    mock_ollama_client = MagicMock()
-    # Tell its 'get_response' method what to return
-    mock_ollama_client.get_response.return_value = "Ollama response"
+def test_gemini_init_success(mock_gemini_env):
+    """Tests successful initialization of the Gemini client."""
+    client = Gemini(key="fake-key")
+    assert isinstance(client, LanguageModelClient)
 
-    # When Ollama is initialized, make it return our fake client
-    monkeypatch.setattr("ucr_chatbot.api.language_model.Ollama", lambda **kwargs: mock_ollama_client)
-    # Force the mode to 'testing'
-    monkeypatch.setenv("LLM_MODE", "testing")
-
-    # Call the function we are testing
-    response = get_response_from_prompt("test prompt")
-
-    # Assertions
-    assert response == "Ollama response"
-    mock_ollama_client.get_response.assert_called_once_with("test prompt", ANY)
-
-
-def test_get_response_in_production_mode(monkeypatch):
-    """
-    Ensures the function calls the Gemini client in 'production' mode.
-    """
-    mock_gemini_client = MagicMock()
-    mock_gemini_client.get_response.return_value = "Gemini response"
-
-    monkeypatch.setattr("ucr_chatbot.api.language_model.Gemini", lambda **kwargs: mock_gemini_client)
-    monkeypatch.setenv("LLM_MODE", "production")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake-api-key") # Must be present
-
-    response = get_response_from_prompt("test prompt")
-
-    assert response == "Gemini response"
-    mock_gemini_client.get_response.assert_called_once_with("test prompt", ANY)
-
-
-def test_stream_response_in_testing_mode(monkeypatch):
-    """
-    Ensures the streaming function calls the Ollama client correctly.
-    """
-    mock_ollama_client = MagicMock()
-    # Make the stream_response method return a simple generator
-    mock_ollama_client.stream_response.return_value = iter(["Ollama ", "stream ", "response"])
-
-    monkeypatch.setattr("ucr_chatbot.api.language_model.Ollama", lambda **kwargs: mock_ollama_client)
-    monkeypatch.setenv("LLM_MODE", "testing")
-
-    # Call the function and consume the generator
-    stream = stream_response_from_prompt("test stream")
-    result = "".join(list(stream))
-
-    assert result == "Ollama stream response"
-    mock_ollama_client.stream_response.assert_called_once_with("test stream", ANY)
-
-
-def test_production_mode_raises_error_without_key(monkeypatch):
-    """
-    Tests that running in 'production' mode without an API key raises a ValueError.
-    """
-    # Force production mode but remove the API key
-    monkeypatch.setenv("LLM_MODE", "production")
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-
-    # Use pytest.raises to assert that a specific error is thrown
+def test_gemini_init_raises_error_without_key():
+    """Tests that Gemini raises a ValueError if no API key is provided."""
     with pytest.raises(ValueError, match="A Gemini API key is required"):
-        get_response_from_prompt("this will fail")
+        Gemini(key=None)
 
+def test_gemini_get_response(mock_gemini_env):
+    """Tests the get_response method for the Gemini client."""
+    client = Gemini(key="fake-key")
+    # Configure the mock model's return value
+    mock_response = MagicMock()
+    mock_response.text = "Gemini response text"
+    client.model.generate_content.return_value = mock_response
 
-def test_parameters_are_passed_correctly(monkeypatch):
-    """
-    Tests that optional parameters like temperature are passed down to the client.
-    """
-    mock_gemini_client = MagicMock()
-    monkeypatch.setattr("ucr_chatbot.api.language_model.Gemini", lambda **kwargs: mock_gemini_client)
+    response = client.get_response("test prompt", max_tokens=100)
+    assert response == "Gemini response text"
+    # Verify that the underlying API call was made correctly
+    client.model.generate_content.assert_called_once()
+
+def test_gemini_stream_response(mock_gemini_env):
+    """Tests the stream_response method for the Gemini client."""
+    client = Gemini(key="fake-key")
+    # Configure the mock model to return a generator of mock parts
+    mock_part1 = MagicMock()
+    mock_part1.text = "Stream part 1"
+    mock_part2 = MagicMock()
+    mock_part2.text = "Stream part 2"
+    client.model.generate_content.return_value = iter([mock_part1, mock_part2])
+
+    stream = client.stream_response("test prompt", max_tokens=100)
+    result = "".join(list(stream))
+    assert result == "Stream part 1Stream part 2"
+
+def test_gemini_setters():
+    """Tests the set_temp and set_stop_sequences methods for Gemini."""
+    client = Gemini(key="fake-key")
+    client.set_temp(0.5)
+    client.set_stop_sequences(["stop"])
+    assert client.temp == 0.5
+    assert client.stop_sequences == ["stop"]
+
+    with pytest.raises(ValueError):
+        client.set_temp(3.0) # Out of range
+    with pytest.raises(TypeError):
+        client.set_stop_sequences("not a list")
+
+# --- Test Ollama Class ---
+
+@pytest.fixture
+def mock_ollama_env(monkeypatch):
+    """A pytest fixture to set up a mocked Ollama environment."""
+    # Mock the ollama.Client so it doesn't make a real connection
+    with patch("ollama.Client") as mock_client:
+        yield mock_client
+
+def test_ollama_init_success(mock_ollama_env):
+    """Tests successful initialization of the Ollama client."""
+    client = Ollama()
+    assert isinstance(client, LanguageModelClient)
+    # Check that it tried to connect by calling list()
+    client.client.list.assert_called_once()
+
+def test_ollama_init_raises_connection_error(monkeypatch):
+    """Tests that Ollama raises ConnectionError if the client fails to connect."""
+    # Make the ollama.Client constructor raise an exception
+    monkeypatch.setattr("ollama.Client", MagicMock(side_effect=Exception("connection failed")))
+    with pytest.raises(ConnectionError, match="Could not connect to Ollama"):
+        Ollama()
+
+def test_ollama_get_response(mock_ollama_env):
+    """Tests the get_response method for the Ollama client."""
+    client = Ollama()
+    # Configure the mock client's return value
+    client.client.generate.return_value = {"response": "Ollama response text"}
+
+    response = client.get_response("test prompt", max_tokens=100)
+    assert response == "Ollama response text"
+    client.client.generate.assert_called_once()
+
+def test_ollama_stream_response(mock_ollama_env):
+    """Tests the stream_response method for the Ollama client."""
+    client = Ollama()
+    # Configure the mock client to return a generator of mock chunks
+    mock_chunk1 = {"response": "Stream part 1"}
+    mock_chunk2 = {"response": "Stream part 2"}
+    client.client.generate.return_value = iter([mock_chunk1, mock_chunk2])
+
+    stream = client.stream_response("test prompt", max_tokens=100)
+    result = "".join(list(stream))
+    assert result == "Stream part 1Stream part 2"
+
+# --- Test Global Client Initialization ---
+
+def test_global_client_is_ollama_by_default(monkeypatch):
+    """Tests that the global client is an Ollama instance by default."""
+    monkeypatch.setattr("ollama.Client", MagicMock())
+    # We need to reload the module to trigger the initialization logic again
+    import importlib
+    import ucr_chatbot.api.response as response_module
+    importlib.reload(response_module)
+    assert isinstance(response_module.client, Ollama)
+
+def test_global_client_is_gemini_in_production(monkeypatch):
+    """Tests that the global client is a Gemini instance in production mode."""
     monkeypatch.setenv("LLM_MODE", "production")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake-api-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    monkeypatch.setattr("google.generativeai.GenerativeModel", MagicMock())
 
-    # Call the function with specific keyword arguments
-    get_response_from_prompt(
-        "test prompt",
-        max_tokens=500,
-        temperature=0.9,
-        stop_sequences=["stop"]
-    )
-
-    # We can't easily inspect the kwargs of the client's init,
-    # but we can test the factory function directly.
-    client_instance = get_llm_client(temperature=0.9, stop_sequences=["stop"])
-
-    # Assert that the client object was created with the correct attributes
-    assert isinstance(client_instance, Gemini)
-    assert client_instance.temperature == 0.9
-    assert client_instance.stop_sequences == ["stop"]
+    import importlib
+    import ucr_chatbot.api.response as response_module
+    importlib.reload(response_module)
+    assert isinstance(response_module.client, Gemini)

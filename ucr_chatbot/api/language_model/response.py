@@ -2,17 +2,11 @@ import os
 import google.generativeai as genai
 import ollama
 from typing import Generator, List
+from abc import ABC, abstractmethod
+
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 MODE = os.environ.get("LLM_MODE", "testing") 
-
-# Set mode to Gemini (production) or Ollama (testing)
-if MODE == "production":
-    client = Gemini(API_KEY)
-    print("Running in Production Mode (Gemini)")
-else:
-    client = Ollama()
-    print("Running in Testing Mode (Ollama)")
 
 class LanguageModelClient(ABC):
     """An abstract base class for language model clients."""
@@ -185,6 +179,11 @@ class Ollama(LanguageModelClient):
             raise TypeError("Stop sequences must be a list of strings.")
         self.stop_sequences = stop
 
-
-
+# Set mode to Gemini (production) or Ollama (testing)
+if MODE == "production":
+    client = Gemini(API_KEY)
+    print("Running in Production Mode (Gemini)")
+else:
+    client = Ollama()
+    print("Running in Testing Mode (Ollama)")
 
