@@ -4,8 +4,7 @@ from ..language_model.response import MODE
 OLLAMA_URL = "localhost:11434"
 
 if MODE == "testing":
-    client = None
-
+    client = None 
 try:
     client = Client(host=OLLAMA_URL)
     # A quick check to make sure the server is responsive
@@ -23,7 +22,7 @@ def embed_text(text: str) -> Sequence[float]:
     """
     global client
 
-    response = client.embeddings(model="nomic-embed-text", prompt=text)
+    response = client.embeddings(model="nomic-embed-text", prompt=text) # type: ignore
     embedding = response["embedding"]
     embed = list(embedding)
 
