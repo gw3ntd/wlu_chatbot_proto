@@ -1,4 +1,5 @@
 from ucr_chatbot.api.file_parsing import parse_file
+import os
 
 def test_md():
     test_string = """# My Markdown Example
@@ -32,20 +33,20 @@ def greet(name):
 
 print(greet("Markdown"))
 """
-    #print(parse_file("tests\\file_parser\\test.md"))
+    #print(parse_file("tests{os.sep}file_parser{os.sep}test.md"))
     #print(test_string)
-    assert parse_file("tests\\file_parser\\test_files\\test.md") == ["".join(test_string.split("#"))]
+    assert parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}test.md") == ["".join(test_string.split("#"))]
 
 
 def test_text_pdf():
-    #print(parse_file("tests\\file_parser\\text_test_1.pdf"))
-    assert isinstance(parse_file("tests\\file_parser\\test_files\\text_test_2.pdf"), list)
-    #print(parse_file("tests\\file_parser\\text_test_2.pdf"))
-    assert isinstance(parse_file("tests\\file_parser\\test_files\\text_test_2.pdf"), list)
+    #print(parse_file("tests{os.sep}file_parser{os.sep}text_test_1.pdf"))
+    assert isinstance(parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf"), list)
+    #print(parse_file("tests{os.sep}file_parser{os.sep}text_test_2.pdf"))
+    assert isinstance(parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf"), list)
 
 
 def test_complex_pdf():
-    result = parse_file("tests\\file_parser\\test_files\\test_textbook2.pdf")
+    result = parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}test_textbook2.pdf")
     print(result)
     #assert result == ["dog"]
     assert isinstance(result, list)
