@@ -226,7 +226,7 @@ def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int, overlap: int) -> li
 
     # Making sure no sentence is too long or document doesn't us proper sentences (like a slide deck)
     for i, sentence in enumerate(sentences):
-        if len(sentence) > (chars_per_seg/2):
+        if len(sentence) > (chars_per_seg / 2):
             temp_sentence = sentence
             sentences.pop(i)
             for j in range(0, len(temp_sentence), chars_per_seg):
@@ -241,7 +241,7 @@ def _parse_pdf(pdf_file: BufferedIOBase, chars_per_seg: int, overlap: int) -> li
         else:
             segments.append(curr_segment)
             curr_segment = ""
-            for k in range(overlap,0,-1):
+            for k in range(overlap, 0, -1):
                 curr_segment += sentences[i - k]
 
     # for segment in segments:
