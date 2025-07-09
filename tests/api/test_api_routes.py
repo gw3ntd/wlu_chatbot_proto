@@ -54,7 +54,7 @@ def test_generate_non_stream_ok(client, monkeypatch):
     assert response_data["sources"][0]["segment_id"] == 101
 
 
-def test_generate_stream_ok(client, monkeypatch):
+def test_generate_stream_response(client, monkeypatch):
     """
     Tests a successful streaming POST request to /generate.
     """

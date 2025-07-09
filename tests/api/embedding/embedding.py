@@ -1,10 +1,8 @@
 import pytest
-import numpy as np
 from typing import Sequence
 from unittest.mock import MagicMock
 
-# Assuming your embedding function is in a file like this
-from your_project.context_retrieval import embed_text
+from ucr_chatbot.api.embedding import embed_text
 
 def test_embed_text_transforms_data_correctly(monkeypatch):
     """
