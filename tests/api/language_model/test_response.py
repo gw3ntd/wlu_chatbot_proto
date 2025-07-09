@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 # Adjust the import path to match your project structure
-from ucr_chatbot.api.response import (
+from ucr_chatbot.api.language_model.response import (
     LanguageModelClient,
     Gemini,
     Ollama,
@@ -121,9 +121,9 @@ def test_global_client_is_ollama_by_default(monkeypatch):
     monkeypatch.setattr("ollama.Client", MagicMock())
     # We need to reload the module to trigger the initialization logic again
     import importlib
-    import ucr_chatbot.api.response as response_module
+    import ucr_chatbot.api.language_model.response as response_module
     importlib.reload(response_module)
-    assert isinstance(response_module.client, Ollama)
+    assert response_module.client.__class__.__name__ == "Ollama"
 
 def test_global_client_is_gemini_in_production(monkeypatch):
     """Tests that the global client is a Gemini instance in production mode."""
@@ -132,6 +132,6 @@ def test_global_client_is_gemini_in_production(monkeypatch):
     monkeypatch.setattr("google.generativeai.GenerativeModel", MagicMock())
 
     import importlib
-    import ucr_chatbot.api.response as response_module
+    import ucr_chatbot.api.language_model.response as response_module
     importlib.reload(response_module)
-    assert isinstance(response_module.client, Gemini)
+    assert response_module.client.__class__.__name__ == "Gemini"

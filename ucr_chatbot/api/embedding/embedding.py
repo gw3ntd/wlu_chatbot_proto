@@ -3,7 +3,13 @@ from ollama import Client
 
 OLLAMA_URL = "localhost:11434"
 
-client = Client(OLLAMA_URL)
+try:
+    client = Client(host=OLLAMA_URL)
+    # A quick check to make sure the server is responsive
+    client.list()
+except Exception as e:
+    # This provides a more informative, specific error
+    raise ConnectionError(f"Could not connect to Ollama at {OLLAMA_URL}") from e
 
 
 def embed_text(text: str) -> Sequence[float]:
@@ -14,7 +20,8 @@ def embed_text(text: str) -> Sequence[float]:
     """
     global client
 
-    embedding = client.embeddings("nomic-embed-text:latest", text).embedding
+    response = client.embeddings(model="nomic-embed-text", prompt=text)
+    embedding = response['embedding']
     embed: Sequence[float] = list(embedding) if not isinstance(embedding, list) else embedding
 
     return embed

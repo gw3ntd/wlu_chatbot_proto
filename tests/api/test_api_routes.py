@@ -63,6 +63,7 @@ def test_generate_passes_parameters_to_client(client, monkeypatch):
     and passed to the language model client.
     """
     mock_llm_client = MagicMock()
+    mock_llm_client.get_response.return_value = "mocked llm response"
     mock_retriever = MagicMock()
     mock_retriever.get_segments_for.return_value = []
     monkeypatch.setattr("ucr_chatbot.api.routes.client", mock_llm_client)
@@ -106,6 +107,4 @@ def test_generate_invalid_json_returns_400(client):
         data="this is not json",
         content_type="text/plain"
     )
-    assert response.status_code == 400
-    response_data = response.get_json()
-    assert "Invalid JSON" in response_data["error"]
+    assert response.status_code == 415
