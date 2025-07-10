@@ -4,7 +4,6 @@ import ollama
 from typing import Generator, List
 from abc import ABC, abstractmethod
 
-
 API_KEY = os.environ.get("GEMINI_API_KEY")
 MODE = os.environ.get("LLM_MODE", "testing")
 
@@ -187,5 +186,7 @@ if MODE == "production":
             "GEMINI_API_KEY environment variable not set for production mode."
         )
     client: LanguageModelClient = Gemini(key=API_KEY)
-else:
-    client: LanguageModelClient = Ollama()
+elif MODE == "development":
+    client = Ollama(host="http://localhost:11434")
+elif MODE == "testing":
+    client = None  # type: ignore

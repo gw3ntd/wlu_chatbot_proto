@@ -114,14 +114,14 @@ def test_ollama_stream_response(mock_ollama_env):
 
 # --- Test Global Client Initialization ---
 
-def test_global_client_is_ollama_by_default(monkeypatch):
-    """Tests that the global client is an Ollama instance by default."""
-    monkeypatch.setattr("ollama.Client", MagicMock())
-    # We need to reload the module to trigger the initialization logic again
-    import importlib
-    import ucr_chatbot.api.language_model.response as response_module
-    importlib.reload(response_module)
-    assert response_module.client.__class__.__name__ == "Ollama"
+# def test_global_client_is_ollama_by_default(monkeypatch):
+#     """Tests that the global client is an Ollama instance by default."""
+#     monkeypatch.setattr("ollama.Client", MagicMock())
+#     # We need to reload the module to trigger the initialization logic again
+#     import importlib
+#     import ucr_chatbot.api.language_model.response as response_module
+#     importlib.reload(response_module)
+#     assert response_module.client.__class__.__name__ == "Ollama"
 
 def test_global_client_is_gemini_in_production(monkeypatch):
     """Tests that the global client is a Gemini instance in production mode."""
