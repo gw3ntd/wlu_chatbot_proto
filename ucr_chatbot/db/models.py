@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     Enum,
+    Boolean
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -94,6 +95,7 @@ class Documents(base):
     __tablename__ = "Documents"
     file_path = Column(String, primary_key=True)
     course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
 
     course = relationship("Courses", back_populates="documents")
     segments = relationship("Segments", back_populates="document", uselist=True)
@@ -194,6 +196,12 @@ def add_new_document(file_path: str, course_id: int):
         except IntegrityError:
             session.rollback()
             print("Error adding document. Course id must exist.\n")
+
+def set_document_inactive(file_path: str):
+    with Session(engine) as session:
+        document = session.query(Documents).filter_by(file_path=file_path).first()
+        document.is_active = False
+        session.commit()
 
 
 def print_users():
