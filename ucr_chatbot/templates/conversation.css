@@ -6,11 +6,19 @@
 }
 body {
   margin: 0;
-  font-family: sans-serif;
+  font-family: "Fira Sans", sans-serif;
   display: flex;
   height: 100vh;
   background-color: #f7f7f8;
   color: #333;
+  display: flex;
+  flex-direction: column; 
+}
+
+#main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* FONTS */
@@ -20,11 +28,27 @@ body {
   font-weight: 400;
   font-style: normal;
 }
-
 .fira-sans {
   font-family: "Fira Sans", sans-serif;
   font-weight: 400;
   font-style: normal;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #003da5;
+  color: white;
+  padding: 1.5rem 2rem;
+}
+header h1 {
+  margin: 0;
+  font-family: "Oswald", sans-serif;
+}
+header img {
+  height: 50px;
 }
 
 /* SIDEBAR */
@@ -59,7 +83,7 @@ body {
 }
 
 .conversation-item.active {
-  background-color: #fde4f2;
+  background-color: #FFB81C;
   font-weight: bold;
 }
 
@@ -131,4 +155,5 @@ body {
 
 #input-form button:hover {
   background-color: #FFB81C;
+  color: black;
 }
