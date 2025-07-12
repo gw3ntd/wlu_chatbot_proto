@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat</title>
+    <link rel="stylesheet" href="conversation.css" />
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="oswald">
+      <h2>CONVERSATIONS</h2>
+      <div id="sidebar-messages">
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="main">
+      <div id="chat-container"></div>
+      <div id="message-input">
+        <form id="input-form" onsubmit="handleSend(event)">
+          <textarea
+            id="userMessage"
+            rows="2"
+            class="fira-sans"
+            placeholder="Type your message..."
+          ></textarea>
+          <button type="submit" class="fira-sans">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="conversation.js"></script>
+  </body>
+</html>
