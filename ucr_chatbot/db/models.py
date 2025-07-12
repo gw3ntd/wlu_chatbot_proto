@@ -7,7 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     Enum,
-    Boolean
+    Boolean,
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -18,6 +18,9 @@ import os
 from sqlalchemy.exc import IntegrityError
 
 from tabulate import tabulate
+
+import typing
+from typing import Sequence
 
 load_dotenv()
 
@@ -197,15 +200,54 @@ def add_new_document(file_path: str, course_id: int):
             session.rollback()
             print("Error adding document. Course id must exist.\n")
 
+
 def set_document_inactive(file_path: str):
+    """Sets the is_active column of a document entry to false.
+    :param file_path: The file path of the document to be set inactive.
+    """
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         document.is_active = False
         session.commit()
 
 
+def store_segment(segment_text: str, file_path: str) -> int:
+    """Creates new Segments instance and stores it into Segments table.
+    :param segment_text: The segment text to be added.
+    :param file_path: The file path of the document the segment was parsed from.
+    :return: An int representing the segment ID.
+    """
+    with Session(engine) as session:
+        document = session.query(Documents).filter_by(file_path=file_path).first()
+        new_segment = Segments(
+            text = segment_text
+            doucment_id = file_path
+        )
+        session.add(new_segment)
+        session.flush()
+        segment_id = new_segment.id
+        session.commit()
+
+        return segment_id
+
+
+def store_embedding(embedding: Sequence[float], segment_id: int):
+    """Creates new Embeddings instance and stores it into Embeddings table.
+    :param embedding: List of floats representing the vector embedding.
+    :param segment_id: ID for the segment the vector embedding represents.
+    """
+    with Session(engine) as session:
+        segment = session.query(Segments).filter_by(id=segment_id).first()
+        new_embedding = Embeddings(
+            vector = embedding
+            segment_id = segment_id
+        )
+        session.add(new_embedding)
+        session.commit()
+
+
 def print_users():
-    """prints all users and their information"""
+    """Prints all users and their information"""
     with Session(engine) as session:
         all_entries = session.query(Users).all()
         rows: list[typing.Tuple[Column[str], Column[str], Column[str]]] = []
@@ -215,11 +257,8 @@ def print_users():
         print(tabulate(rows, headers="keys", tablefmt="psql"))
 
 
-import typing
-
-
 def print_participation():
-    """prints all relationships between users and courses"""
+    """Prints all relationships between users and courses"""
     with Session(engine) as session:
         all_entries = session.query(ParticipatesIn).all()
         rows: list[typing.Tuple[Column[str], Column[int], Column[str]]] = []
