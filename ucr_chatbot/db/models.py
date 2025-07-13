@@ -8,6 +8,8 @@ from sqlalchemy import (
     Text,
     Enum,
     Boolean,
+    ARRAY,
+    Float
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -21,6 +23,8 @@ from tabulate import tabulate
 
 import typing
 from typing import Sequence
+
+import sys
 
 load_dotenv()
 
@@ -136,7 +140,7 @@ class Embeddings(base):
 
     __tablename__ = "Embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(Vector)
+    vector = mapped_column(ARRAY(Float)) # replace with Vector later
     segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
 
     segment = relationship("Segments", back_populates="embeddings")
@@ -150,8 +154,13 @@ class References(base):
     segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
 
 
-base.metadata.drop_all(engine)
-base.metadata.create_all(engine)
+def initialize_db():
+    base.metadata.create_all(engine)
+    print("Datatbase initialized.")
+
+def clear_db():
+    base.metadata.drop_all(engine)
+    print("Database cleared.")
 
 
 def add_new_user(email: str, first_name: str, last_name: str):
@@ -220,8 +229,8 @@ def store_segment(segment_text: str, file_path: str) -> int:
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         new_segment = Segments(
-            text = segment_text
-            doucment_id = file_path
+            text=segment_text,
+            doucment_id=file_path,
         )
         session.add(new_segment)
         session.flush()
@@ -239,8 +248,8 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
     with Session(engine) as session:
         segment = session.query(Segments).filter_by(id=segment_id).first()
         new_embedding = Embeddings(
-            vector = embedding
-            segment_id = segment_id
+            vector=embedding,
+            segment_id=segment_id,
         )
         session.add(new_embedding)
         session.commit()
@@ -256,6 +265,15 @@ def print_users():
             rows.append((row.email, row.first_name, row.last_name))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
 
+def print_courses():
+    """Prints all users and their information"""
+    with Session(engine) as session:
+        all_entries = session.query(Courses).all()
+        rows: list[typing.Tuple[Column[int], Column[str]]] = []
+
+        for row in all_entries:
+            rows.append((row.id, row.name))
+        print(tabulate(rows, headers="keys", tablefmt="psql"))
 
 def print_participation():
     """Prints all relationships between users and courses"""
@@ -266,3 +284,50 @@ def print_participation():
         for row in all_entries:
             rows.append((row.email, row.course_id, row.role))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
+
+def print_documents():
+    """Prints all documents instances"""
+    with Session(engine) as session:
+        all_entries = session.query(Documents).all()
+        rows: list[typing.Tuple[Column[str], Column[int], Column[bool]]] = []
+
+        for row in all_entries:
+            rows.append((row.file_path, row.course_id, row.is_active))
+        print(tabulate(rows, headers="keys", tablefmt="psql"))
+
+def print_segments():
+    """Prints all segments instances"""
+    with Session(engine) as session:
+        all_entries = session.query(Segments).all()
+        rows: list[typing.Tuple[Column[int], Column[str], Column[str]]] = []
+
+        for row in all_entries:
+            rows.append((row.id, row.text, row.document_id))
+        print(tabulate(rows, headers="keys", tablefmt="psql"))
+
+def print_embeddings():
+    """Prints all embeddings instances"""
+    with Session(engine) as session:
+        all_entries = session.query(Embeddings).all()
+        rows: list[typing.Tuple[Column[int], Column[Sequence[float]], Column[int]]] = []
+
+        for row in all_entries:
+            rows.append((row.id, row.vector, row.segment_id))
+        print(tabulate(rows, headers="keys", tablefmt="psql"))
+
+if __name__ == "__main__":
+    if "init" in sys.argv:
+        initialize_db()
+    elif "clear" in sys.argv:
+        clear_db()
+    elif "print" in sys.argv:
+        print_users()
+        print_courses()
+        print_participation()
+        print_documents()
+        print_segments()
+        print_embeddings()
+    elif "add_course" in sys.argv:
+        course_id = int(sys.argv[2])
+        course_name = sys.argv[3]
+        add_new_course(course_id, course_name)
