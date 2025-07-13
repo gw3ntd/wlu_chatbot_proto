@@ -13,7 +13,7 @@ import os
 from typing import cast
 from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
-
+from ..db.models import add_new_document, store_segment, store_embedding, set_document_inactive
 
 allowed_extenstions = {"txt", "md", "pdf", "wav", "mp3"}
 courses = {
@@ -29,13 +29,23 @@ courses = {
     111: "CS111",
     141: "CS141",
 }
+documents = {}
 
 bp = Blueprint("routes", __name__)
+
 
 
 @bp.route("/")
 def course_selection():
     """Responds with a landing page where a student can select a course"""
+    docs_list = os.listdir(current_app.config["UPLOAD_FOLDER"])
+    for doc in docs_list:
+        path = os.path.join(current_app.config["UPLOAD_FOLDER"], doc)
+        docs = os.listdir(path)
+        for d in docs:
+            documents[os.path.join(path, d)] = True
+            print(os.path.join(path, d))
+            print(d)
     body_text = ""
     for course in courses:
         body_text += f'Select your course. <a href="{url_for(".new_conversation", course_id=course)}"> {courses[course]} </a> &emsp; Upload documents for a course: <a href="{url_for(".course_documents", course_id=course)}"> {courses[course]} </a> <br/>'
@@ -116,22 +126,26 @@ def course_documents(course_id: int):
 
         if file and _allowed_file(file.filename):
             filename: str = secure_filename(file.filename)
+            new_doc_file_path = os.path.join(os.path.join(curr_path, courses[course_id]), filename)
             file.save(
-                os.path.join(os.path.join(curr_path, courses[course_id]), filename)
+                new_doc_file_path
             )
+            documents[new_doc_file_path] = True
+            add_new_document(new_doc_file_path, course_id)
             # Parse into segments
             segments: list[str] = parse_file(
-                os.path.join(os.path.join(curr_path, courses[course_id]), filename)
+                new_doc_file_path
             )
             for segment in segments:
-                print(segment)
-                print("*****")
-                print(embed_text(segment))
-                print("---------------------------------------")
+                segment_id = store_segment(segment, new_doc_file_path)
+                embedding = embed_text(segment)
+                store_embedding(embedding, segment_id)
 
     docs_list = os.listdir(os.path.join(curr_path, courses[course_id]))
     doc_string = ""
     for i, doc in enumerate(docs_list):
+        if documents[os.path.join(os.path.join(curr_path, courses[course_id]), doc)] == False:
+            continue
         download_link = url_for(".download_file", course_id=course_id, name=doc)
         delete_link = url_for(".delete_document", course_id=course_id, filename=doc)
 
@@ -159,7 +173,9 @@ def delete_document(course_id: int, filename: str):
     file_path = os.path.join(curr_path, courses[course_id], secure_filename(filename))
 
     if os.path.exists(file_path):
-        os.remove(file_path)
+        #os.remove(file_path)
+        documents[file_path] = False
+        set_document_inactive(file_path)
 
     return redirect(url_for(".course_documents", course_id=course_id))
 
