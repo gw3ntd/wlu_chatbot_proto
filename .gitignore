@@ -18,3 +18,5 @@ docs/
 .vscode
 
 .env
+
+ucr_chatbot/uploads

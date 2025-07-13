@@ -11,6 +11,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 import os
 from typing import cast
+from ..api.file_parsing.file_parsing import parse_file
+from ..api.embedding.embedding import embed_text
 
 
 allowed_extenstions = {"txt", "md", "pdf", "wav", "mp3"}
@@ -76,6 +78,7 @@ def course_documents(course_id: int):
     :param course_id: The id of the course for which a conversation will be initialized.
     """
     curr_path: str = cast(str, current_app.config["UPLOAD_FOLDER"])
+    error_docstring = ""
     if request.method == "POST":
         if "file" not in request.files:
             return redirect(request.url)
@@ -85,25 +88,88 @@ def course_documents(course_id: int):
         if not file.filename:
             return redirect(request.url)
 
+        if _allowed_file(file.filename) == False:
+            """
+            Puts an error popup when the teacher adds something bad.
+            """
+            error_docstring = """
+            <div id="error-popup" style="display: block;">
+                <h3>Error!</h3>
+                <p id="error-message">You can't upload this type of file</p>
+                <button id="close-popup">Close</button>
+            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const popup = document.getElementById("error-popup");
+                    const closeBtn = document.getElementById("close-popup");
+
+                    if (closeBtn && popup) {
+                    closeBtn.addEventListener("click", function() {
+                        popup.style.display = "none";
+                        popup.parentNode.removeChild(popup);
+                    });
+                }
+            });
+        </script>
+        """
+            # return render_template("documents.html", body=docstring)
+
         if file and _allowed_file(file.filename):
             filename: str = secure_filename(file.filename)
             file.save(
                 os.path.join(os.path.join(curr_path, courses[course_id]), filename)
             )
+            # Parse into segments
+            segments: list[str] = parse_file(
+                os.path.join(os.path.join(curr_path, courses[course_id]), filename)
+            )
+            for segment in segments:
+                print(segment)
+                print("*****")
+                print(embed_text(segment))
+                print("---------------------------------------")
 
     docs_list = os.listdir(os.path.join(curr_path, courses[course_id]))
     doc_string = ""
     for i, doc in enumerate(docs_list):
-        print(doc)
-        doc_string += f'{i + 1}. <a href="{url_for(".download_file", name=doc)}"> {doc} </a> <br/>'
+        download_link = url_for(".download_file", course_id=course_id, name=doc)
+        delete_link = url_for(".delete_document", course_id=course_id, filename=doc)
 
+        doc_string += f'''
+            <div style="margin-bottom: 5px;">
+                    <span style="display: inline-block; width: 25px;">{i + 1}.</span> 
+                    <a href="{download_link}" style="display: inline-block; margin-right: 10px;">{doc}</a> 
+                    <form action="{delete_link}" method="post" style="display: inline-block;">
+                        <button type="submit" onclick="return confirm('Are you sure you want to delete the file?');">Delete</button>
+                    </form>
+                </div>
+        '''
+
+    doc_string = error_docstring + doc_string
     return render_template("documents.html", body=doc_string)
 
 
-@bp.route("/uploads/<name>")
-def download_file(name: str):
+@bp.route("/course/<int:course_id>/documents/delete/<filename>", methods=["POST"])
+def delete_document(course_id: int, filename: str):
+    """This function deletes a file for the course
+    :param course_id: The id of the course of the file to be deleted
+    :param filename: Name of the file to be deleted.
+    """
+    curr_path = cast(str, current_app.config["UPLOAD_FOLDER"])
+    file_path = os.path.join(curr_path, courses[course_id], secure_filename(filename))
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
+@bp.route("/uploads/<int:course_id>/<name>")
+def download_file(course_id: int, name: str):
     """Responds with a page of the specified document that then can be downloaded.
     :param name: The name of the file stored to be downloaded.
+    :param course_id: The course id of the course the file belongs to
     """
     curr_path: str = cast(str, current_app.config["UPLOAD_FOLDER"])
-    return send_from_directory(curr_path, name)
+    file_path = os.path.join(curr_path, courses[course_id])
+    return send_from_directory(file_path, name)
