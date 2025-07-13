@@ -230,7 +230,7 @@ def store_segment(segment_text: str, file_path: str) -> int:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         new_segment = Segments(
             text=segment_text,
-            doucment_id=file_path,
+            document_id=file_path,
         )
         session.add(new_segment)
         session.flush()
@@ -331,3 +331,10 @@ if __name__ == "__main__":
         course_id = int(sys.argv[2])
         course_name = sys.argv[3]
         add_new_course(course_id, course_name)
+    elif "test" in sys.argv:
+        add_new_course(1, "CS010A")
+        add_new_user("user123@ucr.edu", "test", "user")
+        add_new_document("documents/course1/testdoc.txt", 1)
+        store_segment("test text abcd", "documents/course1/testdoc.txt")
+        store_embedding([1.0, 2.0, 3.0], 1)
+        set_document_inactive("documents/course1/testdoc.txt")
