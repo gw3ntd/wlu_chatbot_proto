@@ -6,41 +6,23 @@ from flask import (
     request,
     send_from_directory,
 )
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-from sqlalchemy.orm import Session
-import os
-from ..api.file_parsing.file_parsing import parse_file
-from ..api.embedding.embedding import embed_text
-from ..db.models import (
-    engine,
-    Courses,
-    upload_folder,
-    add_new_document,
-    store_segment,
-    store_embedding,
-    get_active_documents,
-    set_document_inactive,
-    Documents,
-)
-
+from ucr_chatbot.db.models import *
+from sqlalchemy import select
 
 bp = Blueprint("routes", __name__)
 
-
 @bp.route("/")
 def course_selection():
-    """Responds with a landing page where a student can select a course"""
-    body_text = ""
     with Session(engine) as session:
-        courses = session.query(Courses)
-    for course in courses:
-        body_text += f'Select your course. <a href="{url_for(".new_conversation", course_id=course.id)}"> {course.name} </a> &emsp; Upload documents for a course: <a href="{url_for(".course_documents", course_id=course.id)}"> {course.name} </a> <br/>'
-    return render_template(
-        "base.html",
-        title="Landing Page",
-        body=body_text,
-    )
+        stmt = (select(Courses).join(ParticipatesIn, Courses.id == ParticipatesIn.course_id).where(ParticipatesIn.email == 'test@ucr.edu'))
+        result = session.execute(stmt)
+
+        courses = []
+        for row in result:
+            courses.append(row[0])
+
+    return render_template("landing_page.html",courses=courses,)
+
 
 
 @bp.route("/course/<int:course_id>/chat")

@@ -149,6 +149,10 @@ class References(base):
     segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
 
 
+# base.metadata.drop_all(engine)
+base.metadata.create_all(engine)
+
+
 def add_new_user(email: str, first_name: str, last_name: str):
     """Adds new user entry to Users table with the given parameters.
     :param email: new user's email address
