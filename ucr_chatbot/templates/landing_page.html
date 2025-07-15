@@ -4,9 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UCR</title>
+    <link rel="stylesheet" href="../static/landing_page.css"/>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Select a Course:</h1>
+    <header>
+        <h1>SELECT A COURSE</h1>
+        <img src="../web_interface/images/UC_Riverside_Horiz_BluBG.png" alt="UC Riverside logo">
+    </header>
     <ul>
         {% for course in courses %}
         <li>
