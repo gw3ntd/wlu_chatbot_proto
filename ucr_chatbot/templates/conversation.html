@@ -7,61 +7,35 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='conversation.css') }}">
 
     <!-- FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   </head>
-  <!-- this body tag is changed for the conversation id -->
-  <body
-    {%
-    if
-    conversation_id
-    %}data-conversation-id="{{ conversation_id }}"
-    {%
-    endif
-    %}
-    {%
-    if
-    course_id
-    %}data-course-id="{{ course_id }}"
-    {%
-    endif
-    %}
-  >
-    <!-- HEADER -->
-    <header>
-      <h1>ScotGPT</h1>
-      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}">
-    </header>
 
-    <div id="main-layout">
-      <!-- SIDEBAR -->
-      <div id="sidebar" class="oswald">
-        <h2>CONVERSATIONS</h2>
-        <div id="sidebar-messages"></div>
-      </div>
+  <body>
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="oswald">
+      <h2>CONVERSATIONS</h2>
+      <div id="sidebar-messages"></div>
+    </div>
 
-      <!-- CHAT AREA -->
-      <div id="main">
-        <div id="chat-container"></div>
-        <div id="message-input">
-          <form id="input-form" onsubmit="handleSend(event)">
-            <textarea
-              id="userMessage"
-              rows="2"
-              class="fira-sans"
-              placeholder="Type your message..."
-            ></textarea>
-            <button type="submit" class="fira-sans">Send</button>
-          </form>
-        </div>
+    <!-- MESSAGES -->
+    <div id="main">
+      <div id="chat-container"></div>
+      <div id="message-input">
+        <form id="input-form" onsubmit="handleSend(event)">
+          <textarea
+            id="userMessage"
+            rows="2"
+            class="fira-sans"
+            placeholder="Type your message..."
+          ></textarea>
+          <button type="submit" class="fira-sans">Send</button>
+        </form>
       </div>
     </div>
 
-  </script>
-  <script src="{{ url_for('static', filename='conversation.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='conversation.js') }}"></script>
   </body>
 </html>

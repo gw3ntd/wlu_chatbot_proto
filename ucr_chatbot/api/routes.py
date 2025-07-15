@@ -10,6 +10,8 @@ from flask import (
 from .context_retrieval import retriever
 from .language_model.response import client as client
 import json
+from ucr_chatbot.db.models import *
+from sqlalchemy import select, insert
 
 bp = Blueprint("routes", __name__)
 
@@ -23,6 +25,7 @@ def course_selection():
     )
 
 
+
 @bp.route("/course/<int:course_id>/chat")
 def new_conversation(course_id: int):
     """Redirects to a page with a new conversation for a course.
@@ -31,17 +34,83 @@ def new_conversation(course_id: int):
     return redirect(url_for(".conversation", conversation_id=course_id))
 
 
-@bp.route("/convsersation/<int:conversation_id>")
+@bp.route("/conversation/<int:conversation_id>")
 def conversation(conversation_id: int):
     """Responds with page where a student can interact with a chatbot for a course.
 
     :param conversation_id: The id of the conversation to be send back to the user.
     """
-    return render_template(
-        "base.html",
-        title="Landing Page",
-        body=f"Chat with me about the course for which the conversation with id {conversation_id} exists.",
-    )
+    with Session(engine) as session:
+        stmt = select(Messages).where(Messages.conversation_id == conversation_id).order_by(Messages.timestamp.asc())
+        messages = session.execute(stmt).scalars().all()
+
+
+        type_map = {
+            MessageType.STUDENT_MESSAGES: "StudentMessage",
+            MessageType.BOT_MESSAGES: "BotMessage"
+        }
+        messages_list = []
+        for message in messages:
+            sender = type_map.get(message.type)
+            message_dict = {
+                "id": message.id,
+                "body": message.body,
+                "sender": sender, 
+                "timestamp": message.timestamp.isoformat()
+            }
+            messages_list.append(message_dict)
+
+        return jsonify({"messages": messages_list})
+
+    r
+
+user_email='test@ucr.edu'
+@bp.route("/create_conversation", methods=['POST'])
+def create_conversation():
+    """Responds with a landing page where a student can select a course"""
+
+    content = request.json
+    print(content['courseId'])
+    print(content['message'])
+    with Session(engine) as session:
+        new_conv = Conversations(course_id=content['courseId'], initiated_by=user_email)
+        session.add(new_conv)
+        session.commit()
+
+        conv_id = new_conv.id
+
+       
+
+        insert_msg = insert(Messages).values(body=content['message'], conversation_id=conv_id, type=MessageType.STUDENT_MESSAGES, written_by=user_email)
+        session.execute(insert_msg)
+        session.commit()
+    return { "conversationId": conv_id }
+
+@bp.route("/conversations/<int:conversation_id>/reply", methods=['POST'])
+def reply_conversation(conversation_id):
+    content = request.json['userMessage']
+
+    LLM_response = "LLM response"
+    with Session(engine) as session:
+        insert_msg = insert(Messages).values(body=LLM_response, conversation_id=conversation_id, type=MessageType.BOT_MESSAGES, written_by=user_email)
+        session.execute(insert_msg)
+        session.commit()
+
+    return {"reply": LLM_response}
+
+
+@bp.route("/conversations/<int:conversation_id>/send", methods=['POST'])
+def send_message(conversation_id):
+    content = request.json
+    print("Input message: "+str(content['message']))
+    with Session(engine) as session:
+        insert_msg = insert(Messages).values(body=content['message'], conversation_id=conversation_id, type=MessageType.STUDENT_MESSAGES, written_by=user_email)
+        session.execute(insert_msg)
+        session.commit()
+
+    return {"status": "200"}
+
+
 
 # NOT RESPONSIBLE FOR THIS PART =================================================================================================
 

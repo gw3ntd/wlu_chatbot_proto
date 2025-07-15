@@ -14,7 +14,7 @@ be started. This page should have a chat interface like Gemini or ChatGPT. -->
     <ul>
         {% for course in courses %}
         <li>
-           <a href="{{ url_for('api.routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
+           <a href="{{ url_for('web_interface.routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
         </li>
         {% endfor %}
     </ul>
