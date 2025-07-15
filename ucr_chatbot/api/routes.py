@@ -2,6 +2,9 @@ from flask import (
     Blueprint,
     request,
     jsonify,
+    Blueprint,
+    request,
+    jsonify,
     Response,
     render_template,
     url_for,
@@ -14,6 +17,7 @@ from ucr_chatbot.db.models import *
 from sqlalchemy import select, insert
 
 bp = Blueprint("routes", __name__)
+
 
 
 @bp.route("/")
@@ -40,106 +44,15 @@ def conversation(conversation_id: int):
 
     :param conversation_id: The id of the conversation to be send back to the user.
     """
-    with Session(engine) as session:
-        stmt = (
-            select(Messages)
-            .where(Messages.conversation_id == conversation_id)
-            .order_by(Messages.timestamp.asc())
-        )
-        messages = session.execute(stmt).scalars().all()
-
-        type_map = {
-            MessageType.STUDENT_MESSAGES: "StudentMessage",
-            MessageType.BOT_MESSAGES: "BotMessage",
-        }
-        messages_list = []
-        for message in messages:
-            sender = type_map.get(message.type)
-            message_dict = {
-                "id": message.id,
-                "body": message.body,
-                "sender": sender,
-                "timestamp": message.timestamp.isoformat(),
-            }
-            messages_list.append(message_dict)
-
-        return jsonify({"messages": messages_list})
-
-    
+    return render_template(
+        "base.html",
+        title="Landing Page",
+        body=f"Chat with me about the course for which the conversation with id {conversation_id} exists.",
+    )
 
 
-user_email = "test@ucr.edu"
+# NOT RESPONSIBLE FOR THIS PART =================================================================================================
 
-
-@bp.route("/create_conversation", methods=["POST"])
-def create_conversation():
-    """Responds with a landing page where a student can select a course"""
-
-    content = request.json
-    print(content["courseId"])
-    print(content["message"])
-    with Session(engine) as session:
-        new_conv = Conversations(course_id=content["courseId"], initiated_by=user_email)
-        session.add(new_conv)
-        session.commit()
-
-        conv_id = new_conv.id
-
-        insert_msg = insert(Messages).values(
-            body=content["message"],
-            conversation_id=conv_id,
-            type=MessageType.STUDENT_MESSAGES,
-            written_by=user_email,
-        )
-        session.execute(insert_msg)
-        session.commit()
-    return {"conversationId": conv_id}
-
-
-@bp.route("/conversations/<int:conversation_id>/reply", methods=["POST"])
-def reply_conversation(conversation_id):
-    content = request.json["userMessage"]
-
-    LLM_response = "LLM response"
-    with Session(engine) as session:
-        insert_msg = insert(Messages).values(
-            body=LLM_response,
-            conversation_id=conversation_id,
-            type=MessageType.BOT_MESSAGES,
-            written_by=user_email,
-        )
-        session.execute(insert_msg)
-        session.commit()
-
-    return {"reply": LLM_response}
-
-
-@bp.route("/conversations/<int:conversation_id>/send", methods=["POST"])
-def send_message(conversation_id):
-    content = request.json
-    print("Input message: " + str(content["message"]))
-    with Session(engine) as session:
-        insert_msg = insert(Messages).values(
-            body=content["message"],
-            conversation_id=conversation_id,
-            type=MessageType.STUDENT_MESSAGES,
-            written_by=user_email,
-        )
-        session.execute(insert_msg)
-        session.commit()
-
-    return {"status": "200"}
-
-@bp.route("/conversations/get_conversations", methods=['POST'])
-def get_conversations():
-    # content = request.json
-    # user_email = content['user_email']
-
-    with Session(engine) as session:
-        stmt = (select(Conversations.id).where(Conversations.initiated_by == 'test@ucr.edu').order_by(Conversations.id.desc())  )
-        result = session.execute(stmt).scalars().all()
-
-    return jsonify(result)
 
 @bp.route("/course/<int:course_id>/documents")
 def course_documents(course_id: int):
@@ -154,6 +67,8 @@ def course_documents(course_id: int):
     )
 
 
+# STUFF FROM SPRINT 1 ===========================================================================================================
+
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
 You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer.
@@ -166,6 +81,7 @@ If the context is not relevant, than you should tell the student, "I cannot find
 ## Question
 {question}
 """
+
 
 
 @bp.route("/generate", methods=["POST"])
@@ -192,7 +108,7 @@ def generate():
     segments = retriever.get_segments_for(prompt, num_segments=3)
     context = "\n".join(
         # Assuming each 's' object has 'segment_id' and 'text' attributes
-        map(lambda s: f"Reference number: {s.segment_id}, text: {s.text}", segments)
+        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)
     )
 
     prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt)
@@ -217,7 +133,7 @@ def generate():
         response_text = client.get_response(**generation_params)  # type: ignore
 
         # Dynamically create the list of source IDs
-        sources = [{"segment_id": s.segment_id} for s in segments]
+        sources = [{"segment_id": s.id} for s in segments]
 
         return jsonify(
             {
