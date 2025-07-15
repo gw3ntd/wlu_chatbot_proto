@@ -2,6 +2,9 @@ from flask import (
     Blueprint,
     request,
     jsonify,
+    Blueprint,
+    request,
+    jsonify,
     Response,
     render_template,
     url_for,
@@ -16,6 +19,7 @@ from sqlalchemy import select, insert
 bp = Blueprint("routes", __name__)
 
 
+
 @bp.route("/")
 def course_selection():
     """Responds with a landing page where a student can select a course"""
@@ -24,6 +28,7 @@ def course_selection():
         title="Landing Page",
         body=f'Select your course. <a href="{url_for(".new_conversation", course_id="1")}"> CS009A </a>',
     )
+
 
 
 @bp.route("/course/<int:course_id>/chat")
@@ -54,14 +59,14 @@ def conversation(conversation_id: int):
         }
         messages_list = []
         for message in messages:
-            sender = type_map.get(message.type)  # type: ignore
+            sender = type_map.get(message.type)
             message_dict = {
                 "id": message.id,
                 "body": message.body,
                 "sender": sender,
                 "timestamp": message.timestamp.isoformat(),
             }
-            messages_list.append(message_dict)  # type: ignore
+            messages_list.append(message_dict)
 
         return jsonify({"messages": messages_list})
 
@@ -74,8 +79,6 @@ def create_conversation():
     """Responds with a landing page where a student can select a course"""
 
     content = request.json
-    if not content:
-        return jsonify({"error": "Request body must be valid JSON"}), 400
     print(content["courseId"])
     print(content["message"])
     with Session(engine) as session:
@@ -97,15 +100,13 @@ def create_conversation():
 
 
 @bp.route("/conversations/<int:conversation_id>/reply", methods=["POST"])
-def reply_conversation(conversation_id: int):
-    """Saves a placeholder bot reply to the database.
+def reply_conversation(conversation_id):
+    content = request.json["userMessage"]
 
-    :param conversation_id: The ID of the current conversation.
-    """
-    llm_response = "LLM response"
+    LLM_response = "LLM response"
     with Session(engine) as session:
         insert_msg = insert(Messages).values(
-            body=llm_response,
+            body=LLM_response,
             conversation_id=conversation_id,
             type=MessageType.BOT_MESSAGES,
             written_by=user_email,
@@ -113,18 +114,12 @@ def reply_conversation(conversation_id: int):
         session.execute(insert_msg)
         session.commit()
 
-    return {"reply": llm_response}
+    return {"reply": LLM_response}
 
 
 @bp.route("/conversations/<int:conversation_id>/send", methods=["POST"])
-def send_message(conversation_id: int):
-    """Saves a new user message to the database.
-
-    :param conversation_id: The ID of the current conversation.
-    """
+def send_message(conversation_id):
     content = request.json
-    if not content:
-        return jsonify({"error": "Request body must be valid JSON"}), 400
     print("Input message: " + str(content["message"]))
     with Session(engine) as session:
         insert_msg = insert(Messages).values(
@@ -139,24 +134,7 @@ def send_message(conversation_id: int):
     return {"status": "200"}
 
 
-@bp.route("/conversations/get_conversations", methods=["POST"])
-def get_conversations():
-    """Gets all conversation IDs for the test user."""
-    data = request.get_json()
-    course_id = data.get("courseId")
-
-    with Session(engine) as session:
-        stmt = (
-            select(Conversations.id)
-            .where(
-                Conversations.initiated_by == "test@ucr.edu",
-                Conversations.course_id == course_id,
-            )
-            .order_by(Conversations.id.desc())
-        )
-        result = session.execute(stmt).scalars().all()
-
-    return jsonify(result)
+# NOT RESPONSIBLE FOR THIS PART =================================================================================================
 
 
 @bp.route("/course/<int:course_id>/documents")
@@ -172,6 +150,8 @@ def course_documents(course_id: int):
     )
 
 
+# STUFF FROM SPRINT 1 ===========================================================================================================
+
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
 You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer.
@@ -184,6 +164,7 @@ If the context is not relevant, than you should tell the student, "I cannot find
 ## Question
 {question}
 """
+
 
 
 @bp.route("/generate", methods=["POST"])

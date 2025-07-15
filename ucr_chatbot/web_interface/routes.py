@@ -7,34 +7,43 @@ from sqlalchemy import select
 
 bp = Blueprint("web_routes", __name__)
 
+bp = Blueprint("routes", __name__)
+
 user_email = "test@ucr.edu"
 
 
 @bp.route("/")
 def course_selection():
-    """Renders the main landing page with a list of the user's courses."""
+    print("web_interface")
     with Session(engine) as session:
         stmt = (
             select(Courses)
             .join(ParticipatesIn, Courses.id == ParticipatesIn.course_id)
             .where(ParticipatesIn.email == user_email)
         )
-        courses = session.execute(stmt).scalars().all()
+        result = session.execute(stmt)
+
+        courses = []
+        for row in result:
+            courses.append(row[0])
 
     return render_template(
+        "landing_page.html",
+        courses=courses,
         "landing_page.html",
         courses=courses,
     )
 
 
 @bp.route("/new_conversation/<int:course_id>/chat")
+@bp.route("/new_conversation/<int:course_id>/chat")
 def new_conversation(course_id: int):
     """Renders the conversation page for a new conversation.
 
     :param course_id: The id of the course for which a conversation will be initialized.
     """
-    return render_template("conversation.html", course_id=course_id)
 
+    return render_template("conversation.html")
 
 @bp.route("/conversation/<int:conversation_id>")
 def conversation(conversation_id: int):
