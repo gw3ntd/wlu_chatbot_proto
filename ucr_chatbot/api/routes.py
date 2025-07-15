@@ -134,9 +134,6 @@ def send_message(conversation_id):
     return {"status": "200"}
 
 
-# NOT RESPONSIBLE FOR THIS PART =================================================================================================
-
-
 @bp.route("/course/<int:course_id>/documents")
 def course_documents(course_id: int):
     """Responds with a page where a course administrator can add more documents
@@ -149,8 +146,6 @@ def course_documents(course_id: int):
         body=f"These are the documents for the course with id {course_id}",
     )
 
-
-# STUFF FROM SPRINT 1 ===========================================================================================================
 
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.

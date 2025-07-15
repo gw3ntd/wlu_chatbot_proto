@@ -10,17 +10,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/landing_page.css"/>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <h1>SELECT A COURSE</h1>
-        <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UC Riverside logo">
-
+        <img src="../web_interface/images/UC_Riverside_Horiz_BluBG.png" alt="UC Riverside logo">
     </header>
     <ul>
-        {% for course in courses %}
+        <!-- insert for loop here maybe to connected database of classes? -->
         <li>
-           <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
+            <!-- lists buttons for each course {course.name} which link to a new convo and the appropriate course id -->
+            <a href="{{ url_for('routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
         </li>
         {% endfor %}
     </ul>
