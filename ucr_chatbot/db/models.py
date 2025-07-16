@@ -9,7 +9,7 @@ from sqlalchemy import (
     Enum,
     Boolean,
     ARRAY,
-    Float
+    Float,
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -140,7 +140,7 @@ class Embeddings(base):
 
     __tablename__ = "Embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(ARRAY(Float)) # replace with Vector later
+    vector = mapped_column(ARRAY(Float))  # replace with Vector later
     segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
 
     segment = relationship("Segments", back_populates="embeddings")
@@ -155,16 +155,23 @@ class References(base):
 
 
 def initialize_db():
+    """Creates database using specified engine."""
     base.metadata.create_all(engine)
     print("Datatbase initialized.")
 
+
 def clear_db():
+    """Deletes all tables in database."""
     base.metadata.drop_all(engine)
     print("Database cleared.")
 
 
 def add_new_user(email: str, first_name: str, last_name: str):
-    """Adds new user entry to Users table with the given parameters."""
+    """Adds new user entry to Users table with the given parameters.
+    :param email: new user's email address
+    :param first_name: new user's first name
+    :param last_name: new user's last_name
+    """
     with Session(engine) as session:
         try:
             new_user = Users(email=email, first_name=first_name, last_name=last_name)
@@ -178,7 +185,10 @@ def add_new_user(email: str, first_name: str, last_name: str):
 
 
 def add_new_course(id: int, name: str):
-    """Adds new course to the Courses table with the given parameters."""
+    """Adds new course to the Courses table with the given parameters.
+    :param id: id for course to be added
+    :param name: name of course to be added
+    """
     with Session(engine) as session:
         try:
             new_course = Courses(
@@ -195,7 +205,10 @@ def add_new_course(id: int, name: str):
 
 
 def add_new_document(file_path: str, course_id: int):
-    """Adds new document to the Documents table with the given parameters."""
+    """Adds new document to the Documents table with the given parameters.
+    :param file_path: path pointing to where new document is stored.
+    :param course_id: id for course document was uploaded to.
+    """
     with Session(engine) as session:
         try:
             new_document = Documents(
@@ -216,8 +229,9 @@ def set_document_inactive(file_path: str):
     """
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
-        document.is_active = False
-        session.commit()
+        if document:
+            document.is_active = False  # type: ignore
+            session.commit()
 
 
 def store_segment(segment_text: str, file_path: str) -> int:
@@ -227,14 +241,14 @@ def store_segment(segment_text: str, file_path: str) -> int:
     :return: An int representing the segment ID.
     """
     with Session(engine) as session:
-        document = session.query(Documents).filter_by(file_path=file_path).first()
+        # document = session.query(Documents).filter_by(file_path=file_path).first()
         new_segment = Segments(
             text=segment_text,
             document_id=file_path,
         )
         session.add(new_segment)
         session.flush()
-        segment_id = new_segment.id
+        segment_id = int(getattr(new_segment, "id"))
         session.commit()
 
         return segment_id
@@ -246,13 +260,27 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
     :param segment_id: ID for the segment the vector embedding represents.
     """
     with Session(engine) as session:
-        segment = session.query(Segments).filter_by(id=segment_id).first()
+        # segment = session.query(Segments).filter_by(id=segment_id).first()
         new_embedding = Embeddings(
             vector=embedding,
             segment_id=segment_id,
         )
         session.add(new_embedding)
         session.commit()
+
+
+def get_active_documents() -> list[str]:
+    """Returns list of the file paths for all active documents in the database.
+    :return: list of the file paths for all active documents:
+    """
+    with Session(engine) as session:
+        active_documents = session.query(Documents).filter_by(is_active=True)
+        file_paths: list[str] = []
+
+        for doc in active_documents:
+            file_paths.append(getattr(doc, "file_path"))
+
+        return file_paths
 
 
 def print_users():
@@ -265,6 +293,7 @@ def print_users():
             rows.append((row.email, row.first_name, row.last_name))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
 
+
 def print_courses():
     """Prints all users and their information"""
     with Session(engine) as session:
@@ -274,6 +303,7 @@ def print_courses():
         for row in all_entries:
             rows.append((row.id, row.name))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
+
 
 def print_participation():
     """Prints all relationships between users and courses"""
@@ -285,6 +315,7 @@ def print_participation():
             rows.append((row.email, row.course_id, row.role))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
 
+
 def print_documents():
     """Prints all documents instances"""
     with Session(engine) as session:
@@ -294,6 +325,7 @@ def print_documents():
         for row in all_entries:
             rows.append((row.file_path, row.course_id, row.is_active))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
+
 
 def print_segments():
     """Prints all segments instances"""
@@ -305,6 +337,7 @@ def print_segments():
             rows.append((row.id, row.text, row.document_id))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
 
+
 def print_embeddings():
     """Prints all embeddings instances"""
     with Session(engine) as session:
@@ -314,6 +347,7 @@ def print_embeddings():
         for row in all_entries:
             rows.append((row.id, row.vector, row.segment_id))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
+
 
 if __name__ == "__main__":
     if "init" in sys.argv:
@@ -327,11 +361,24 @@ if __name__ == "__main__":
         print_documents()
         print_segments()
         print_embeddings()
-    elif "add_course" in sys.argv:
-        course_id = int(sys.argv[2])
-        course_name = sys.argv[3]
-        add_new_course(course_id, course_name)
-    elif "test" in sys.argv:
+    elif "add_courses" in sys.argv:
+        course_ids: list[int] = [91, 92, 93, 101, 102, 103, 11, 61, 100, 111, 141]
+        course_names: list[str] = [
+            "CS009A",
+            "CS009B",
+            "CS009C",
+            "CS010A",
+            "CS010B",
+            "CS010C",
+            "CS011",
+            "CS061",
+            "CS100",
+            "CS111",
+            "CS141",
+        ]
+        for id, name in zip(course_ids, course_names):
+            add_new_course(id, name)
+    elif "dev_test" in sys.argv:
         add_new_course(1, "CS010A")
         add_new_user("user123@ucr.edu", "test", "user")
         add_new_document("documents/course1/testdoc.txt", 1)
