@@ -366,7 +366,7 @@ def test_store_embedding(db: Connection):
     answer = None
     for row in result:
         answer = row
-    assert answer is not None
+    assert answer is not None and len(answer) > 0
     assert answer == (1, [1.0, 2.0, 3.0], segment_id)
 
 

@@ -3,6 +3,7 @@ import io
 import os
 from ucr_chatbot.web_interface.routes import documents
 from ucr_chatbot.db.models import initialize_db, clear_db, add_courses
+from unittest.mock import MagicMock
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
@@ -10,10 +11,16 @@ def test_course_selection_ok_response(client: FlaskClient):
 
 
 
-def test_file_upload(client: FlaskClient):
+def test_file_upload(client: FlaskClient, monkeypatch):
     clear_db()
     initialize_db()
     add_courses()
+
+    mock_ollama_client = MagicMock()
+    fake_embedding = [0.1, -0.2, 0.3, 0.4]
+    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
+    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
+
     data = {}
     data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file.txt")
 
@@ -53,9 +60,15 @@ def test_file_upload_invalid_extension(client: FlaskClient):
     assert b"You can't upload this type of file" in response.data
 
 
-def test_file_download(client: FlaskClient):
+def test_file_download(client: FlaskClient, monkeypatch):
+    mock_ollama_client = MagicMock()
+    fake_embedding = [0.1, -0.2, 0.3, 0.4]
+    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
+    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
+
     data = {}
     data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file_download.txt")
+
 
     response = client.post("/course/91/documents", data=data, content_type="multipart/form-data")
     assert "200 OK" == response.status
@@ -78,7 +91,12 @@ def test_file_download(client: FlaskClient):
     os.remove(file_path)
 
 
-def test_file_delete(client: FlaskClient):
+def test_file_delete(client: FlaskClient, monkeypatch):
+    mock_ollama_client = MagicMock()
+    fake_embedding = [0.1, -0.2, 0.3, 0.4]
+    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
+    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
+
     data = {}
     data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file_delete.txt")
 
