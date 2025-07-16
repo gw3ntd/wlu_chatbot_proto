@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy.engine import Connection
 
+import numpy as np
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
@@ -366,8 +368,11 @@ def test_store_embedding(db: Connection):
     answer = None
     for row in result:
         answer = row
-    assert answer is not None and len(answer) > 0
-    assert answer == (1, [1.0, 2.0, 3.0], segment_id)
+    assert answer is not None
+    id, vector, seg_id = answer
+    assert id == 1
+    assert np.allclose(vector, [1.0, 2.0, 3.0])
+    assert seg_id == segment_id
 
 
 
