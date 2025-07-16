@@ -11,9 +11,30 @@ on:
         required: true
         type: number
 
+env:
+  PG_DB: testing_tutor
+  PG_USER: postgres
+  PG_PASSWORD: test_password
+  PG_HOST: localhost
+
 jobs:
   review:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: ${{ env.PG_DB }} 
+          POSTGRES_USER: ${{ env.PG_USER }}
+          POSTGRES_PASSWORD: ${{ env.PG_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - name: Checkout repository
@@ -28,6 +49,37 @@ jobs:
       run: |
         pip install uv
 
+    - name: Install apt dependencies (netcat, postgresql-client)
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-traditional # Use netcat-traditional for nc command
+          sudo apt-get install -y netcat-traditional postgresql-client
+
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        echo "Waiting for PostgreSQL to start..."
+        for i in $(seq 1 10); do
+          if nc -zv localhost 5432; then
+            echo "PostgreSQL is up and running!"
+            break
+          fi
+          echo "Still waiting... ($i/10)"
+          sleep 5
+        done
+        if ! nc -zv localhost 5432; then
+          echo "PostgreSQL did not start in time."
+          exit 1
+        fi
+
+    - name: Install pgvector extension
+      run: |
+        psql -h ${{ env.PG_HOST }} -p 5432 -U ${{ env.PG_USER }} -d ${{ env.PG_DB }} -c "CREATE EXTENSION vector;"
+      env:
+        PGPASSWORD: ${{ env.PG_PASSWORD }}
+
     - name: Run code review script
       run: |
         python review_code.py
+      env:
+        LLM_MODE: testing
+        DB_PASSWORD: ${{ env.PG_PASSWORD }}
