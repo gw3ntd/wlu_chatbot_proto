@@ -37,9 +37,6 @@ courses = {
 }
 documents = {}
 
-active_documents: list[str] = get_active_documents()
-for active_document in active_documents:
-    documents[active_document] = True
 
 bp = Blueprint("routes", __name__)
 
@@ -89,6 +86,9 @@ def course_documents(course_id: int):
     :param course_id: The id of the course for which a conversation will be initialized.
     """
     curr_path: str = cast(str, current_app.config["UPLOAD_FOLDER"])
+    active_documents: list[str] = get_active_documents()
+    for active_document in active_documents:
+        documents[active_document] = True
     error_docstring = ""
     if request.method == "POST":
         if "file" not in request.files:
@@ -175,6 +175,9 @@ def delete_document(course_id: int, filename: str):
     """
     curr_path = cast(str, current_app.config["UPLOAD_FOLDER"])
     file_path = os.path.join(curr_path, courses[course_id], secure_filename(filename))
+    active_documents: list[str] = get_active_documents()
+    for active_document in active_documents:
+        documents[active_document] = True
 
     if os.path.exists(file_path):
         # os.remove(file_path)
