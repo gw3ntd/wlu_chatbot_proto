@@ -8,8 +8,8 @@ from sqlalchemy import (
     Text,
     Enum,
     Boolean,
-    ARRAY,
-    Float,
+    # ARRAY,
+    # Float,
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -140,7 +140,7 @@ class Embeddings(base):
 
     __tablename__ = "Embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(ARRAY(Float))  # replace with Vector later
+    vector = mapped_column(Vector)
     segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
 
     segment = relationship("Segments", back_populates="embeddings")

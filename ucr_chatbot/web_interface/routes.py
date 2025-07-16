@@ -13,7 +13,13 @@ import os
 from typing import cast
 from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
-from ..db.models import add_new_document, store_segment, store_embedding, set_document_inactive, get_active_documents
+from ..db.models import (
+    add_new_document,
+    store_segment,
+    store_embedding,
+    set_document_inactive,
+    get_active_documents,
+)
 
 allowed_extenstions = {"txt", "md", "pdf", "wav", "mp3"}
 courses = {
@@ -173,7 +179,7 @@ def delete_document(course_id: int, filename: str):
     if os.path.exists(file_path):
         # os.remove(file_path)
         documents[file_path] = False
-        set_document_inactive(file_path) 
+        set_document_inactive(file_path)
 
     return redirect(url_for(".course_documents", course_id=course_id))
 
