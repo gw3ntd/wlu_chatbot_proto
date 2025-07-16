@@ -11,7 +11,7 @@ def test_generate_non_stream_success(client, monkeypatch):
     mock_retriever = MagicMock()
 
     # Configure the return values for the mocked dependencies
-    mock_retriever.get_segments_for.return_value = [MagicMock(segment_id=10, text="fact 1")]
+    mock_retriever.get_segments_for.return_value = [MagicMock(id=10, text="fact 1")]
     mock_llm_client.get_response.return_value = "Mocked LLM response."
 
     # Use monkeypatch to replace the real objects with our mocks

@@ -20,7 +20,7 @@
     <ul>
         {% for course in courses %}
         <li>
-           <a href="{{ url_for('web_interface.routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
+           <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
         </li>
         {% endfor %}
     </ul>

@@ -17,10 +17,15 @@ if (path.startsWith("/new_conversation/")) {
 
 async function loadAllConversationsForUser() {
   sidebarMessages.innerHTML = "";
+  let courseId = null;
+  if (isNewConversation) {
+    courseId = Number(path.split("/")[2]);
+  }
 
   const res = await fetch("/api/conversations/get_conversations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ courseId }),
   });
 
   const conversationIds = await res.json();

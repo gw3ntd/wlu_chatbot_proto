@@ -142,13 +142,16 @@ def send_message(conversation_id: int):
 @bp.route("/conversations/get_conversations", methods=["POST"])
 def get_conversations():
     """Gets all conversation IDs for the test user."""
-    # content = request.json
-    # user_email = content['user_email']
+    data = request.get_json()
+    course_id = data.get("courseId")
 
     with Session(engine) as session:
         stmt = (
             select(Conversations.id)
-            .where(Conversations.initiated_by == "test@ucr.edu")
+            .where(
+                Conversations.initiated_by == "test@ucr.edu",
+                Conversations.course_id == course_id,
+            )
             .order_by(Conversations.id.desc())
         )
         result = session.execute(stmt).scalars().all()
