@@ -1,13 +1,10 @@
 from flask import (
     Blueprint,
     render_template,
-    # FIX: 'url_for' and 'redirect' were removed as they are not used.
 )
 from ucr_chatbot.db.models import Session, engine, Courses, ParticipatesIn
 from sqlalchemy import select
-# FIX: 'insert' was removed as it is not used.
 
-# FIX: Rename blueprint to be unique from your api_routes blueprint
 bp = Blueprint("web_routes", __name__)
 
 user_email = "test@ucr.edu"
@@ -22,8 +19,6 @@ def course_selection():
             .join(ParticipatesIn, Courses.id == ParticipatesIn.course_id)
             .where(ParticipatesIn.email == user_email)
         )
-        # FIX: Replace the manual loop with the more direct .scalars().all() method.
-        # This is more idiomatic and helps the type checker understand the data type.
         courses = session.execute(stmt).scalars().all()
 
     return render_template(
