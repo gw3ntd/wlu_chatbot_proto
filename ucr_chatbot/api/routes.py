@@ -34,7 +34,7 @@ def new_conversation(course_id: int):
     return redirect(url_for(".conversation", conversation_id=course_id))
 
 
-@bp.route("/conversation/<int:conversation_id>")
+@bp.route("/conversations/<int:conversation_id>")
 def conversation(conversation_id: int):
     """Responds with page where a student can interact with a chatbot for a course.
 
@@ -65,7 +65,7 @@ def conversation(conversation_id: int):
 
         return jsonify({"messages": messages_list})
 
-    r
+    
 
 
 user_email = "test@ucr.edu"
@@ -130,6 +130,16 @@ def send_message(conversation_id):
 
     return {"status": "200"}
 
+@bp.route("/conversations/get_conversations", methods=['POST'])
+def get_conversations():
+    # content = request.json
+    # user_email = content['user_email']
+
+    with Session(engine) as session:
+        stmt = (select(Conversations.id).where(Conversations.initiated_by == 'test@ucr.edu').order_by(Conversations.id.desc())  )
+        result = session.execute(stmt).scalars().all()
+
+    return jsonify(result)
 
 @bp.route("/course/<int:course_id>/documents")
 def course_documents(course_id: int):
