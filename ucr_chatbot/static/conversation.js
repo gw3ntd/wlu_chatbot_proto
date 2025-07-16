@@ -2,47 +2,76 @@ const chatContainer = document.getElementById("chat-container");
 const sidebarMessages = document.getElementById("sidebar-messages");
 const userMessageTextarea = document.getElementById("userMessage");
 
-let conversationId = null;
-let isNewConversation = false;
+let conversationId = document.body.dataset.conversationId
+  ? Number(document.body.dataset.conversationId)
+  : null;
 
+let courseId = document.body.dataset.courseId
+  ? Number(document.body.dataset.courseId)
+  : null;
 
-// Detect if this is a new conversation or not (for the sidebar)
-const path = window.location.pathname;
-if (path.startsWith("/new_conversation/")) {
-  isNewConversation = true;
-} else if (path.startsWith("/conversation/")) {
-  conversationId = path.split("/").pop();
-}
+let isNewConversation = courseId !== null;
 
+//Loads conversation ids for sidebar
+async function loadAllConversationIds() {
+  if (!courseId && !conversationId) return;
 
-async function loadAllConversationsForUser() {
-  sidebarMessages.innerHTML = "";
-  let courseId = null;
-  if (isNewConversation) {
-    courseId = Number(path.split("/")[2]);
+  let fetchUrl;
+  let fetchBody;
+
+  if (courseId) {
+    fetchUrl = `/conversation/new/${courseId}/chat`;
+    fetchBody = { type: "ids" };
+  } else if (conversationId) {
+    fetchUrl = `/conversation/new/0/chat`;
+    fetchBody = { type: "ids" };
   }
 
-  const res = await fetch("/api/conversations/get_conversations", {
+  const res = await fetch(fetchUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ courseId }),
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(fetchBody),
   });
 
   const conversationIds = await res.json();
-  conversationIds.reverse();
 
-  for (const convoId of conversationIds) {
-    addSidebarMessage(`Conversation ${convoId}`, convoId);
-  }
+  sidebarMessages.innerHTML = "";
+
+  conversationIds.reverse().forEach((id) => {
+    addSidebarMessage(`Conversation ${id}`, id);
+  });
 }
 
+//loads a conversation's messages
+async function loadAllConversationsForUser() {
+  if (!conversationId) return;
+
+  const res = await fetch(`/conversation/${conversationId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "conversation" }),
+  });
+
+  const data = await res.json();
+
+  chatContainer.innerHTML = "";
+
+  data.messages.forEach((msg) => {
+    appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
+  });
+}
+
+loadAllConversationIds();
 
 if (!isNewConversation && conversationId) {
-  loadConversation(conversationId);
+  loadAllConversationsForUser();
 }
-
-
-loadAllConversationsForUser();
 
 // Send message on Enter key press
 userMessageTextarea.addEventListener("keydown", (event) => {
@@ -60,62 +89,36 @@ async function handleSend(e) {
   if (!message) return;
 
   appendMessage("user", message);
-<<<<<<< HEAD
-  addSidebarMessage(message); // this just adds every message to the sidebar - needs to summarize conversations like chatgpt
   textarea.value = "";
 
-  // FIX
-  // Creates a new conversation
   if (isNewConversation) {
-    const courseId = Number(path.split("/")[2]);
-=======
-  textarea.value = "";
-   // Create new conversation
-  if (isNewConversation) {
-<<<<<<< HEAD
-    // Create new conversation
-    const courseId = path.split("/").pop();
->>>>>>> 6090418 (Sidebar edit)
-=======
-    const courseId = Number(path.split("/")[2]);
->>>>>>> 09fad76 (sidebar functional)
-    const res = await fetch("/api/create_conversation", {
+    const res = await fetch(`/conversation/new/${courseId}/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId, message }),
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ type: "create", message }),
     });
 
     const data = await res.json();
     conversationId = data.conversationId;
     isNewConversation = false;
 
-
     window.history.replaceState({}, "", `/conversation/${conversationId}`);
 
-<<<<<<< HEAD
-    const botResponse = await fetchBotReply(conversationId, message);
-    appendMessage("bot", botResponse);
-  } else {
-=======
-    // Add this conversation to the sidebar
     addSidebarMessage(`Conversation ${conversationId}`, conversationId);
 
-    // Get bot response and show to interface
-    const botResponse = await fetchBotReply(conversationId, message);
+    const botResponse = await fetchBotReply(message);
     appendMessage("bot", botResponse);
   } else {
-    // Use existing conversation
->>>>>>> 6090418 (Sidebar edit)
-    await sendMessage(conversationId, message);
-    const botResponse = await fetchBotReply(conversationId, message);
+    await sendMessage(message);
+    const botResponse = await fetchBotReply(message);
     appendMessage("bot", botResponse);
   }
 }
 
-<<<<<<< HEAD
-=======
 // Add user or bot message to interface
->>>>>>> 6090418 (Sidebar edit)
 function appendMessage(sender, text) {
   const div = document.createElement("div");
   div.classList.add("message", sender);
@@ -124,98 +127,50 @@ function appendMessage(sender, text) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-<<<<<<< HEAD
-// FIX
-// Adds new conversation to sidebar
-function addSidebarMessage(text, convoId) {
-=======
 // Add convo to sidebar
 function addSidebarMessage(label, convoId) {
   if (document.querySelector(`[data-convo-id="${convoId}"]`)) return;
 
->>>>>>> 6090418 (Sidebar edit)
   const item = document.createElement("div");
   item.classList.add("conversation-item");
   item.textContent = label;
   item.dataset.convoId = convoId;
 
   item.addEventListener("click", () => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    window.location.href = `/conversation/${item.dataset.convoId}`;
-=======
-    window.location.href = `/conversation/${convoId}`;
->>>>>>> 6090418 (Sidebar edit)
-=======
     window.history.replaceState({}, "", `/conversation/${convoId}`);
     conversationId = convoId;
     chatContainer.innerHTML = "";
-    loadConversation(convoId);
->>>>>>> 09fad76 (sidebar functional)
+    loadAllConversationsForUser();
   });
 
   if (window.location.pathname.endsWith(convoId)) {
     item.classList.add("active");
   }
 
-
   sidebarMessages.insertBefore(item, sidebarMessages.firstChild);
 }
 
-<<<<<<< HEAD
-// FIX
-// On click, leads to new conversation page for that conversation
-=======
-// Load existing conversation and display messages
->>>>>>> 6090418 (Sidebar edit)
-async function loadConversation(id) {
-  const res = await fetch(`/api/conversations/${id}`);
-  const data = await res.json();
-
-<<<<<<< HEAD
-  data.messages.forEach((msg) => {
-    appendMessage(msg.sender, msg.text);
-<<<<<<< HEAD
-    if (msg.sender === "user") {
-      addSidebarMessage(msg.text);aaaaa
-    }
-  });
-}
-
-// FIX
-// Sends a message to LM
-=======
-  });
-=======
-  chatContainer.innerHTML = "";
->>>>>>> 09fad76 (sidebar functional)
-
-  data.messages.forEach((msg) => {
-    appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
-  });
-}
-
 // Send message to backend for LM
->>>>>>> 6090418 (Sidebar edit)
-async function sendMessage(id, message) {
-  await fetch(`/api/conversations/${id}/send`, {
+async function sendMessage(message) {
+  await fetch(`/conversation/${conversationId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "send", message }),
   });
 }
 
-<<<<<<< HEAD
-// FIX
-// Gets message from LM
-=======
 // Get LM response from backend
->>>>>>> 6090418 (Sidebar edit)
-async function fetchBotReply(id, userMessage) {
-  const res = await fetch(`/api/conversations/${id}/reply`, {
+async function fetchBotReply(userMessage) {
+  const res = await fetch(`/conversation/${conversationId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userMessage }),
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "reply", message: userMessage }),
   });
 
   const data = await res.json();

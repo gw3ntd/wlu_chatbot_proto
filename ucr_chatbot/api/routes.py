@@ -70,6 +70,8 @@ def conversation(conversation_id: int):
 
         return jsonify({"messages": messages_list})
 
+    
+
 
 user_email = "test@ucr.edu"
 
@@ -133,6 +135,16 @@ def send_message(conversation_id):
 
     return {"status": "200"}
 
+@bp.route("/conversations/get_conversations", methods=['POST'])
+def get_conversations():
+    # content = request.json
+    # user_email = content['user_email']
+
+    with Session(engine) as session:
+        stmt = (select(Conversations.id).where(Conversations.initiated_by == 'test@ucr.edu').order_by(Conversations.id.desc())  )
+        result = session.execute(stmt).scalars().all()
+
+    return jsonify(result)
 
 @bp.route("/course/<int:course_id>/documents")
 def course_documents(course_id: int):
