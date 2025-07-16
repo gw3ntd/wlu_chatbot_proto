@@ -2,9 +2,12 @@ from flask.testing import FlaskClient
 import io
 import os
 from ucr_chatbot.web_interface.routes import documents
-#from ucr_chatbot.db.models import initialize_db, clear_db, add_courses
+from ucr_chatbot.db.models import initialize_db, clear_db, add_courses
 
 def test_course_selection_ok_response(client: FlaskClient):
+    clear_db()
+    initialize_db()
+    add_courses()
     response = client.get('/')
     assert "200 OK" == response.status
 
