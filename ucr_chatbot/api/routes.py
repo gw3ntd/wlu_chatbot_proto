@@ -210,7 +210,7 @@ def generate():
     segments = retriever.get_segments_for(prompt, num_segments=3)
     context = "\n".join(
         # Assuming each 's' object has 'segment_id' and 'text' attributes
-        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)
+        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
     )
 
     prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt)
