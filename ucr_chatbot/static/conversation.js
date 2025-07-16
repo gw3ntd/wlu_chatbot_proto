@@ -16,8 +16,12 @@ let isNewConversation = courseId !== null;
 async function loadAllConversationIds() {
   if (!courseId && !conversationId) return;
 
-  let fetchUrl;
-  let fetchBody;
+async function loadAllConversationsForUser() {
+  sidebarMessages.innerHTML = "";
+  let courseId = null;
+  if (isNewConversation) {
+    courseId = Number(path.split("/")[2]);
+  }
 
   if (courseId) {
     fetchUrl = `/conversation/new/${courseId}/chat`;
@@ -29,11 +33,8 @@ async function loadAllConversationIds() {
 
   const res = await fetch(fetchUrl, {
     method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify(fetchBody),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ courseId }),
   });
 
   const conversationIds = await res.json();
