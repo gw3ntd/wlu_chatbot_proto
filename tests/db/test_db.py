@@ -14,7 +14,10 @@ from ucr_chatbot.db.models import *
 
 def test_add_new_course(db: Connection):
     """tests the add_new_course wrapper function"""
-    add_new_course(id = 100, name = 'CS100')
+    clear_db()
+    initialize_db()
+    add_courses()
+    #add_new_course(id = 100, name = 'CS100')
     s = select(Courses).where(Courses.id == 100 , Courses.name=='CS100')
     result = db.execute(s)
 
@@ -134,7 +137,7 @@ def test_add_new_document(db: Connection):
     for row in result:
         answer = row
     assert answer is not None
-    assert answer == ("slide_1.pdf", 100)
+    assert answer == ("slide_1.pdf", 100, True)
 
 def test_add_document_integrity(capsys):
     """tests the add_new_document function exception occurs when error"""
@@ -160,7 +163,7 @@ def test_insert_segments(db: Connection):
 
 def test_insert_embeddings(db: Connection): 
     """tests if an embedding can be inserted and selected out of db"""
-    emb = [0,0,0,0.,0,0,0,0,0,0]
+    emb = [0.,0.,0.,0.,0.,0.,0.,0.,0.,0.]
     stmt = insert(Embeddings).values(id =100, vector=emb, segment_id=100)
     db.execute(stmt)
     db.commit()
@@ -313,8 +316,6 @@ def test_delete_user(db: Connection):
 
 def test_initialize_db():
   """Tests initialize_db wrapper function"""
-  clear_db()
-  initialize_db()
   inspector = inspect(engine)
   table_names = inspector.get_table_names()
   assert "Users" in table_names
@@ -367,5 +368,7 @@ def test_store_embedding(db: Connection):
         answer = row
     assert answer is not None
     assert answer == (1, [1.0, 2.0, 3.0], segment_id)
+
+
 
  

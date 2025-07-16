@@ -140,7 +140,7 @@ class Embeddings(base):
 
     __tablename__ = "Embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(Vector)
+    vector = mapped_column(Vector)  # replace with Vector later
     segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
 
     segment = relationship("Segments", back_populates="embeddings")
@@ -347,6 +347,26 @@ def print_embeddings():
         for row in all_entries:
             rows.append((row.id, row.vector, row.segment_id))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
+
+
+def add_courses():
+    """Adds all courses needed for testing to Courses table"""
+    course_ids: list[int] = [91, 92, 93, 101, 102, 103, 11, 61, 100, 111, 141]
+    course_names: list[str] = [
+        "CS009A",
+        "CS009B",
+        "CS009C",
+        "CS010A",
+        "CS010B",
+        "CS010C",
+        "CS011",
+        "CS061",
+        "CS100",
+        "CS111",
+        "CS141",
+    ]
+    for id, name in zip(course_ids, course_names):
+        add_new_course(id, name)
 
 
 if __name__ == "__main__":
