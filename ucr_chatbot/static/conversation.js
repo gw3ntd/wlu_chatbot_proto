@@ -12,29 +12,13 @@ let courseId = document.body.dataset.courseId
 
 let isNewConversation = courseId !== null;
 
-//Loads conversation ids for sidebar
-async function loadAllConversationIds() {
-  if (!courseId && !conversationId) return;
-
 async function loadAllConversationsForUser() {
   sidebarMessages.innerHTML = "";
-  let courseId = null;
-  if (isNewConversation) {
-    courseId = Number(path.split("/")[2]);
-  }
 
-  if (courseId) {
-    fetchUrl = `/conversation/new/${courseId}/chat`;
-    fetchBody = { type: "ids" };
-  } else if (conversationId) {
-    fetchUrl = `/conversation/new/0/chat`;
-    fetchBody = { type: "ids" };
-  }
-
-  const res = await fetch(fetchUrl, {
+  const res = await fetch("/api/conversations/get_conversations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ courseId }),
+    body: JSON.stringify({ courseId }), 
   });
 
   const conversationIds = await res.json();
@@ -68,8 +52,6 @@ async function loadAllConversationsForUser() {
   });
 }
 
-loadAllConversationIds();
-
 if (!isNewConversation && conversationId) {
   loadAllConversationsForUser();
 }
@@ -92,14 +74,12 @@ async function handleSend(e) {
   appendMessage("user", message);
   textarea.value = "";
 
+
   if (isNewConversation) {
-    const res = await fetch(`/conversation/new/${courseId}/chat`, {
+    const res = await fetch("/api/create_conversation", {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ type: "create", message }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId, message }), 
     });
 
     const data = await res.json();
@@ -107,17 +87,17 @@ async function handleSend(e) {
     isNewConversation = false;
 
     window.history.replaceState({}, "", `/conversation/${conversationId}`);
-
     addSidebarMessage(`Conversation ${conversationId}`, conversationId);
 
-    const botResponse = await fetchBotReply(message);
+    const botResponse = await fetchBotReply(conversationId, message);
     appendMessage("bot", botResponse);
   } else {
-    await sendMessage(message);
-    const botResponse = await fetchBotReply(message);
+    await sendMessage(conversationId, message);
+    const botResponse = await fetchBotReply(conversationId, message);
     appendMessage("bot", botResponse);
   }
 }
+
 
 // Add user or bot message to interface
 function appendMessage(sender, text) {
@@ -149,6 +129,23 @@ function addSidebarMessage(label, convoId) {
   }
 
   sidebarMessages.insertBefore(item, sidebarMessages.firstChild);
+}
+
+// Load existing conversation and display messages
+async function loadConversation(id) {
+  const res = await fetch(`/api/conversations/${id}`);
+  const data = await res.json();
+
+  chatContainer.innerHTML = "";
+
+  data.messages.forEach((msg) => {
+    appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
+  });
+
+  const firstUserMessage = data.messages.find((m) => m.sender === "user");
+  if (firstUserMessage) {
+    addSidebarMessage(firstUserMessage.body, id);
+  }
 }
 
 // Send message to backend for LM

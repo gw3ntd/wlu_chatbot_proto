@@ -14,8 +14,23 @@
       rel="stylesheet"
     />
   </head>
-
-  <body>
+  <!-- this body tag is changed for the conversation id -->
+  <body
+    {%
+    if
+    conversation_id
+    %}data-conversation-id="{{ conversation_id }}"
+    {%
+    endif
+    %}
+    {%
+    if
+    course_id
+    %}data-course-id="{{ course_id }}"
+    {%
+    endif
+    %}
+  >
     <!-- HEADER -->
     <header>
       <h1>ScotGPT</h1>
@@ -49,6 +64,6 @@
       </div>
     </div>
 
-    <script src="{{ url_for('static', filename='conversation.js') }}"></script>
+    <script src="../static/conversation.js"></script>
   </body>
 </html>
