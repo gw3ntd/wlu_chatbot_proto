@@ -75,7 +75,7 @@ def test_file_download(client: FlaskClient, monkeypatch):
     assert "200 OK" == response.status
 
     file_path = os.path.join("1", "test_file_download.txt")
-    response = client.get(f"document/{file_path}/download")
+    response = client.get(f"/document/{file_path}/download")
 
     assert "200 OK" == response.status
     assert response.data == b"Test file for CS009A"
@@ -88,7 +88,7 @@ def test_file_download(client: FlaskClient, monkeypatch):
     response = client.get("/")
     assert "200 OK" == response.status
 
-    os.remove(file_path)
+    os.remove(os.path.join(upload_folder,file_path))
 
 
 def test_file_delete(client: FlaskClient, monkeypatch):
@@ -103,11 +103,14 @@ def test_file_delete(client: FlaskClient, monkeypatch):
     response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
     assert "200 OK" == response.status
 
-    file_path = os.path.join(os.path.join(upload_folder, "1"), "test_file_delete.txt")
+    file_path = os.path.join("1", "test_file_delete.txt")
 
     response = client.post(f"document/{file_path}/delete")
 
-    assert os.path.exists(file_path)
-    with open(file_path, "rb") as f:
+    assert "302 FOUND" == response.status
+
+    full_path = os.path.join(upload_folder,file_path)
+    assert os.path.exists(full_path)
+    with open(full_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
-    os.remove(file_path)
+    os.remove(full_path)

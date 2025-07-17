@@ -15,7 +15,7 @@ from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import os
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 from typing import Sequence
 
@@ -161,7 +161,7 @@ def add_new_user(email: str, first_name: str, last_name: str):
 
             session.add_all([new_user])
             session.commit()
-        except IntegrityError:
+        except SQLAlchemyError:
             session.rollback()
 
 
@@ -178,7 +178,7 @@ def add_new_course(name: str):
             session.commit()
 
             create_upload_folder(getattr(new_course, "id"))
-        except IntegrityError:
+        except SQLAlchemyError:
             session.rollback()
 
 

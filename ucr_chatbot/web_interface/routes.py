@@ -85,26 +85,29 @@ def course_documents(course_id: int):
         if not file.filename:
             return redirect(request.url)
 
-        new_doc_file_path = ""
+        full_local_path = ""
         try:
             filename: str = secure_filename(file.filename)
-            new_doc_file_path = os.path.join(
-                os.path.join(curr_path, str(getattr(course, "id"))), filename
+
+            relative_doc_path = os.path.join(str(course_id), filename).replace(
+                os.path.sep, "/"
             )
-            file.save(new_doc_file_path)
+            print(relative_doc_path)
+            full_local_path = os.path.join(curr_path, relative_doc_path)
+            file.save(full_local_path)
             # Parse into segments
-            segments: list[str] = parse_file(new_doc_file_path)
-            add_new_document(new_doc_file_path, course_id)
+            segments: list[str] = parse_file(full_local_path)
+            add_new_document(relative_doc_path, course_id)
             for segment in segments:
                 # print(segment)
                 # embed_text(segment)
-                segment_id = store_segment(segment, new_doc_file_path)
+                segment_id = store_segment(segment, relative_doc_path)
                 embedding = embed_text(segment)
                 store_embedding(embedding, segment_id)
         except (ValueError, TypeError) as e:
             print(f"Error: {e}")
-            if os.path.exists(new_doc_file_path):
-                os.remove(new_doc_file_path)
+            if os.path.exists(full_local_path):
+                os.remove(full_local_path)
             error_docstring = """
             <div id="error-popup" style="display: block;">
                 <h3>Error!</h3>
@@ -129,43 +132,43 @@ def course_documents(course_id: int):
     docs_list = os.listdir(os.path.join(curr_path, str(getattr(course, "id"))))
     doc_string = ""
     active_documents: list[str] = get_active_documents()
-    for i, doc in enumerate(docs_list):
-        if (
-            os.path.join(os.path.join(curr_path, str(getattr(course, "id"))), doc)
-            not in active_documents
-        ):
+    index = 0
+    for doc in docs_list:
+        file_path = os.path.join(
+            str(getattr(course, "id")), secure_filename(doc)
+        ).replace(os.path.sep, "/")
+        if file_path not in active_documents:
             continue
 
-        file_path = os.path.join(
-            curr_path, str(getattr(course, "id")), secure_filename(doc)
-        )
-        download_link = url_for(
-            ".download_file", file_path=os.path.join(str(course_id), doc)
-        )
+        download_link = url_for(".download_file", file_path=file_path)
         delete_link = url_for(".delete_document", file_path=file_path)
 
         doc_string += f'''
             <div style="margin-bottom: 5px;">
-                    <span style="display: inline-block; width: 25px;">{i + 1}.</span> 
+                    <span style="display: inline-block; width: 25px;">{index + 1}.</span> 
                     <a href="{download_link}" style="display: inline-block; margin-right: 10px;">{doc}</a> 
                     <form action="{delete_link}" method="post" style="display: inline-block;">
                         <button type="submit" onclick="return confirm('Are you sure you want to delete the file?');">Delete</button>
                     </form>
                 </div>
         '''
+        index += 1
 
     doc_string = error_docstring + doc_string
     return render_template("documents.html", body=doc_string)
 
 
-@bp.route("/document/<string:file_path>/delete", methods=["POST"])
+@bp.route("/document/<path:file_path>/delete", methods=["POST"])
 def delete_document(file_path: str):
     """This function deletes a file for the course
     :param file_path: Path of the file to be deleted.
     """
-    if os.path.exists(file_path):
+    file_path = file_path.replace(os.path.sep, "/")
+    full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+    if os.path.exists(full_path):
         # os.remove(file_path)
         set_document_inactive(file_path)
+    print(file_path)
 
     course_id = 0
     with Session(engine) as session:
@@ -176,11 +179,12 @@ def delete_document(file_path: str):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
-@bp.route("document/<string:file_path>/download", methods=["GET"])
+@bp.route("document/<path:file_path>/download", methods=["GET"])
 def download_file(file_path: str):
     """Responds with a page of the specified document that then can be downloaded.
     :param file_path: The path of the file stored to be downloaded.
     """
     directory, name = os.path.split(file_path)
-
+    print(os.path.join(upload_folder, directory))
+    print(name)
     return send_from_directory(os.path.join(upload_folder, directory), name)
