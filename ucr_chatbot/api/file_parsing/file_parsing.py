@@ -22,7 +22,7 @@ class InvalidFileExtensionError(FileParsingError):
     """Bad file extension"""
 
     def __init__(self, extension: str):
-        self.__init__(f'Cannot interpret file with extension "{extension}"')
+        super().__init__(f'Cannot interpret file with extension "{extension}"')
 
 
 def parse_file(path: str) -> list[str]:

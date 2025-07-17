@@ -9,19 +9,13 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+from sqlalchemy.orm import Session
 import os
 from typing import cast
 from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
-from ..db.models import (
-    add_new_document,
-    store_segment,
-    store_embedding,
-    set_document_inactive,
-    get_active_documents,
-)
+from ..db.models import *
 
-allowed_extenstions = {"txt", "md", "pdf", "wav", "mp3"}
 courses = {
     91: "CS009A",
     92: "CS009B",
@@ -75,10 +69,6 @@ def conversation(conversation_id: int):
     )
 
 
-def _allowed_file(filename: str) -> bool:
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extenstions
-
-
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 def course_documents(course_id: int):
     """Responds with a page where a course administrator can add more documents
@@ -99,10 +89,27 @@ def course_documents(course_id: int):
         if not file.filename:
             return redirect(request.url)
 
-        if _allowed_file(file.filename) == False:
-            """
-            Puts an error popup when the teacher adds something bad.
-            """
+        new_doc_file_path = ""
+        try:
+            filename: str = secure_filename(file.filename)
+            new_doc_file_path = os.path.join(
+                os.path.join(curr_path, courses[course_id]), filename
+            )
+            file.save(new_doc_file_path)
+            # Parse into segments
+            segments: list[str] = parse_file(new_doc_file_path)
+            documents[new_doc_file_path] = True
+            add_new_document(new_doc_file_path, course_id)
+            for segment in segments:
+                # print(segment)
+                # embed_text(segment)
+                segment_id = store_segment(segment, new_doc_file_path)
+                embedding = embed_text(segment)
+                store_embedding(embedding, segment_id)
+        except (ValueError, TypeError) as e:
+            print(f"Error: {e}")
+            if os.path.exists(new_doc_file_path):
+                os.remove(new_doc_file_path)
             error_docstring = """
             <div id="error-popup" style="display: block;">
                 <h3>Error!</h3>
@@ -123,24 +130,6 @@ def course_documents(course_id: int):
             });
         </script>
         """
-            # return render_template("documents.html", body=docstring)
-
-        if file and _allowed_file(file.filename):
-            filename: str = secure_filename(file.filename)
-            new_doc_file_path = os.path.join(
-                os.path.join(curr_path, courses[course_id]), filename
-            )
-            file.save(new_doc_file_path)
-            documents[new_doc_file_path] = True
-            add_new_document(new_doc_file_path, course_id)
-            # Parse into segments
-            segments: list[str] = parse_file(new_doc_file_path)
-            for segment in segments:
-                # print(segment)
-                # embed_text(segment)
-                segment_id = store_segment(segment, new_doc_file_path)
-                embedding = embed_text(segment)
-                store_embedding(embedding, segment_id)
 
     docs_list = os.listdir(os.path.join(curr_path, courses[course_id]))
     doc_string = ""
@@ -150,8 +139,10 @@ def course_documents(course_id: int):
             == False
         ):
             continue
-        download_link = url_for(".download_file", course_id=course_id, name=doc)
-        delete_link = url_for(".delete_document", course_id=course_id, filename=doc)
+        
+        file_path = os.path.join(curr_path, courses[course_id], secure_filename(doc))
+        download_link = url_for(".download_file", file_path=file_path)
+        delete_link = url_for(".delete_document", file_path=file_path)
 
         doc_string += f'''
             <div style="margin-bottom: 5px;">
@@ -167,14 +158,11 @@ def course_documents(course_id: int):
     return render_template("documents.html", body=doc_string)
 
 
-@bp.route("/course/<int:course_id>/documents/delete/<filename>", methods=["POST"])
-def delete_document(course_id: int, filename: str):
+@bp.route("/document/<string:file_path>/delete", methods=["POST"])
+def delete_document(file_path: str):
     """This function deletes a file for the course
-    :param course_id: The id of the course of the file to be deleted
-    :param filename: Name of the file to be deleted.
+    :param file_path: Path of the file to be deleted.
     """
-    curr_path = cast(str, current_app.config["UPLOAD_FOLDER"])
-    file_path = os.path.join(curr_path, courses[course_id], secure_filename(filename))
     active_documents: list[str] = get_active_documents()
     for active_document in active_documents:
         documents[active_document] = True
@@ -184,15 +172,29 @@ def delete_document(course_id: int, filename: str):
         documents[file_path] = False
         set_document_inactive(file_path)
 
+    course_id = 0
+    with Session(engine) as session:
+        course_id = getattr(session.query(Documents).filter_by(file_path=file_path).first(), "course_id")
+
+    print(course_id)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
-@bp.route("/course/<int:course_id>/documents/uploads/<name>")
-def download_file(course_id: int, name: str):
+@bp.route("document/<string:file_path>/download")
+def download_file(file_path: str):
     """Responds with a page of the specified document that then can be downloaded.
-    :param name: The name of the file stored to be downloaded.
-    :param course_id: The course id of the course the file belongs to
+    :param file_path: The path of the file stored to be downloaded.
     """
-    curr_path: str = cast(str, current_app.config["UPLOAD_FOLDER"])
-    file_path = os.path.join(curr_path, courses[course_id])
-    return send_from_directory(file_path, name)
+    print(file_path)
+    path_parts = file_path.split("\\")
+    print(path_parts)
+    directory = ""
+    name = ""
+    for i, part in enumerate(path_parts):
+        if i == (len(path_parts)-1):
+            name = part
+            break
+        directory += part + "/"
+    print(directory)
+    print(name)
+    return send_from_directory(directory, name)
