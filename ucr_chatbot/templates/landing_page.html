@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UCR</title>
-    <link rel="stylesheet" href="../static/landing_page.css"/>
+    <link rel="stylesheet" href="../static/landing_page.css" />
 
     <!-- FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/landing_page.css"/>
-
-    <!-- FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
-</head>
-<body>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- HEADER -->
     <header>
-        <h1>SELECT A COURSE</h1>
-        <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UC Riverside logo">
-
+      <h1>ScotGPT</h1>
+      <img
+        src="../static/images/UC_Riverside_Horiz_BluBG.png"
+        alt="UC Riverside logo"
+      />
     </header>
+
+    <h1>Select a Course:</h1>
     <ul>
-        <!-- insert for loop here maybe to connected database of classes? -->
-        <li>
-           <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}"> {{ course.name }} </a>
-        </li>
-        {% endfor %}
+      {% for course in courses %}
+      <li>
+        <a
+          href="{{ url_for('web_interface.routes.new_conversation', course_id=course.id) }}"
+        >
+          {{ course.name }}
+        </a>
+      </li>
+      {% endfor %}
     </ul>
-</body>
+  </body>
 </html>
