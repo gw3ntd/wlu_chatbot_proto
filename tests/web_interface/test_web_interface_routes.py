@@ -74,12 +74,13 @@ def test_file_download(client: FlaskClient, monkeypatch):
     response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
     assert "200 OK" == response.status
 
-    file_path = os.path.join(os.path.join(upload_folder, "1"), "test_file_download.txt")
+    file_path = os.path.join("1", "test_file_download.txt")
     response = client.get(f"document/{file_path}/download")
 
     assert "200 OK" == response.status
     assert response.data == b"Test file for CS009A"
 
+    file_path = os.path.join(upload_folder, file_path)
     assert os.path.exists(file_path)
     with open(file_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
