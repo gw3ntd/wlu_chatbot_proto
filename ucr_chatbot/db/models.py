@@ -8,8 +8,6 @@ from sqlalchemy import (
     Text,
     Enum,
     Boolean,
-    # ARRAY,
-    # Float,
 )
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
@@ -17,9 +15,7 @@ from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import os
-from sqlalchemy.exc import IntegrityError
-
-from tabulate import tabulate
+from sqlalchemy.exc import SQLAlchemyError
 
 import typing
 from typing import Sequence
@@ -140,7 +136,7 @@ class Embeddings(base):
 
     __tablename__ = "Embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(Vector)  # replace with Vector later
+    vector = mapped_column(Vector)
     segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
 
     segment = relationship("Segments", back_populates="embeddings")
@@ -152,18 +148,6 @@ class References(base):
     __tablename__ = "References"
     message = Column(Integer, ForeignKey("Messages.id"), primary_key=True)
     segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
-
-
-def initialize_db():
-    """Creates database using specified engine."""
-    base.metadata.create_all(engine)
-    print("Datatbase initialized.")
-
-
-def clear_db():
-    """Deletes all tables in database."""
-    base.metadata.drop_all(engine)
-    print("Database cleared.")
 
 
 def add_new_user(email: str, first_name: str, last_name: str):
@@ -178,30 +162,23 @@ def add_new_user(email: str, first_name: str, last_name: str):
 
             session.add_all([new_user])
             session.commit()
-            print("New user added successfully.\n")
-        except IntegrityError:
+        except SQLAlchemyError:
             session.rollback()
-            print("Error adding new user.\n")
 
 
-def add_new_course(id: int, name: str):
+def add_new_course(name: str):
     """Adds new course to the Courses table with the given parameters.
     :param id: id for course to be added
     :param name: name of course to be added
     """
     with Session(engine) as session:
         try:
-            new_course = Courses(
-                id=id,
-                name=name,
-            )
+            new_course = Courses(name=name)
 
             session.add(new_course)
             session.commit()
-            print("New course added successfully.\n")
-        except IntegrityError:
+        except SQLAlchemyError:
             session.rollback()
-            print("Error adding new course.\n")
 
 
 def add_new_document(file_path: str, course_id: int):
@@ -217,10 +194,10 @@ def add_new_document(file_path: str, course_id: int):
             )
             session.add(new_document)
             session.commit()
-            print("Document added successfully.\n")
-        except IntegrityError:
+            print("Document added.")
+        except SQLAlchemyError:
             session.rollback()
-            print("Error adding document. Course id must exist.\n")
+            print("Document not added.")
 
 
 def set_document_inactive(file_path: str):
@@ -232,42 +209,6 @@ def set_document_inactive(file_path: str):
         if document:
             document.is_active = False  # type: ignore
             session.commit()
-
-
-def store_segment(segment_text: str, file_path: str) -> int:
-    """Creates new Segments instance and stores it into Segments table.
-    :param segment_text: The segment text to be added.
-    :param file_path: The file path of the document the segment was parsed from.
-    :return: An int representing the segment ID.
-    """
-    with Session(engine) as session:
-        # document = session.query(Documents).filter_by(file_path=file_path).first()
-        new_segment = Segments(
-            text=segment_text,
-            document_id=file_path,
-        )
-        session.add(new_segment)
-        session.flush()
-        segment_id = int(getattr(new_segment, "id"))
-        session.commit()
-
-        return segment_id
-
-
-def store_embedding(embedding: Sequence[float], segment_id: int):
-    """Creates new Embeddings instance and stores it into Embeddings table.
-    :param embedding: List of floats representing the vector embedding.
-    :param segment_id: ID for the segment the vector embedding represents.
-    """
-    with Session(engine) as session:
-        # segment = session.query(Segments).filter_by(id=segment_id).first()
-        new_embedding = Embeddings(
-            vector=embedding,
-            segment_id=segment_id,
-        )
-        session.add(new_embedding)
-        session.commit()
-
 
 def get_active_documents() -> list[str]:
     """Returns list of the file paths for all active documents in the database.
@@ -283,125 +224,43 @@ def get_active_documents() -> list[str]:
         return file_paths
 
 
-def print_users():
-    """Prints all users and their information"""
+def store_segment(segment_text: str, file_path: str) -> int:
+    """Creates new Segments instance and stores it into Segments table.
+    :param segment_text: The segment text to be added.
+    :param file_path: The file path of the document the segment was parsed from.
+    :return: An int representing the segment ID.
+    """
     with Session(engine) as session:
-        all_entries = session.query(Users).all()
-        rows: list[typing.Tuple[Column[str], Column[str], Column[str]]] = []
+        # document = session.query(Documents).filter_by(file_path=file_path).first()
+        try:
+            new_segment = Segments(
+                text=segment_text,
+                document_id=file_path,
+            )
+            session.add(new_segment)
+            session.flush()
+            segment_id = int(getattr(new_segment, "id"))
+            session.commit()
 
-        for row in all_entries:
-            rows.append((row.email, row.first_name, row.last_name))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
+            return segment_id
+        except SQLAlchemyError:
+            session.rollback()
 
 
-def print_courses():
-    """Prints all users and their information"""
+def store_embedding(embedding: Sequence[float], segment_id: int):
+    """Creates new Embeddings instance and stores it into Embeddings table.
+    :param embedding: List of floats representing the vector embedding.
+    :param segment_id: ID for the segment the vector embedding represents.
+    """
     with Session(engine) as session:
-        all_entries = session.query(Courses).all()
-        rows: list[typing.Tuple[Column[int], Column[str]]] = []
+        # segment = session.query(Segments).filter_by(id=segment_id).first()
+        try:
+            new_embedding = Embeddings(
+                vector=embedding,
+                segment_id=segment_id,
+            )
+            session.add(new_embedding)
+            session.commit()
+        except SQLAlchemyError:
+            session.rollback()
 
-        for row in all_entries:
-            rows.append((row.id, row.name))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-def print_participation():
-    """Prints all relationships between users and courses"""
-    with Session(engine) as session:
-        all_entries = session.query(ParticipatesIn).all()
-        rows: list[typing.Tuple[Column[str], Column[int], Column[str]]] = []
-
-        for row in all_entries:
-            rows.append((row.email, row.course_id, row.role))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-def print_documents():
-    """Prints all documents instances"""
-    with Session(engine) as session:
-        all_entries = session.query(Documents).all()
-        rows: list[typing.Tuple[Column[str], Column[int], Column[bool]]] = []
-
-        for row in all_entries:
-            rows.append((row.file_path, row.course_id, row.is_active))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-def print_segments():
-    """Prints all segments instances"""
-    with Session(engine) as session:
-        all_entries = session.query(Segments).all()
-        rows: list[typing.Tuple[Column[int], Column[str], Column[str]]] = []
-
-        for row in all_entries:
-            rows.append((row.id, row.text, row.document_id))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-def print_embeddings():
-    """Prints all embeddings instances"""
-    with Session(engine) as session:
-        all_entries = session.query(Embeddings).all()
-        rows: list[typing.Tuple[Column[int], Column[Sequence[float]], Column[int]]] = []
-
-        for row in all_entries:
-            rows.append((row.id, row.vector, row.segment_id))
-        print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-def add_courses():
-    """Adds all courses needed for testing to Courses table"""
-    course_ids: list[int] = [91, 92, 93, 101, 102, 103, 11, 61, 100, 111, 141]
-    course_names: list[str] = [
-        "CS009A",
-        "CS009B",
-        "CS009C",
-        "CS010A",
-        "CS010B",
-        "CS010C",
-        "CS011",
-        "CS061",
-        "CS100",
-        "CS111",
-        "CS141",
-    ]
-    for id, name in zip(course_ids, course_names):
-        add_new_course(id, name)
-
-
-if __name__ == "__main__":
-    if "init" in sys.argv:
-        initialize_db()
-    elif "clear" in sys.argv:
-        clear_db()
-    elif "print" in sys.argv:
-        print_users()
-        print_courses()
-        print_participation()
-        print_documents()
-        print_segments()
-        print_embeddings()
-    elif "add_courses" in sys.argv:
-        course_ids: list[int] = [91, 92, 93, 101, 102, 103, 11, 61, 100, 111, 141]
-        course_names: list[str] = [
-            "CS009A",
-            "CS009B",
-            "CS009C",
-            "CS010A",
-            "CS010B",
-            "CS010C",
-            "CS011",
-            "CS061",
-            "CS100",
-            "CS111",
-            "CS141",
-        ]
-        for id, name in zip(course_ids, course_names):
-            add_new_course(id, name)
-    elif "dev_test" in sys.argv:
-        add_new_course(1, "CS010A")
-        add_new_user("user123@ucr.edu", "test", "user")
-        add_new_document("documents/course1/testdoc.txt", 1)
-        store_segment("test text abcd", "documents/course1/testdoc.txt")
-        store_embedding([1.0, 2.0, 3.0], 1)
-        set_document_inactive("documents/course1/testdoc.txt")
