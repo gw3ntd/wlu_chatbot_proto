@@ -1,5 +1,7 @@
 import shutil
 from tabulate import tabulate
+import typing
+import sys
 
 from ucr_chatbot.db.models import *
 
@@ -14,7 +16,7 @@ def clear_db():
 
 def delete_uploads_folder():
     """Deletes uploads folder and all files within it."""
-    uploads_folder_path = "ucr_chatbot/uploads"
+    uploads_folder_path = upload_folder
     if os.path.exists(uploads_folder_path):
       shutil.rmtree(uploads_folder_path)
     else:
@@ -37,6 +39,7 @@ def add_courses():
     ]
     for name in course_names:
         add_new_course(name)
+
 
 def print_users():
     """Prints all users and their information"""

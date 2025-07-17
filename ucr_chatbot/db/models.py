@@ -15,14 +15,13 @@ from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import os
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-import typing
 from typing import Sequence
 
-import sys
-
 load_dotenv()
+
+upload_folder: str = os.path.join(os.path.abspath(os.path.dirname(__file__)), "uploads")
 
 
 password = os.getenv("DB_PASSWORD")
@@ -162,12 +161,12 @@ def add_new_user(email: str, first_name: str, last_name: str):
 
             session.add_all([new_user])
             session.commit()
-        except SQLAlchemyError:
+        except IntegrityError:
             session.rollback()
 
 
 def add_new_course(name: str):
-    """Adds new course to the Courses table with the given parameters.
+    """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.
     :param id: id for course to be added
     :param name: name of course to be added
     """
@@ -177,7 +176,9 @@ def add_new_course(name: str):
 
             session.add(new_course)
             session.commit()
-        except SQLAlchemyError:
+
+            create_upload_folder(getattr(new_course, "id"))
+        except IntegrityError:
             session.rollback()
 
 
@@ -210,6 +211,7 @@ def set_document_inactive(file_path: str):
             document.is_active = False  # type: ignore
             session.commit()
 
+
 def get_active_documents() -> list[str]:
     """Returns list of the file paths for all active documents in the database.
     :return: list of the file paths for all active documents:
@@ -232,19 +234,16 @@ def store_segment(segment_text: str, file_path: str) -> int:
     """
     with Session(engine) as session:
         # document = session.query(Documents).filter_by(file_path=file_path).first()
-        try:
-            new_segment = Segments(
-                text=segment_text,
-                document_id=file_path,
-            )
-            session.add(new_segment)
-            session.flush()
-            segment_id = int(getattr(new_segment, "id"))
-            session.commit()
+        new_segment = Segments(
+            text=segment_text,
+            document_id=file_path,
+        )
+        session.add(new_segment)
+        session.flush()
+        segment_id = int(getattr(new_segment, "id"))
+        session.commit()
 
-            return segment_id
-        except SQLAlchemyError:
-            session.rollback()
+        return segment_id
 
 
 def store_embedding(embedding: Sequence[float], segment_id: int):
@@ -264,3 +263,12 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
         except SQLAlchemyError:
             session.rollback()
 
+
+def create_upload_folder(course_id: int):
+    """Creates a folder named after the course id within the uploads folder.
+    :param course_id: name of the folder to be created
+    """
+    if not os.path.isdir(upload_folder):
+        os.makedirs(upload_folder)
+
+    os.makedirs(os.path.join(upload_folder, str(course_id)))

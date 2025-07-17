@@ -5,31 +5,24 @@ from flask import (
     redirect,
     request,
     send_from_directory,
-    current_app,
 )
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import Session
 import os
-from typing import cast
 from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
-from ..db.models import *
-
-courses = {
-    91: "CS009A",
-    92: "CS009B",
-    93: "CS009C",
-    101: "CS010A",
-    102: "CS010B",
-    103: "CS010C",
-    11: "CS011",
-    61: "CS061",
-    100: "CS100",
-    111: "CS111",
-    141: "CS141",
-}
-documents = {}
+from ..db.models import (
+    engine,
+    Courses,
+    upload_folder,
+    add_new_document,
+    store_segment,
+    store_embedding,
+    get_active_documents,
+    set_document_inactive,
+    Documents,
+)
 
 
 bp = Blueprint("routes", __name__)
@@ -39,8 +32,10 @@ bp = Blueprint("routes", __name__)
 def course_selection():
     """Responds with a landing page where a student can select a course"""
     body_text = ""
+    with Session(engine) as session:
+        courses = session.query(Courses)
     for course in courses:
-        body_text += f'Select your course. <a href="{url_for(".new_conversation", course_id=course)}"> {courses[course]} </a> &emsp; Upload documents for a course: <a href="{url_for(".course_documents", course_id=course)}"> {courses[course]} </a> <br/>'
+        body_text += f'Select your course. <a href="{url_for(".new_conversation", course_id=course.id)}"> {course.name} </a> &emsp; Upload documents for a course: <a href="{url_for(".course_documents", course_id=course.id)}"> {course.name} </a> <br/>'
     return render_template(
         "base.html",
         title="Landing Page",
@@ -75,10 +70,11 @@ def course_documents(course_id: int):
     to the course for use by the retrieval-augmented generation system.
     :param course_id: The id of the course for which a conversation will be initialized.
     """
-    curr_path: str = cast(str, current_app.config["UPLOAD_FOLDER"])
-    active_documents: list[str] = get_active_documents()
-    for active_document in active_documents:
-        documents[active_document] = True
+    with Session(engine) as session:
+        course = session.query(Courses).filter_by(id=course_id).first()
+
+    curr_path: str = upload_folder
+
     error_docstring = ""
     if request.method == "POST":
         if "file" not in request.files:
@@ -93,12 +89,11 @@ def course_documents(course_id: int):
         try:
             filename: str = secure_filename(file.filename)
             new_doc_file_path = os.path.join(
-                os.path.join(curr_path, courses[course_id]), filename
+                os.path.join(curr_path, str(getattr(course, "id"))), filename
             )
             file.save(new_doc_file_path)
             # Parse into segments
             segments: list[str] = parse_file(new_doc_file_path)
-            documents[new_doc_file_path] = True
             add_new_document(new_doc_file_path, course_id)
             for segment in segments:
                 # print(segment)
@@ -131,16 +126,19 @@ def course_documents(course_id: int):
         </script>
         """
 
-    docs_list = os.listdir(os.path.join(curr_path, courses[course_id]))
+    docs_list = os.listdir(os.path.join(curr_path, str(getattr(course, "id"))))
     doc_string = ""
+    active_documents: list[str] = get_active_documents()
     for i, doc in enumerate(docs_list):
         if (
-            documents[os.path.join(os.path.join(curr_path, courses[course_id]), doc)]
-            == False
+            os.path.join(os.path.join(curr_path, str(getattr(course, "id"))), doc)
+            not in active_documents
         ):
             continue
-        
-        file_path = os.path.join(curr_path, courses[course_id], secure_filename(doc))
+
+        file_path = os.path.join(
+            curr_path, str(getattr(course, "id")), secure_filename(doc)
+        )
         download_link = url_for(".download_file", file_path=file_path)
         delete_link = url_for(".delete_document", file_path=file_path)
 
@@ -163,20 +161,16 @@ def delete_document(file_path: str):
     """This function deletes a file for the course
     :param file_path: Path of the file to be deleted.
     """
-    active_documents: list[str] = get_active_documents()
-    for active_document in active_documents:
-        documents[active_document] = True
-
     if os.path.exists(file_path):
         # os.remove(file_path)
-        documents[file_path] = False
         set_document_inactive(file_path)
 
     course_id = 0
     with Session(engine) as session:
-        course_id = getattr(session.query(Documents).filter_by(file_path=file_path).first(), "course_id")
+        course_id = getattr(
+            session.query(Documents).filter_by(file_path=file_path).first(), "course_id"
+        )
 
-    print(course_id)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
@@ -191,7 +185,7 @@ def download_file(file_path: str):
     directory = ""
     name = ""
     for i, part in enumerate(path_parts):
-        if i == (len(path_parts)-1):
+        if i == (len(path_parts) - 1):
             name = part
             break
         directory += part + "/"
