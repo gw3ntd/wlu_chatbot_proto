@@ -174,13 +174,13 @@ def delete_document(file_path: str):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
-@bp.route("document/<string:file_path>/download")
+@bp.route("document/<string:file_path>/download", methods=["GET"])
 def download_file(file_path: str):
     """Responds with a page of the specified document that then can be downloaded.
     :param file_path: The path of the file stored to be downloaded.
     """
     print(file_path)
-    path_parts = file_path.split("\\")
+    path_parts = file_path.split(os.sep)
     print(path_parts)
     directory = ""
     name = ""
@@ -188,7 +188,7 @@ def download_file(file_path: str):
         if i == (len(path_parts) - 1):
             name = part
             break
-        directory += part + "/"
+        directory += part + os.sep
     print(directory)
     print(name)
     return send_from_directory(directory, name)
