@@ -179,16 +179,5 @@ def download_file(file_path: str):
     """Responds with a page of the specified document that then can be downloaded.
     :param file_path: The path of the file stored to be downloaded.
     """
-    print(file_path)
-    path_parts = file_path.split(os.sep)
-    print(path_parts)
-    directory = ""
-    name = ""
-    for i, part in enumerate(path_parts):
-        if i == (len(path_parts) - 1):
-            name = part
-            break
-        directory += part + os.sep
-    print(directory)
-    print(name)
+    directory, name = os.path.split(file_path)
     return send_from_directory(directory, name)
