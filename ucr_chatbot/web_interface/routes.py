@@ -139,7 +139,9 @@ def course_documents(course_id: int):
         file_path = os.path.join(
             curr_path, str(getattr(course, "id")), secure_filename(doc)
         )
-        download_link = url_for(".download_file", file_path=os.path.join(str(course_id),doc))
+        download_link = url_for(
+            ".download_file", file_path=os.path.join(str(course_id), doc)
+        )
         delete_link = url_for(".delete_document", file_path=file_path)
 
         doc_string += f'''
@@ -180,5 +182,5 @@ def download_file(file_path: str):
     :param file_path: The path of the file stored to be downloaded.
     """
     directory, name = os.path.split(file_path)
-    
-    return send_from_directory(os.path.join(upload_folder,directory), name)
+
+    return send_from_directory(os.path.join(upload_folder, directory), name)
