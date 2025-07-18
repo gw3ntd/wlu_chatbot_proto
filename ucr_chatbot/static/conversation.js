@@ -12,13 +12,28 @@ let courseId = document.body.dataset.courseId
 
 let isNewConversation = courseId !== null;
 
-async function loadAllConversationsForUser() {
-  sidebarMessages.innerHTML = "";
+//Loads conversation ids for sidebar
+async function loadAllConversationIds() {
+  if (!courseId && !conversationId) return;
 
-  const res = await fetch("/api/conversations/get_conversations", {
+  let fetchUrl;
+  let fetchBody;
+
+  if (courseId) {
+    fetchUrl = `/conversation/new/${courseId}/chat`;
+    fetchBody = { type: "ids" };
+  } else if (conversationId) {
+    fetchUrl = `/conversation/new/0/chat`;
+    fetchBody = { type: "ids" };
+  }
+
+  const res = await fetch(fetchUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ courseId }), 
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(fetchBody),
   });
 
   const conversationIds = await res.json();
@@ -50,9 +65,40 @@ async function loadAllConversationsForUser() {
   data.messages.forEach((msg) => {
     appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
   });
+
+  sidebarMessages.innerHTML = "";
+
+  conversationIds.reverse().forEach((id) => {
+    addSidebarMessage(`Conversation ${id}`, id);
+  });
 }
 
+//loads a conversation's messages
+async function loadAllConversationsForUser() {
+  if (!conversationId) return;
+
+  const res = await fetch(`/conversation/${conversationId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "conversation" }),
+  });
+
+  const data = await res.json();
+
+  chatContainer.innerHTML = "";
+
+  data.messages.forEach((msg) => {
+    appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
+  });
+}
+
+loadAllConversationIds();
+
 if (!isNewConversation && conversationId) {
+  loadAllConversationsForUser();
   loadAllConversationsForUser();
 }
 
@@ -76,10 +122,13 @@ async function handleSend(e) {
 
 
   if (isNewConversation) {
-    const res = await fetch("/api/create_conversation", {
+    const res = await fetch(`/conversation/new/${courseId}/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId, message }), 
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ type: "create", message }),
     });
 
     const data = await res.json();
@@ -89,15 +138,14 @@ async function handleSend(e) {
     window.history.replaceState({}, "", `/conversation/${conversationId}`);
     addSidebarMessage(`Conversation ${conversationId}`, conversationId);
 
-    const botResponse = await fetchBotReply(conversationId, message);
+    const botResponse = await fetchBotReply(message);
     appendMessage("bot", botResponse);
   } else {
-    await sendMessage(conversationId, message);
-    const botResponse = await fetchBotReply(conversationId, message);
+    await sendMessage(message);
+    const botResponse = await fetchBotReply(message);
     appendMessage("bot", botResponse);
   }
 }
-
 
 // Add user or bot message to interface
 function appendMessage(sender, text) {
@@ -122,6 +170,7 @@ function addSidebarMessage(label, convoId) {
     conversationId = convoId;
     chatContainer.innerHTML = "";
     loadAllConversationsForUser();
+    loadAllConversationsForUser();
   });
 
   if (window.location.pathname.endsWith(convoId)) {
@@ -131,27 +180,17 @@ function addSidebarMessage(label, convoId) {
   sidebarMessages.insertBefore(item, sidebarMessages.firstChild);
 }
 
-// Load existing conversation and display messages
-async function loadConversation(id) {
-  const res = await fetch(`/api/conversations/${id}`);
-  const data = await res.json();
-
-  chatContainer.innerHTML = "";
-
-  data.messages.forEach((msg) => {
-    appendMessage(msg.sender === "StudentMessage" ? "user" : "bot", msg.body);
-  });
-
-  const firstUserMessage = data.messages.find((m) => m.sender === "user");
-  if (firstUserMessage) {
-    addSidebarMessage(firstUserMessage.body, id);
-  }
-}
-
 // Send message to backend for LM
 async function sendMessage(message) {
   await fetch(`/conversation/${conversationId}`, {
+async function sendMessage(message) {
+  await fetch(`/conversation/${conversationId}`, {
     method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "send", message }),
     headers: { 
       "Content-Type": "application/json",
       "Accept": "application/json"
@@ -163,7 +202,14 @@ async function sendMessage(message) {
 // Get LM response from backend
 async function fetchBotReply(userMessage) {
   const res = await fetch(`/conversation/${conversationId}`, {
+async function fetchBotReply(userMessage) {
+  const res = await fetch(`/conversation/${conversationId}`, {
     method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "reply", message: userMessage }),
     headers: { 
       "Content-Type": "application/json",
       "Accept": "application/json"

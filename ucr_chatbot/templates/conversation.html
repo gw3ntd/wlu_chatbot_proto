@@ -34,10 +34,7 @@
     <!-- HEADER -->
     <header>
       <h1>ScotGPT</h1>
-      <img
-        src="../static/images/UC_Riverside_Horiz_BluBG.png"
-        alt="UC Riverside logo"
-      />
+      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}">
     </header>
 
     <div id="main-layout">
@@ -64,6 +61,7 @@
       </div>
     </div>
 
-    <script src="../static/conversation.js"></script>
+  </script>
+  <script src="{{ url_for('static', filename='conversation.js') }}"></script>
   </body>
 </html>

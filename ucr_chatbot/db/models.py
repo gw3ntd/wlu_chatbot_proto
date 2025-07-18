@@ -150,7 +150,7 @@ class References(base):
 
 
 # base.metadata.drop_all(engine)
-base.metadata.create_all(engine)
+# base.metadata.create_all(engine)
 
 
 def add_new_user(email: str, first_name: str, last_name: str):
