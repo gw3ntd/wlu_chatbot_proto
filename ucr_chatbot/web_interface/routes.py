@@ -1,4 +1,17 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    jsonify,
+    url_for,  # ← new
+    redirect,  # ← new
+    send_from_directory,  # ← new
+)
+from werkzeug.utils import secure_filename  # ← new
+from werkzeug.datastructures import FileStorage  # ← new
+from sqlalchemy import select, insert
+import os  # ← new
+
 from ucr_chatbot.db.models import (
     Session,
     engine,
@@ -7,9 +20,17 @@ from ucr_chatbot.db.models import (
     Conversations,
     Courses,
     ParticipatesIn,
+    upload_folder,
+    add_new_document,
+    store_segment,
+    store_embedding,
+    get_active_documents,
+    set_document_inactive,
+    Documents,
 )
 
-from sqlalchemy import select, insert
+from ..api.file_parsing.file_parsing import parse_file
+from ..api.embedding.embedding import embed_text
 
 bp = Blueprint("web_routes", __name__)
 
@@ -152,15 +173,11 @@ def course_selection():
     return render_template(
         "landing_page.html",
         courses=courses,
-        "landing_page.html",
-        courses=courses,
     )
 
 
 @bp.route("/conversation/new/<int:course_id>/chat", methods=["GET", "POST"])
 def new_conversation(course_id: int):
-    """Renders the conversation page for a new conversation.
-
     """Renders the conversation page for a new conversation.
 
     :param course_id: The id of the course for which a conversation will be initialized.
@@ -184,9 +201,6 @@ def new_conversation(course_id: int):
 @bp.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
 def conversation(conversation_id: int):
     """Renders the conversation page for an existing conversation.
-    """Renders the conversation page for an existing conversation.
-
-    :param conversation_id: The id of the conversation to be displayed.
     :param conversation_id: The id of the conversation to be displayed.
     """
 
@@ -221,16 +235,87 @@ def conversation(conversation_id: int):
 
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 def course_documents(course_id: int):
-    """Responds with a page for course document management.
+    """Renders the documents page for a course.
+    :param course_id: The id of the course for which documents are being managed."""
+    curr_path = upload_folder
+    error_msg = ""
 
-    :param course_id: The id of the course.
-    """Responds with a page for course document management.
+    if request.method == "POST":
+        if "file" not in request.files:
+            return redirect(request.url)
 
-    :param course_id: The id of the course.
-    """
-    return render_template(
-        "base.html",
-        title="Course Documents",
-        title="Course Documents",
-        body=f"These are the documents for the course with id {course_id}",
-    )
+        file: FileStorage = request.files["file"]
+        if not file.filename:
+            return redirect(request.url)
+
+        full_local_path = ""
+        try:
+            filename = secure_filename(file.filename)
+            relative_path = os.path.join(str(course_id), filename).replace(
+                os.path.sep, "/"
+            )
+            full_local_path = os.path.join(curr_path, relative_path)
+
+            file.save(full_local_path)
+
+            segments = parse_file(full_local_path)
+            add_new_document(relative_path, course_id)
+            for seg in segments:
+                seg_id = store_segment(seg, relative_path)
+                embedding = embed_text(seg)
+                store_embedding(embedding, seg_id)
+
+        except (ValueError, TypeError):
+            if os.path.exists(full_local_path):
+                os.remove(full_local_path)
+            error_msg = "<p style='color:red;'>Invalid file type.</p>"
+
+    docs_html = ""
+    active_docs = get_active_documents()
+    docs_dir = os.path.join(curr_path, str(course_id))
+    if os.path.isdir(docs_dir):
+        for idx, doc in enumerate(os.listdir(docs_dir), 1):
+            file_path = os.path.join(str(course_id), secure_filename(doc)).replace(
+                os.path.sep, "/"
+            )
+            if file_path not in active_docs:
+                continue
+
+            docs_html += f"""
+              <div style="margin-bottom:4px;">
+                  {idx}. <a href="{url_for(".download_file", file_path=file_path)}">{doc}</a>
+                  <form action="{url_for(".delete_document", file_path=file_path)}" method="post" style="display:inline;">
+                      <button type="submit" onclick="return confirm('Delete {doc}?');">Delete</button>
+                  </form>
+              </div>
+            """
+
+    body = error_msg + (docs_html or "No documents uploaded yet.")
+    return render_template("documents.html", body=body)
+
+
+@bp.route("/document/<path:file_path>/delete", methods=["POST"])
+def delete_document(file_path: str):
+    """Handles file deletion requests.
+    :param file_path: The path of the file to be deleted."""
+    file_path = file_path.replace(os.path.sep, "/")
+    full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+
+    if os.path.exists(full_path):
+        # os.remove(full_path)  # physical delete optional
+        set_document_inactive(file_path)
+
+    with Session(engine) as session:
+        course_id = (
+            session.query(Documents).filter_by(file_path=file_path).first().course_id  # type: ignore
+        )
+
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
+@bp.route("/document/<path:file_path>/download", methods=["GET"])
+def download_file(file_path: str):
+    """Handles file download requests.
+    :param file_path: The path of the file to be downloaded."""
+    directory, name = os.path.split(file_path)
+    return send_from_directory(os.path.join(upload_folder, directory), name)
