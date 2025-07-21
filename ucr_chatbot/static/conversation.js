@@ -183,8 +183,6 @@ function addSidebarMessage(label, convoId) {
 // Send message to backend for LM
 async function sendMessage(message) {
   await fetch(`/conversation/${conversationId}`, {
-async function sendMessage(message) {
-  await fetch(`/conversation/${conversationId}`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
@@ -200,8 +198,6 @@ async function sendMessage(message) {
 }
 
 // Get LM response from backend
-async function fetchBotReply(userMessage) {
-  const res = await fetch(`/conversation/${conversationId}`, {
 async function fetchBotReply(userMessage) {
   const res = await fetch(`/conversation/${conversationId}`, {
     method: "POST",
