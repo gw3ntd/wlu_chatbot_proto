@@ -268,7 +268,7 @@ def course_documents(course_id: int):
         except (ValueError, TypeError):
             if os.path.exists(full_local_path):
                 os.remove(full_local_path)
-            error_msg = "<p style='color:red;'>Invalid file type.</p>"
+            error_msg = "<p style='color:red;'>You can't upload this type of file</p>"
 
     docs_html = ""
     active_docs = get_active_documents()
