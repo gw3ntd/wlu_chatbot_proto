@@ -52,7 +52,7 @@ class Users(base, UserMixin):
     email = Column(String, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
-    password_hash = Column(String(150), nullable=False) 
+    password_hash = Column(String(255), nullable=False) 
 
     conversations = relationship("Conversations", back_populates="user", uselist=True)
     messages = relationship("Messages", back_populates="user", uselist=True)

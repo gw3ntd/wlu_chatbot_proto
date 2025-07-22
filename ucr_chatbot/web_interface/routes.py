@@ -61,7 +61,7 @@ def home():
     :return: a redirect response to the dashboard or the login page
     :rtype: flask.Response
     """
-    if "email" in session:
+    if current_user.is_authenticated:
         return redirect(url_for("web_routes.course_selection"))
     return render_template("index.html")
     # return "hello"
@@ -113,7 +113,7 @@ def login_google() -> Response | tuple[str, int]:
     """
     try:
         google = current_app.oauth.google  # type: ignore
-        redirect_uri = url_for("web_interface.web_routes.authorize_google", _external=True)
+        redirect_uri = url_for("web_routes.authorize_google", _external=True)
         return google.authorize_redirect(redirect_uri)  # type: ignore
     except Exception as e:
         import traceback
@@ -124,24 +124,38 @@ def login_google() -> Response | tuple[str, int]:
 
 @bp.route("/authorize/google")
 def authorize_google():
-    if "code" not in request.args:
-        return redirect(url_for("web_interface.web_routes.login"))
+    try:
+        if "code" not in request.args:
+            flash("Google authorization failed: No code received", "error")
+            return redirect(url_for("web_routes.login"))
 
-    google = current_app.oauth.google 
-    google.authorize_access_token()
-    if google is None:
-        return redirect(url_for("web_interface.web_routes.login"))
+        google = current_app.oauth.google 
+        token = google.authorize_access_token()
+        if not token:
+            flash("Google authorization failed: No token received", "error")
+            return redirect(url_for("web_routes.login"))
 
-    userinfo_endpoint = google.server_metadata["userinfo_endpoint"]
-    resp = google.get(userinfo_endpoint)
-    user_info = resp.json()
-    email = user_info["email"]
-    with Session(engine) as session:
-        user = session.query(Users).filter_by(email=email).first()
-        session.add(user)
-        session.commit()
-        login_user(user)
-    return redirect(url_for("web_interface.web_routes.dashboard"))
+        userinfo_endpoint = google.server_metadata["userinfo_endpoint"]
+        resp = google.get(userinfo_endpoint)
+        resp.raise_for_status()
+        user_info = resp.json()
+        email = user_info["email"]
+        with Session(engine) as session:
+            user = session.query(Users).filter_by(email=email).first()
+            if not user:
+                user = Users(
+                    email=email,
+                    password_hash=generate_password_hash("google-oauth-placeholder")
+                )
+                session.add(user)
+                session.commit()
+            login_user(user) # Log the user in
+        return redirect(url_for("web_routes.course_selection"))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Authorization error: {str(e)}", "error")
+        return f"<pre>Authorization error:<br>{str(e)}</pre>", 500
 
 
 
@@ -224,7 +238,7 @@ def get_conversation_ids(user_email: str, course_id: int):
         stmt = (
             select(Conversations.id)
             .where(
-                Conversations.initiated_by == "test@ucr.edu",
+                Conversations.initiated_by == user_email, # changed ts
                 Conversations.course_id == course_id,
             )
             .order_by(Conversations.id.desc())
@@ -309,7 +323,7 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
 @login_required # gwen add
 def course_selection():
     """Renders the main landing page with a list of the user's courses."""
-    user_email = "test@ucr.edu"
+    user_email = current_user.email # I changed this
     with Session(engine) as session:
         stmt = (
             select(Courses, ParticipatesIn.role)
@@ -339,7 +353,7 @@ def new_conversation(course_id: int):
     ):
         content = request.get_json()
         request_type = content["type"]
-        user_email = "test@ucr.edu"
+        user_email = current_user.email # I changed this
 
         if request_type == "ids":
             return get_conversation_ids(user_email, course_id)
@@ -362,7 +376,7 @@ def conversation(conversation_id: int):
     ):
         content = request.get_json()
         request_type = content["type"]
-        user_email = "test@ucr.edu"
+        user_email = current_user.email
 
         if request_type == "send":
             return send_conversation(conversation_id, user_email, content["message"])
@@ -394,16 +408,18 @@ def course_documents(course_id: int):
     with Session(engine) as session:
         user = session.query(Users).filter_by(email=email).first()
     if user is None:
-        return "User not found", 404
+        abort(404, description="User not found")
     curr_path = upload_folder
     error_msg = ""
 
     if request.method == "POST":
         if "file" not in request.files:
+            flash("No file part", "error")
             return redirect(request.url)
 
         file: FileStorage = request.files["file"]
         if not file.filename:
+            flash("No selected file", "error")
             return redirect(request.url)
 
         full_local_path = ""
@@ -422,6 +438,7 @@ def course_documents(course_id: int):
                 seg_id = store_segment(seg, relative_path)
                 embedding = embed_text(seg)
                 store_embedding(embedding, seg_id)
+            flash("File uploaded and processed successfully!", "success")
 
         except (ValueError, TypeError):
             if os.path.exists(full_local_path):
@@ -458,21 +475,27 @@ def delete_document(file_path: str):
     """Handles file deletion requests.
     :param file_path: The path of the file to be deleted."""
     email = current_user.email
-    with Session(engine) as session:
-        user = session.query(Users).filter_by(email=email).first()
-    
+
     if current_user.is_anonymous:
         abort(403)
 
-    if user is None:
-        abort(404, description="User not found")
-    
-    file_path = file_path.replace(os.path.sep, "/")
-    full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+    with Session(engine) as session:
+        document = session.query(Documents).filter_by(file_path=file_path).first()
+        if document is None:
+            abort(404, description="Document not found")
 
-    if os.path.exists(full_path):
-        # os.remove(full_path)  # physical delete optional
-        set_document_inactive(file_path)
+        participation = session.query(ParticipatesIn).filter_by(email=email, course_id=document.course_id).first()
+        if not participation:
+            abort(403, description="You do not have permission to delete this document.")
+        
+        course_id = document.course_id
+    
+        file_path = file_path.replace(os.path.sep, "/")
+        full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+
+        if os.path.exists(full_path):
+            # os.remove(full_path)  # physical delete optional
+            set_document_inactive(file_path)
 
     
 
