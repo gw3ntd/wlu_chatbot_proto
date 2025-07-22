@@ -6,6 +6,7 @@
     <title>{{title or "UCR"}}</title>
   </head>
   <body>
-    <p>{{body | safe}}</p>
+        {% block body %}
+        {% endblock %}
   </body>
 </html>

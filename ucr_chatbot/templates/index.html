@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h1>Welcome</h1>
+    <form id="auth-form" action="{{url_for('web_interface.web_routes.login')}}" method="post">        
+        <input type="text" name="email" placeholder="email" class="input-field"/>
+        <input type="password" name="password" placeholder="password" class="input-field"/>
+        <input type="submit" value="Login" class="btn btn-login" onclick="setActionForm('login')"/>
+        <input type="button" class="btn login-google" value="Login with Google"
+               onclick="window.location.href='{{ url_for('web_interface.web_routes.login_google') }}'" />
+    </form>
+
+
+
+</div>
+
+
+<script>
+    function setActionForm(action){
+        let form = document.getElementById("auth-form");
+        if (action === 'web_interface.web_routes.login'){
+            form.action = "{{url_for('web_interface.web_routes.login')}}";
+            form.method = "post";
+            form.submit();
+    }}
+
+</script>
+
+
+{% endblock %}

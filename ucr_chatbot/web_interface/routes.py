@@ -3,17 +3,25 @@ from flask import (
     render_template,
     request,
     jsonify,
-    url_for,  # ← new
-    redirect,  # ← new
-    send_from_directory,  # ← new
+    url_for,  
+    redirect,  
+    send_from_directory, 
+    session, # g
+    abort, # g
+    render_template, # g
+    flash, # g
+    current_app, # g 
+    Response #g
 )
-from werkzeug.utils import secure_filename  # ← new
-from werkzeug.datastructures import FileStorage  # ← new
+from werkzeug.utils import secure_filename  
+from werkzeug.datastructures import FileStorage  
+from werkzeug.security import generate_password_hash, check_password_hash # g
 from sqlalchemy import select, insert
-import os  # ← new
 import pandas as pd
 import io
-
+import os  
+from typing import List, Optional, cast
+from flask_login import current_user, login_required, login_user, logout_user # g
 
 from ucr_chatbot.db.models import (
     Session,
@@ -32,13 +40,147 @@ from ucr_chatbot.db.models import (
     set_document_inactive,
     add_user_to_course,
     add_students_from_list,
+    Documents,
+    Users
 )
+
+# from ucr_chatbot.web_interface.routes.auth import get_google_auth
+# from .auth import get_google_auth
 
 from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
 
 bp = Blueprint("web_routes", __name__)
 
+# gwen add
+@bp.route("/")
+def home():
+    """Login page for the user. If the user is already
+    logged in, they are redirected to the dashboard
+
+    :return: a redirect response to the dashboard or the login page
+    :rtype: flask.Response
+    """
+    if "email" in session:
+        return redirect(url_for("web_routes.course_selection"))
+    return render_template("index.html")
+    # return "hello"
+
+# gwen add
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Checks if the user has valid login credentials. If they do, the
+    user is successfully logged in and redirected to the dashboard
+
+    :return: a redirect response to the dashboard or the login page
+    :rtype: flask.Response
+    """
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        with Session(engine) as session:
+            user = session.query(Users).filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            return redirect(request.args.get("next") or url_for("web_routes.course_selection"))
+        else:
+            flash("Invalid email or password", "error")
+    return render_template("index.html")
+
+# gwen add
+@bp.route("/logout")
+def logout():
+    """The user is sucessfully logged out and redirected to
+    the home page
+
+    :return: a redirect response to the home page
+    :rtype: flask.Response
+    """
+    logout_user()
+    return redirect(url_for("web_routes.home"))
+
+# gwen add
+@bp.route("/login/google")
+def login_google() -> Response | tuple[str, int]:
+    """This function starts the Google OAuth login process for
+    the user. It will either redirect the user to the Google OAuth
+    authorization endpoint or, if an error occurs, it returns a 500
+    error response.
+
+    :return: a redirect response to Google authorization URL or
+    a tuple containing an error message
+    :rtype: Response | tuple[str, int]
+    """
+    try:
+        google = current_app.oauth.google  # type: ignore
+        redirect_uri = url_for("web_interface.web_routes.authorize_google", _external=True)
+        return google.authorize_redirect(redirect_uri)  # type: ignore
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return f"<pre>Error occurred during login:<br>{str(e)}</pre>", 500
+
+
+@bp.route("/authorize/google")
+def authorize_google():
+    if "code" not in request.args:
+        return redirect(url_for("web_interface.web_routes.login"))
+
+    google = current_app.oauth.google 
+    google.authorize_access_token()
+    if google is None:
+        return redirect(url_for("web_interface.web_routes.login"))
+
+    userinfo_endpoint = google.server_metadata["userinfo_endpoint"]
+    resp = google.get(userinfo_endpoint)
+    user_info = resp.json()
+    email = user_info["email"]
+    with Session(engine) as session:
+        user = session.query(Users).filter_by(email=email).first()
+        session.add(user)
+        session.commit()
+        login_user(user)
+    return redirect(url_for("web_interface.web_routes.dashboard"))
+
+
+
+# gwen add
+# @bp.route("/authorize/google")
+# def authorize_google():
+#     """Google OAuth user verification. If the user is verified,
+#     they are logged in and redirected to the dashboard endpoint. If they
+#     can't be verified, an error message pops up.
+
+#     :return: redirects user to the dashboard on success or returns an error
+#     :rtype: Response | tuple[str, int]
+#     """
+#     try:
+        # google = current_app.oauth.google  # type: ignore
+#         google.authorize_access_token()  # type: ignore
+#         userinfo_endpoint = google.server_metadata["userinfo_endpoint"]  # type: ignore
+#         resp = google.get(userinfo_endpoint)  # type: ignore
+#         user_info = resp.json()  # type: ignore
+#         email = user_info["email"]
+#         with Session(engine) as session:
+#             user = session.query(Users).filter_by(email=email).first()
+#             if not user:
+#                 user = Users(
+#                     email=email,
+#                     password_hash=generate_password_hash("google-oauth-placeholder")
+#                 )
+#                 session.add(user)
+#                 session.commit()
+#             login_user(user)
+
+#         login_user(user)
+
+#         return redirect(url_for("web_routes.course_selection"))
+#     except Exception as e:
+#         import traceback
+
+#         traceback.print_exc()
+#         return f"<pre>Authorization error:<br>{str(e)}</pre>", 500
 
 def get_conv_messages(conversation_id: int):
     """Responds with all messages in requested conversation
@@ -163,7 +305,8 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
     return jsonify({"status": "200"})
 
 
-@bp.route("/")
+@bp.route("/course_selection")
+@login_required # gwen add
 def course_selection():
     """Renders the main landing page with a list of the user's courses."""
     user_email = "test@ucr.edu"
@@ -179,10 +322,12 @@ def course_selection():
     return render_template(
         "landing_page.html",
         courses=courses,
+        email=current_user.email # gwen add
     )
 
 
 @bp.route("/conversation/new/<int:course_id>/chat", methods=["GET", "POST"])
+@login_required # gwen add 
 def new_conversation(course_id: int):
     """Renders the conversation page for a new conversation.
 
@@ -205,6 +350,7 @@ def new_conversation(course_id: int):
 
 
 @bp.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
+@login_required # gwen add
 def conversation(conversation_id: int):
     """Renders the conversation page for an existing conversation.
     :param conversation_id: The id of the conversation to be displayed.
@@ -240,9 +386,15 @@ def conversation(conversation_id: int):
 
 
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
+@login_required 
 def course_documents(course_id: int):
     """Renders the documents page for a course.
     :param course_id: The id of the course for which documents are being managed."""
+    email = current_user.email
+    with Session(engine) as session:
+        user = session.query(Users).filter_by(email=email).first()
+    if user is None:
+        return "User not found", 404
     curr_path = upload_folder
     error_msg = ""
 
@@ -301,9 +453,20 @@ def course_documents(course_id: int):
 
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
+@login_required
 def delete_document(file_path: str):
     """Handles file deletion requests.
     :param file_path: The path of the file to be deleted."""
+    email = current_user.email
+    with Session(engine) as session:
+        user = session.query(Users).filter_by(email=email).first()
+    
+    if current_user.is_anonymous:
+        abort(403)
+
+    if user is None:
+        abort(404, description="User not found")
+    
     file_path = file_path.replace(os.path.sep, "/")
     full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
 
@@ -311,18 +474,26 @@ def delete_document(file_path: str):
         # os.remove(full_path)  # physical delete optional
         set_document_inactive(file_path)
 
-    with Session(engine) as session:
-        course_id = (
-            session.query(Documents).filter_by(file_path=file_path).first().course_id  # type: ignore
-        )
+    
 
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
 @bp.route("/document/<path:file_path>/download", methods=["GET"])
+@login_required
 def download_file(file_path: str):
     """Handles file download requests.
     :param file_path: The path of the file to be downloaded."""
+    email = current_user.email
+    with Session(engine) as session:
+        document = session.query(Documents).filter_by(file_path=file_path).first()
+        if document is None:
+            abort(404)
+
+        participation = session.query(ParticipatesIn).filter_by(email=email, course_id=document.course_id).first()
+        if not participation:
+            abort(403)
+    
     directory, name = os.path.split(file_path)
     return send_from_directory(os.path.join(upload_folder, directory), name)
 
