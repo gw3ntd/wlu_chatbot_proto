@@ -361,3 +361,13 @@ def create_upload_folder(course_id: int):
         os.makedirs(upload_folder)
 
     os.makedirs(os.path.join(upload_folder, str(course_id)))
+
+if __name__ == '__main__':
+    # Example: add a test user
+    add_new_user(
+        email="tylertulowitzki32207@gmail.com",
+        first_name="Tyler",
+        last_name="Tulowitzki",
+        password="password123"
+    )
+    print("User added.")
