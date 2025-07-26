@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import os
 from sqlalchemy.exc import SQLAlchemyError
+import pandas as pd
 
 from typing import Sequence
 
@@ -168,6 +169,33 @@ def add_new_user(email: str, first_name: str, last_name: str):
         except SQLAlchemyError:
             session.rollback()
 
+def add_user_to_course(email: str, first_name: str, last_name: str, course_id: int, role: str):
+    """Adds a user to the specified course.
+    :param email:
+    """
+    with Session(engine) as session:
+
+        user = session.query(Users).filter(Users.email == email).first()
+        if not user:
+            add_new_user(email, first_name, last_name)
+        
+        participation_status = session.query(ParticipatesIn).filter(ParticipatesIn.email == email, ParticipatesIn.course_id == course_id, ParticipatesIn.role == role).first()
+        if not participation_status:
+            new_participation = ParticipatesIn(email=email, course_id= course_id, role=role)
+            session.add(new_participation)
+            session.commit()
+            print("User added to course.")
+
+def add_students_from_csv(data: pd.DataFrame, course_id: int):
+    with Session(engine) as session:
+        course = session.query(Courses).filter(Courses.id == course_id).first()
+        if course:
+            for _, row in data.iterrows():
+                row: pd.Series
+                email = str(row["SIS User ID"]) + "@ucr.edu"
+                fname = str(row["First Name"])
+                lname = str(row["Last Name"])
+                add_user_to_course(email, fname, lname, course_id, "student")
 
 def add_new_course(name: str):
     """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.

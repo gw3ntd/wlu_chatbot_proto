@@ -11,6 +11,8 @@ from werkzeug.utils import secure_filename  # ← new
 from werkzeug.datastructures import FileStorage  # ← new
 from sqlalchemy import select, insert
 import os  # ← new
+import csv
+import pandas as pd
 
 from ucr_chatbot.db.models import (
     Session,
@@ -20,13 +22,15 @@ from ucr_chatbot.db.models import (
     Conversations,
     Courses,
     ParticipatesIn,
+    Documents,
     upload_folder,
     add_new_document,
     store_segment,
     store_embedding,
     get_active_documents,
     set_document_inactive,
-    Documents,
+    add_user_to_course,
+    add_students_from_csv
 )
 
 from ..api.file_parsing.file_parsing import parse_file
@@ -291,7 +295,7 @@ def course_documents(course_id: int):
             """
 
     body = error_msg + (docs_html or "No documents uploaded yet.")
-    return render_template("documents.html", body=body)
+    return render_template("documents.html", body=body, course_id=course_id)
 
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
@@ -319,3 +323,33 @@ def download_file(file_path: str):
     :param file_path: The path of the file to be downloaded."""
     directory, name = os.path.split(file_path)
     return send_from_directory(os.path.join(upload_folder, directory), name)
+
+@bp.route("course/<int:course_id>/add_user", methods=["POST"])
+def add_student(course_id: int):
+    """Adds a student to the current course."""
+    user_email = request.form["email"]
+    user_fname = request.form["fname"]
+    user_lname = request.form["lname"]
+
+    add_user_to_course(user_email, user_fname, user_lname, course_id, "student")
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+@bp.route("course/<int:course_id>/add_from_csv", methods=["POST"])
+def add_from_csv(course_id: int):
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect(request.url)
+        
+        file: FileStorage = request.files["file"]
+        if file.filename == '':
+            return redirect(request.url)
+        if file and file.filename.endswith('.csv'):
+            print("CSV uploaded")
+            data = pd.read_csv(file, header=0, skiprows=[1,2], usecols=['Student', 'SIS User ID'])
+            data['Student'] = data['Student'].str.strip()
+            data[['Last Name', 'First Name']] = data['Student'].str.split(',')
+            add_students_from_csv(data, course_id)
+        else:
+            print("Invalid file type")
+
+    return redirect(url_for(".course_documents", course_id=course_id))

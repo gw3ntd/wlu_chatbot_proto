@@ -8,3 +8,20 @@
 <body>
     <p>{{body | safe}}</p>
 </body>
+
+<h1>Add Students to Course</h1>
+<h3>Add student manually:</h3>
+<form method=post action="{{ url_for('web_interface.web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
+    <label for="email">Student email:</label><br>
+    <input type="text" id="email" name="email"><br>
+    <label for="fname">First name:</label><br>
+    <input type="text" id="fname" name="fname"><br>
+    <label for="lname">Last name:</label><br>
+    <input type="text" id="lname" name="lname"><br><br>
+    <input type=submit value=Add>
+</form>
+<h3>Add students from csv:</h3>
+<form method=post action="{{ url_for('web_interface.web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+    <input type=file name="file">
+    <input type=submit value="Add">
+</form>

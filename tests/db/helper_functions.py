@@ -3,6 +3,11 @@ from tabulate import tabulate
 import typing
 import sys
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
+
 from ucr_chatbot.db.models import *
 
 def initialize_db():
@@ -113,6 +118,8 @@ if __name__ == "__main__":
         clear_db()
         initialize_db()
         add_courses()
+        add_new_user("test@ucr.edu", "test", "user")
+        add_user_to_course("test@ucr.edu", "test", "user", 1, "instructor")
         print("Database reset.")
     elif "print" in sys.argv:
         print_users()

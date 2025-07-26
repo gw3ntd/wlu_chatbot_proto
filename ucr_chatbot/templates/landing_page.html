@@ -35,5 +35,17 @@
       </li>
       {% endfor %}
     </ul>
+
+    <h1>Instructor Views:</h1>
+    <ul>
+      {% for course in courses %}
+      <li>
+        <a href="{{ url_for('web_interface.web_routes.course_documents', course_id=course.id) }}">
+          {{ course.name }} (Instructor View)
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+
   </body>
 </html>
