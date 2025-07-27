@@ -25,6 +25,7 @@ from typing import List, Optional, cast
 from flask_login import current_user, login_required, login_user, logout_user # g
 import uuid 
 from datetime import datetime, timedelta
+from ucr_chatbot.decorators import roles_required
 
 from ucr_chatbot.db.models import (
     Session,
@@ -414,6 +415,7 @@ def conversation(conversation_id: int):
 
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 @login_required 
+# @roles_required(["teacher"])
 def course_documents(course_id: int):
     """Page where user uploads and sees their documents for a specific course.
 
@@ -501,6 +503,7 @@ def course_documents(course_id: int):
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
 @login_required
+# @roles_required(["teacher"])
 def delete_document(file_path: str):
     """Deletes a document uploaded by a user in a specific course
 
@@ -551,6 +554,7 @@ def delete_document(file_path: str):
 
 @bp.route("/document/<path:file_path>/download", methods=["GET"])
 @login_required
+# @roles_required(["teacher"])
 def download_file(file_path: str):
     """this function delivers a file that was already uploaded by a user
     and it makes sure that only the authorized user can download the file
