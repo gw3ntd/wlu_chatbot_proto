@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy.engine import Connection
 
 import numpy as np
-
+import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
@@ -326,7 +326,32 @@ def test_delete_user(db: Connection):
     assert len(result)==0
 
 
+def test_add_user_to_course(db: Connection):
+    """Tests add_user_to_course function by adding an example student."""
+    add_user_to_course('test@ucr.edu', 'Test', 'User', 1, 'student')
+    s = select(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id==1)
+    result = db.execute(s)
+    answer = None
+    for row in result:
+        answer = row
+    assert getattr(answer, "email") == "test@ucr.edu"
+    assert getattr(answer, "course_id") == 1
+    assert getattr(answer, "role") == "student"
 
+def test_add_students_from_list(db: Connection):
+    """Test add_users_from_list using an example pandas data frame student list"""
+    data = {'Student': ['fname1 lname1', 'fname2 lname2'],
+            'SIS User ID': ['s1', 's2'],
+            'Last Name': ['lname1', 'lname2'],
+            'First Name': ['fname1', 'fname2']}
+    student_list = pd.DataFrame(data)
+    add_students_from_list(student_list, 2)
+
+    s = select(ParticipatesIn).where(ParticipatesIn.course_id==2)
+    result = db.execute(s)
+    answer = None
+    student_emails = {student.email for student in result}
+    assert student_emails == {'s1@ucr.edu', 's2@ucr.edu'}
 
 def test_set_document_inactive(db: Connection):
   """Tests set_document_inactive wrapper function"""

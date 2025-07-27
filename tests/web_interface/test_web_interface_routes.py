@@ -4,6 +4,8 @@ import os
 from ucr_chatbot.db.models import upload_folder
 from db.helper_functions import *
 from unittest.mock import MagicMock
+from sqlalchemy import insert, select, delete, inspect
+
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
@@ -113,3 +115,21 @@ def test_file_delete(client: FlaskClient, monkeypatch):
     with open(full_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
     os.remove(full_path)
+
+def test_add_user(client: FlaskClient):
+    data = {"email": "testadd@ucr.edu", "fname": "testadd_fname", "lname": "testadd_lname"}
+    response = client.post("/course/1/add_user", data=data, content_type="multipart/form-data")
+    assert "302 FOUND" == response.status
+
+def test_add_students_from_list(client: FlaskClient):
+    csv_data = """Student, SIS User ID
+    extra line 1
+    extra line 2
+    lname1, fname1,s001
+    lname2, fname2, s002
+    """
+    data = {}
+    data["file"] = (io.BytesIO(csv_data.encode()), "student_list.csv")
+
+    response = client.post("/course/1/add_from_csv", data=data, content_type="multipart/form-data")
+    assert "302 FOUND" == response.status

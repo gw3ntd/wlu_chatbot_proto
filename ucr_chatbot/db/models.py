@@ -169,24 +169,43 @@ def add_new_user(email: str, first_name: str, last_name: str):
         except SQLAlchemyError:
             session.rollback()
 
-def add_user_to_course(email: str, first_name: str, last_name: str, course_id: int, role: str):
-    """Adds a user to the specified course.
-    :param email:
-    """
-    with Session(engine) as session:
 
+def add_user_to_course(
+    email: str, first_name: str, last_name: str, course_id: int, role: str
+):
+    """Adds a user to the specified course.
+    :param email: The email for the user to be added.
+    :param first_name: The first name for the user to be added.
+    :param last_name: The last name for the user to be added.
+    :param course_id: The course the user will be added to.
+    :param role: The role of the user in the course."""
+    with Session(engine) as session:
         user = session.query(Users).filter(Users.email == email).first()
         if not user:
             add_new_user(email, first_name, last_name)
-        
-        participation_status = session.query(ParticipatesIn).filter(ParticipatesIn.email == email, ParticipatesIn.course_id == course_id, ParticipatesIn.role == role).first()
+
+        participation_status = (
+            session.query(ParticipatesIn)
+            .filter(
+                ParticipatesIn.email == email,
+                ParticipatesIn.course_id == course_id,
+                ParticipatesIn.role == role,
+            )
+            .first()
+        )
         if not participation_status:
-            new_participation = ParticipatesIn(email=email, course_id= course_id, role=role)
+            new_participation = ParticipatesIn(
+                email=email, course_id=course_id, role=role
+            )
             session.add(new_participation)
             session.commit()
             print("User added to course.")
 
-def add_students_from_csv(data: pd.DataFrame, course_id: int):
+
+def add_students_from_list(data: pd.DataFrame, course_id: int):
+    """Adds students to course from a passed in list.
+    :param data: Pandas dataframe containing student information.
+    :param course_id: Course the students will be added to."""
     with Session(engine) as session:
         course = session.query(Courses).filter(Courses.id == course_id).first()
         if course:
@@ -196,6 +215,7 @@ def add_students_from_csv(data: pd.DataFrame, course_id: int):
                 fname = str(row["First Name"])
                 lname = str(row["Last Name"])
                 add_user_to_course(email, fname, lname, course_id, "student")
+
 
 def add_new_course(name: str):
     """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.
