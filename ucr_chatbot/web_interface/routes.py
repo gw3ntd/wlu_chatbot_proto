@@ -19,10 +19,12 @@ from werkzeug.security import generate_password_hash, check_password_hash # g
 from sqlalchemy import select, insert
 import pandas as pd
 import io
+from sqlalchemy import select, insert, func
 import os  
 from typing import List, Optional, cast
 from flask_login import current_user, login_required, login_user, logout_user # g
 import uuid 
+from datetime import datetime, timedelta
 
 from ucr_chatbot.db.models import (
     Session,
@@ -76,25 +78,36 @@ def login():
     :return: a redirect response to the dashboard or the login page
     :rtype: flask.Response
     """
-    if request.method == "POST":
-        max_attempts = current_app.config.get("MAX_LOGIN_ATTEMPTS", 3)
+    max_attempts = current_app.config.get("MAX_LOGIN_ATTEMPTS", 3)
+    cooldown_minutes = 5
 
-        if session.get("login_attempts", 0) >= max_attempts:
-            flash("Too many failed login attempts. Please try again later", "error")
-            return render_template("index.html")
-        
+    now = datetime.utcnow()
+
+    last_attempt_time = session.get("last_login_attempt_time")
+    if last_attempt_time:
+        last_attempt_time = datetime.fromisoformat(last_attempt_time)
+        if now - last_attempt_time > timedelta(minutes=cooldown_minutes):
+            session["login_attempts"] = 0
+
+    if session.get("login_attempts", 0) >= max_attempts:
+        flash("Too many failed login attempts. Please try again later", "error")
+        return render_template("index.html")
+    
+    if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
+        
         with Session(engine) as db_session:
             user = db_session.query(Users).filter_by(email=email).first()
 
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             session.pop("login_attempts", None)
-            session.regenerate()
+            session.pop("last_login_attempt_time", None)
             return redirect(request.args.get("next") or url_for("web_interface.web_routes.course_selection"))
         else:
             session["login_attempts"] = session.get("login_attempts", 0) + 1
+            session["last_login_attempt_time"] = now.isoformat()
             remaining = max_attempts - session["login_attempts"]
             flash(f"Invalid email or password. {remaining} attempt(s) remaining.", "error")
     return render_template("index.html")
@@ -126,20 +139,37 @@ def login_google() -> Response | tuple[str, int]:
     """
     try:
         max_attempts = current_app.config.get("MAX_LOGIN_ATTEMPTS", 3)
+        cooldown_minutes = 5
+
+        now = datetime.utcnow()
+        last_attempt_time = session.get("last_login_attempt_time")
+        
+        if last_attempt_time:
+            last_attempt_time = datetime.fromisoformat(last_attempt_time)
+            if now - last_attempt_time > timedelta(minutes=cooldown_minutes):
+                session["login_attempts"] = 0
+        
         if session.get("login_attempts", 0) >= max_attempts:
             flash("Too many failed login attempts. Please try again later", "error")
+            return redirect(url_for("web_interface.web_routes.login"))
+        
         google = current_app.oauth.google  # type: ignore
         redirect_uri = url_for("web_interface.web_routes.authorize_google", _external=True)
         return google.authorize_redirect(redirect_uri)  # type: ignore
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return f"<pre>Error occurred during login:<br>{str(e)}</pre>", 500
-
-
+    
 @bp.route("/authorize/google")
 def authorize_google():
+    """Google OAuth user verification. If the user is verified,
+    they are logged in and redirected to the dashboard endpoint. If they
+    can't be verified, an error message pops up.
+
+    :return: redirects user to the dashboard on success or returns an error
+    :rtype: Response | tuple[str, int]
+    """
     try:
         if "code" not in request.args:
             flash("Google authorization failed: No code received", "error")
@@ -155,13 +185,22 @@ def authorize_google():
         resp = google.get(userinfo_endpoint)
         resp.raise_for_status()
         user_info = resp.json()
-        email = user_info["email"]
-        with Session(engine) as session:
-            user = session.query(Users).filter_by(email=email).first()
+        
+        email = user_info["email"].lower()
+        with Session(engine) as db_session:
+            # user = db_session.query(Users).filter_by(email=email).first()
+            user = db_session.query(Users).filter(func.lower(Users.email) == email).first()
             if not user:
-                flash("Access denied: This email is not authorized.", "error")
+                session["login_attempts"] = session.get("login_attempts", 0) + 1
+                session["last_login_attempt_time"] = datetime.utcnow().isoformat()
+                remaining = current_app.config.get("MAX_LOGIN_ATTEMPTS", 3) - session["login_attempts"]
+                flash(f"Access denied: This email is not authorized. {remaining} attempt(s) remaining.", "error")
                 return redirect(url_for("web_interface.web_routes.login"))
+            
             login_user(user) # Log the user in
+            session.pop("login_attempts", None)
+            session.pop("last_login_attempt_time", None)
+            # session.regenerate()
         return redirect(url_for("web_interface.web_routes.course_selection"))
     except Exception as e:
         import traceback
@@ -169,44 +208,6 @@ def authorize_google():
         flash(f"Authorization error: {str(e)}", "error")
         return f"<pre>Authorization error:<br>{str(e)}</pre>", 500
 
-
-
-# gwen add
-# @bp.route("/authorize/google")
-# def authorize_google():
-#     """Google OAuth user verification. If the user is verified,
-#     they are logged in and redirected to the dashboard endpoint. If they
-#     can't be verified, an error message pops up.
-
-#     :return: redirects user to the dashboard on success or returns an error
-#     :rtype: Response | tuple[str, int]
-#     """
-#     try:
-        # google = current_app.oauth.google  # type: ignore
-#         google.authorize_access_token()  # type: ignore
-#         userinfo_endpoint = google.server_metadata["userinfo_endpoint"]  # type: ignore
-#         resp = google.get(userinfo_endpoint)  # type: ignore
-#         user_info = resp.json()  # type: ignore
-#         email = user_info["email"]
-#         with Session(engine) as session:
-#             user = session.query(Users).filter_by(email=email).first()
-#             if not user:
-#                 user = Users(
-#                     email=email,
-#                     password_hash=generate_password_hash("google-oauth-placeholder")
-#                 )
-#                 session.add(user)
-#                 session.commit()
-#             login_user(user)
-
-#         login_user(user)
-
-#         return redirect(url_for("web_routes.course_selection"))
-#     except Exception as e:
-#         import traceback
-
-#         traceback.print_exc()
-#         return f"<pre>Authorization error:<br>{str(e)}</pre>", 500
 
 def get_conv_messages(conversation_id: int):
     """Responds with all messages in requested conversation
@@ -414,8 +415,25 @@ def conversation(conversation_id: int):
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 @login_required 
 def course_documents(course_id: int):
-    """Renders the documents page for a course.
-    :param course_id: The id of the course for which documents are being managed."""
+    """Page where user uploads and sees their documents for a specific course.
+
+    Supports GET requests to display the documents the user uploads and
+    POST requests to upload a new document.
+
+    The uploaded files are saved to a user- and course-specific directory on the server.
+    Only allowed file types can be uploaded.
+
+    Uploaded documents are listed with options to download or delete each file.
+
+    :param course_id: unique identifier for course where documents are uploaded
+    :type course_id: int
+
+    :raises 404: If the current user is not found in the database.
+
+    :return: the document upload form, any error messages, and a list of the user's uploaded documents for the course.
+    :rtype: flask.Response
+
+    """
     email = current_user.email
     with Session(engine) as session:
         user = session.query(Users).filter_by(email=email).first()
@@ -484,8 +502,25 @@ def course_documents(course_id: int):
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
 @login_required
 def delete_document(file_path: str):
-    """Handles file deletion requests.
-    :param file_path: The path of the file to be deleted."""
+    """Deletes a document uploaded by a user in a specific course
+
+    Verifies that the current user matches the username parameter.
+
+    If the user or document does not exist, it raises a 404 error.
+
+    :param course_id: course ID of where the document is
+    :type course_id: int
+    :param username: username of document's owner
+    :type username: str
+    :param filename: filename of the document to delete
+    :type filename: str
+
+    :raises 403: the logged-in user does not match the provided username
+    :raises 404: the user or document does not exist in the database
+
+    :return: Redirects to the document listing page for the course after it is deleted
+    :rtype: flask.Response
+    """
     email = current_user.email
 
     if current_user.is_anonymous:
@@ -517,8 +552,21 @@ def delete_document(file_path: str):
 @bp.route("/document/<path:file_path>/download", methods=["GET"])
 @login_required
 def download_file(file_path: str):
-    """Handles file download requests.
-    :param file_path: The path of the file to be downloaded."""
+    """this function delivers a file that was already uploaded by a user
+    and it makes sure that only the authorized user can download the file
+
+    :param course_id: the ID of the course the file belongs to
+    :type course_id: int
+    :param username: the username of the user who owns the file
+    :type username: str
+    :param name: the name of the file to be downloaded
+    :type name: str
+
+    :raises 403: if the current user does not match the username parameter
+
+    :return: a response object to send the requested file from the user's upload directory
+    :rtype: flask.wrappers.Response
+    """
     email = current_user.email
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()

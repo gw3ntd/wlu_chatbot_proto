@@ -365,9 +365,9 @@ def create_upload_folder(course_id: int):
 if __name__ == '__main__':
     # Example: add a test user
     add_new_user(
-        email="tylertulowitzki32207@gmail.com",
+        email="tylertulowitzki49@gmail.com",
         first_name="Tyler",
-        last_name="Tulowitzki",
+        last_name="T",
         password="password123"
     )
     print("User added.")
