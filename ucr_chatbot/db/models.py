@@ -17,8 +17,9 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
+from typing import cast
 
-from flask_login import UserMixin
+from flask_login import UserMixin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Sequence
@@ -52,7 +53,7 @@ class Users(base, UserMixin):
     email = Column(String, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
-    password_hash = Column(String(255), nullable=False) 
+    password_hash = Column(String(255), nullable=False)
 
     conversations = relationship("Conversations", back_populates="user", uselist=True)
     messages = relationship("Messages", back_populates="user", uselist=True)
@@ -79,11 +80,11 @@ class Users(base, UserMixin):
         False if otherwise
         :rtype: bool
         """
-        return check_password_hash(self.password_hash, password)
+        return check_password_hash(cast(str, self.password_hash), password)
 
-    def get_id(self):
+    def get_id(self) -> str:
         """Return the ID used for Flask-Login session tracking."""
-        return self.email  # Flask-Login uses this to store user ID in session
+        return str(self.email)  # Flask-Login uses this to store user ID in session
 
 
 class ParticipatesIn(base):
@@ -362,12 +363,13 @@ def create_upload_folder(course_id: int):
 
     os.makedirs(os.path.join(upload_folder, str(course_id)))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example: add a test user
     add_new_user(
         email="tylertulowitzki49@gmail.com",
         first_name="Tyler",
         last_name="T",
-        password="password123"
+        password="password123",
     )
     print("User added.")

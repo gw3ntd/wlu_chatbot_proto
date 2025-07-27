@@ -14,7 +14,7 @@
     {% endwith %}
 
     <h1>Welcome to ScottGPT</h1>
-    <form id="auth-form" action="{{url_for('web_interface.web_routes.login')}}" method="post">
+    <form id="auth-form" action="{{url_for('web_routes.login')}}" method="post">
         <input 
           type="hidden" 
           name="csrf_token" 
@@ -41,7 +41,7 @@
           type="button" 
           class="btn login-google" 
           value="Login with Google"
-            onclick="window.location.href='{{ url_for('web_interface.web_routes.login_google') }}'" 
+            onclick="window.location.href='{{ url_for('web_routes.login_google') }}'" 
         />
     </form>
   </div>
@@ -50,8 +50,8 @@
 <script>
     function setActionForm(action){
         let form = document.getElementById("auth-form");
-        if (action === 'web_interface.web_routes.login'){
-            form.action = "{{url_for('web_interface.web_routes.login')}}";
+        if (action === 'web_routes.login'){
+            form.action = "{{url_for('web_routes.login')}}";
             form.method = "post";
             form.submit();
     }}

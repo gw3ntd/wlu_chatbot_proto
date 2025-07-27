@@ -1,38 +1,42 @@
 from flask.testing import FlaskClient
 import io
 import os
-from ucr_chatbot.db.models import upload_folder
+from ucr_chatbot.db.models import upload_folder, Users, engine, Session, ParticipatesIn
 from db.helper_functions import *
 from unittest.mock import MagicMock
 from sqlalchemy import insert, select, delete, inspect
 
+from flask_login import login_user
+from werkzeug.security import generate_password_hash
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
     assert "200 OK" == response.status
     assert "200 OK" == response.status
 
-def test_file_upload(client: FlaskClient, monkeypatch):
-    # delete_uploads_folder()
-    # clear_db()
-    # initialize_db()
-    # add_courses()
+def test_file_upload(client: FlaskClient, monkeypatch, app):
+    # --- Step 1: Add test user to DB ---
+    with app.app_context():
+        with Session(engine) as session:
+            user = Users(email="test@ucr.edu", first_name="John", last_name="Doe", password_hash=generate_password_hash("test123"))
+            session.add(user)
+            session.commit()
+
+    with client.session_transaction() as session:
+        session["_user_id"] = "test@ucr.edu" 
 
     mock_ollama_client = MagicMock()
     fake_embedding = [0.1, -0.2, 0.3, 0.4]
     mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
     monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
-    data = {}
-    data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file.txt")
+    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.txt")}
+    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data", follow_redirects=True)
 
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
-
-    assert "200 OK" == response.status
+    assert response.status_code == 200
     assert b"test_file.txt" in response.data
 
-    app_instance = client.application
-    file_path = os.path.join(os.path.join(upload_folder, "1"), "test_file.txt")
+    file_path = os.path.join(upload_folder, "1", "test_file.txt")
     assert os.path.exists(file_path)
     with open(file_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
@@ -52,68 +56,146 @@ def test_file_upload_no_file(client: FlaskClient):
     assert "302 FOUND" == response.status # Successful redirect
 
 
-def test_file_upload_invalid_extension(client: FlaskClient):
-    data = {}
-    data["file"] = (io.BytesIO(b"dog,cat,bird"), "animals.csv")
+def test_file_upload_invalid_extension(client: FlaskClient, app):
+    # create and log in a test user
+    with app.app_context():
+        with Session(engine) as session:
+            existing_user = session.query(Users).filter_by(email="test@ucr.edu").first()
+            if existing_user:
+                session.delete(existing_user)
+                session.commit()
 
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
+            user = Users(
+                email="test@ucr.edu",
+                first_name="John",
+                last_name="Doe",
+                password_hash=generate_password_hash("test123")
+            )
+            session.add(user)
+            session.commit()
 
-    assert "200 OK" == response.status
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = "test@ucr.edu"
+
+    data = {
+        "file": (io.BytesIO(b"dog,cat,bird"), "animals.csv")
+    }
+
+    response = client.post(
+        "/course/1/documents",
+        data=data,
+        content_type="multipart/form-data",
+        follow_redirects=True  
+    )
+
+    assert response.status_code == 200
     assert b"You can't upload this type of file" in response.data
 
 
-def test_file_download(client: FlaskClient, monkeypatch):
+def test_file_download(client: FlaskClient, monkeypatch, app):
+    with app.app_context():
+        with Session(engine) as session:
+            existing_user = session.query(Users).filter_by(email="test@ucr.edu").first()
+            if existing_user:
+                session.delete(existing_user)
+                session.commit()
+
+            user = Users(
+                email="test@ucr.edu",
+                first_name="John",
+                last_name="Doe",
+                password_hash=generate_password_hash("test123"),
+            )
+            session.add(user)
+            session.commit()
+
+            participation = ParticipatesIn(email="test@ucr.edu", course_id=1, role="student")
+            session.add(participation)
+            session.commit()
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = "test@ucr.edu"
+
     mock_ollama_client = MagicMock()
     fake_embedding = [0.1, -0.2, 0.3, 0.4]
     mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
     monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
-    data = {}
-    data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file_download.txt")
-
-
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
-    assert "200 OK" == response.status
+    data = {
+        "file": (io.BytesIO(b"Test file for CS009A"), "test_file_download.txt")
+    }
+    response = client.post(
+        "/course/1/documents",
+        data=data,
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
 
     file_path = os.path.join("1", "test_file_download.txt")
     response = client.get(f"/document/{file_path}/download")
 
-    assert "200 OK" == response.status
+    assert response.status_code == 200
     assert response.data == b"Test file for CS009A"
 
-    file_path = os.path.join(upload_folder, file_path)
-    assert os.path.exists(file_path)
-    with open(file_path, "rb") as f:
+    full_file_path = os.path.join(upload_folder, "1", "test_file_download.txt")
+    assert os.path.exists(full_file_path)
+    with open(full_file_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
-
-    response = client.get("/")
-    assert "200 OK" == response.status
-
-    os.remove(os.path.join(upload_folder,file_path))
+    os.remove(full_file_path)
 
 
-def test_file_delete(client: FlaskClient, monkeypatch):
+def test_file_delete(client: FlaskClient, monkeypatch, app):
+    with app.app_context():
+        with Session(engine) as session:
+            existing_user = session.query(Users).filter_by(email="test@ucr.edu").first()
+            if existing_user:
+                session.query(ParticipatesIn).filter_by(email="test@ucr.edu").delete()
+                session.delete(existing_user)
+                session.commit()
+
+            user = Users(
+                email="test@ucr.edu",
+                first_name="John",
+                last_name="Doe",
+                password_hash=generate_password_hash("test123"),
+            )
+            session.add(user)
+            session.commit()
+
+            participation = ParticipatesIn(email="test@ucr.edu", course_id=1, role="student")
+            session.add(participation)
+            session.commit()
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = "test@ucr.edu"
+
     mock_ollama_client = MagicMock()
     fake_embedding = [0.1, -0.2, 0.3, 0.4]
     mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
     monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
-    data = {}
-    data["file"] = (io.BytesIO(b"Test file for CS009A"), "test_file_delete.txt")
-
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
-    assert "200 OK" == response.status
+    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file_delete.txt")}
+    response = client.post(
+        "/course/1/documents",
+        data=data,
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"test_file_delete.txt" in response.data
 
     file_path = os.path.join("1", "test_file_delete.txt")
 
-    response = client.post(f"document/{file_path}/delete")
+    response = client.post(f"/document/{file_path}/delete", follow_redirects=False)
+    assert response.status_code == 302
 
-    assert "302 FOUND" == response.status
-
-    full_path = os.path.join(upload_folder,file_path)
+    full_path = os.path.join(upload_folder, file_path)
     assert os.path.exists(full_path)
     with open(full_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
+
     os.remove(full_path)
 
 def test_add_user(client: FlaskClient):
@@ -133,3 +215,4 @@ def test_add_students_from_list(client: FlaskClient):
 
     response = client.post("/course/1/add_from_csv", data=data, content_type="multipart/form-data")
     assert "302 FOUND" == response.status
+

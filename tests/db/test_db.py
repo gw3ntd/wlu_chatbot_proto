@@ -50,15 +50,16 @@ def test_add_new_course(db: Connection):
 
 def test_add_new_user(db: Connection):
     """tests the add_new_user wrapper function"""
-    add_new_user("test@ucr.edu", "John", "Doe")
+    add_new_user("test@ucr.edu", "John", "Doe", "testpassword123")
     s = select(Users).where(Users.email=='test@ucr.edu', Users.first_name=='John', Users.last_name=='Doe')
     result = db.execute(s)
 
     answer = None
     for row in result:
         answer = row
-    assert answer is not None
-    assert answer == ('test@ucr.edu', 'John', 'Doe')
+    assert answer.email == 'test@ucr.edu'
+    assert answer.first_name == 'John'
+    assert answer.last_name == 'Doe'
 
 
 # def test_add_user_integrity(capsys):
@@ -67,13 +68,19 @@ def test_add_new_user(db: Connection):
 #     captured = capsys.readouterr()
 #     assert "Error adding new user." in captured.out
 
-def test_print_users(capsys):
-    """tests the print_users wrapper function"""
+def test_print_users(capsys, db: Connection):
+    """Tests the print_users wrapper function"""
+
+    add_new_user("test@ucr.edu", "John", "Doe", "password123")
+
     print_users()
     captured = capsys.readouterr()
-    print(repr(captured.out)) 
-    assert captured.out == '+--------------+------+-----+\n| 0            | 1    | 2   |\n|--------------+------+-----|\n| test@ucr.edu | John | Doe |\n+--------------+------+-----+\n'
 
+    print(repr(captured.out))
+
+    assert "test@ucr.edu" in captured.out
+    assert "John" in captured.out
+    assert "Doe" in captured.out
 
 
 def test_insert_participates(db: Connection):
