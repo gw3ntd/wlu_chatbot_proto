@@ -1,27 +1,56 @@
-<!doctype html>
-<title>Upload new File</title>
-<h1>Upload new File</h1>
-<form method=post enctype=multipart/form-data>
-    <input type=file name=file>
-    <input type=submit value=Upload>
-</form>
-<body>
-    <p>{{body | safe}}</p>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UCR</title>
 
-<h1>Add Students to Course</h1>
-<h3>Add student manually:</h3>
-<form method=post action="{{ url_for('web_interface.web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
-    <label for="email">Student email:</label><br>
-    <input type="text" id="email" name="email"><br>
-    <label for="fname">First name:</label><br>
-    <input type="text" id="fname" name="fname"><br>
-    <label for="lname">Last name:</label><br>
-    <input type="text" id="lname" name="lname"><br><br>
-    <input type=submit value=Add>
-</form>
-<h3>Add students from csv:</h3>
-<form method=post action="{{ url_for('web_interface.web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
-    <input type=file name="file">
-    <input type=submit value="Add">
-</form>
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing_page.css') }}" />
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
+        rel="stylesheet"
+    />
+    </head>
+    <body>
+    <!-- HEADER -->
+    <header>
+        <h1>ScotGPT</h1>
+        <img
+        src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}"
+        alt="UC Riverside logo"
+        />
+    </header>
+    </body>
+    <section style="margin-left: 20px;">
+        <title>Upload New File</title>
+        <h1>Upload new File</h1>
+        <form method=post enctype=multipart/form-data>
+            <input type=file name=file>
+            <input type=submit value=Upload>
+        </form>
+        <body>
+            <p>{{body | safe}}</p>
+        </body>
+
+        <h1>Add Students to Course</h1>
+        <h3>Add student manually:</h3>
+        <form method=post action="{{ url_for('web_interface.web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
+            <label for="email">Student email:</label><br>
+            <input type="text" id="email" name="email"><br>
+            <label for="fname">First name:</label><br>
+            <input type="text" id="fname" name="fname"><br>
+            <label for="lname">Last name:</label><br>
+            <input type="text" id="lname" name="lname"><br><br>
+            <input type=submit value=Add>
+        </form>
+        <h3>Add students from csv:</h3>
+        <form method=post action="{{ url_for('web_interface.web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <input type=file name="file">
+            <input type=submit value="Add">
+        </form>
+    </section>
+</html>

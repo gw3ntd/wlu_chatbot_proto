@@ -120,6 +120,7 @@ if __name__ == "__main__":
         add_courses()
         add_new_user("test@ucr.edu", "test", "user")
         add_user_to_course("test@ucr.edu", "test", "user", 1, "instructor")
+        add_user_to_course("test@ucr.edu", "test", "user", 9, "student")
         print("Database reset.")
     elif "print" in sys.argv:
         print_users()

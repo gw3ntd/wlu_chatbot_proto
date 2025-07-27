@@ -24,28 +24,26 @@
         alt="UC Riverside logo"
       />
     </header>
-
-    <h1>Select a Course:</h1>
-    <ul>
-      {% for course in courses %}
-      <li>
-        <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}">
-          {{ course.name }}
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-
-    <h1>Instructor Views:</h1>
-    <ul>
-      {% for course in courses %}
-      <li>
-        <a href="{{ url_for('web_interface.web_routes.course_documents', course_id=course.id) }}">
-          {{ course.name }} (Instructor View)
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-
+    <section style="margin-left: 20px;">
+      <h1>Select a Course:</h1>
+      <ul>
+        {% for course, role in courses %}
+        {% if role == 'student' %}
+        <li>
+          <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}">
+            {{ course.name }}
+          </a>
+        </li>
+        {% endif %}
+        {% if role == 'instructor' %}
+        <li>
+          <a href="{{ url_for('web_interface.web_routes.course_documents', course_id=course.id) }}">
+            {{ course.name }} (Instructor View)
+          </a>
+        </li>    
+        {% endif %}  
+        {% endfor %}
+      </ul>
+    </section>
   </body>
 </html>

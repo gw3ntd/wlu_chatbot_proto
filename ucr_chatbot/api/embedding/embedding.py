@@ -4,7 +4,7 @@ from ..language_model.response import MODE
 
 OLLAMA_URL = "localhost:11434"
 
-if MODE == "testing":
+if MODE == "dog":
     client = None
 else:
     try:

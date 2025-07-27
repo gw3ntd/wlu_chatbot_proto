@@ -168,12 +168,13 @@ def course_selection():
     user_email = "test@ucr.edu"
     with Session(engine) as session:
         stmt = (
-            select(Courses)
+            select(Courses, ParticipatesIn.role)
             .join(ParticipatesIn, Courses.id == ParticipatesIn.course_id)
             .where(ParticipatesIn.email == user_email)
         )
-        courses = session.execute(stmt).scalars().all()
-
+        
+        courses = session.execute(stmt).all()
+        
     return render_template(
         "landing_page.html",
         courses=courses,
