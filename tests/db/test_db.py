@@ -50,7 +50,7 @@ def test_add_new_course(db: Connection):
 
 def test_add_new_user(db: Connection):
     """tests the add_new_user wrapper function"""
-    add_new_user("test@ucr.edu", "John", "Doe", "testpassword123")
+    add_new_user("test@ucr.edu", "John", "Doe")
     s = select(Users).where(Users.email=='test@ucr.edu', Users.first_name=='John', Users.last_name=='Doe')
     result = db.execute(s)
 
@@ -71,7 +71,7 @@ def test_add_new_user(db: Connection):
 def test_print_users(capsys, db: Connection):
     """Tests the print_users wrapper function"""
 
-    add_new_user("test@ucr.edu", "John", "Doe", "password123")
+    add_new_user("test@ucr.edu", "John", "Doe")
 
     print_users()
     captured = capsys.readouterr()
@@ -408,7 +408,3 @@ def test_store_embedding(db: Connection):
     assert id == 1
     assert np.allclose(vector, [1.0, 2.0, 3.0])
     assert seg_id == segment_id
-
-
-
- 

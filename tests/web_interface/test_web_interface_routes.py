@@ -17,10 +17,7 @@ def test_course_selection_ok_response(client: FlaskClient):
 def test_file_upload(client: FlaskClient, monkeypatch, app):
     # --- Step 1: Add test user to DB ---
     with app.app_context():
-        with Session(engine) as session:
-            user = Users(email="test@ucr.edu", first_name="John", last_name="Doe", password_hash=generate_password_hash("test123"))
-            session.add(user)
-            session.commit()
+        add_new_user("test@ucr.edu", "John", "Doe")
 
     with client.session_transaction() as session:
         session["_user_id"] = "test@ucr.edu" 
@@ -59,21 +56,7 @@ def test_file_upload_no_file(client: FlaskClient):
 def test_file_upload_invalid_extension(client: FlaskClient, app):
     # create and log in a test user
     with app.app_context():
-        with Session(engine) as session:
-            existing_user = session.query(Users).filter_by(email="test@ucr.edu").first()
-            if existing_user:
-                session.delete(existing_user)
-                session.commit()
-
-            user = Users(
-                email="test@ucr.edu",
-                first_name="John",
-                last_name="Doe",
-                password_hash=generate_password_hash("test123")
-            )
-            session.add(user)
-            session.commit()
-
+        add_new_user("test@ucr.edu", "John", "Doe")
 
     with client.session_transaction() as sess:
         sess["_user_id"] = "test@ucr.edu"
@@ -95,24 +78,8 @@ def test_file_upload_invalid_extension(client: FlaskClient, app):
 
 def test_file_download(client: FlaskClient, monkeypatch, app):
     with app.app_context():
-        with Session(engine) as session:
-            existing_user = session.query(Users).filter_by(email="test@ucr.edu").first()
-            if existing_user:
-                session.delete(existing_user)
-                session.commit()
-
-            user = Users(
-                email="test@ucr.edu",
-                first_name="John",
-                last_name="Doe",
-                password_hash=generate_password_hash("test123"),
-            )
-            session.add(user)
-            session.commit()
-
-            participation = ParticipatesIn(email="test@ucr.edu", course_id=1, role="student")
-            session.add(participation)
-            session.commit()
+        add_new_user("test@ucr.edu", "John", "Doe")
+        add_user_to_course("test@ucr.edu", "John", "Doe", 1, "student")
 
     with client.session_transaction() as sess:
         sess["_user_id"] = "test@ucr.edu"
@@ -143,6 +110,9 @@ def test_file_download(client: FlaskClient, monkeypatch, app):
     assert os.path.exists(full_file_path)
     with open(full_file_path, "rb") as f:
         assert f.read() == b"Test file for CS009A"
+    
+    response = client.get("/course/1/documents")
+    assert response.status_code == 200
     os.remove(full_file_path)
 
 

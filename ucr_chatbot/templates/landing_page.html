@@ -63,14 +63,14 @@
         {% for course, role in courses %}
         {% if role == 'student' %}
         <li>
-          <a href="{{ url_for('web_interface.web_routes.new_conversation', course_id=course.id) }}">
+          <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
             {{ course.name }}
           </a>
         </li>
         {% endif %}
         {% if role == 'instructor' %}
         <li>
-          <a href="{{ url_for('web_interface.web_routes.course_documents', course_id=course.id) }}">
+          <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
             {{ course.name }} (Instructor View)
           </a>
         </li>    

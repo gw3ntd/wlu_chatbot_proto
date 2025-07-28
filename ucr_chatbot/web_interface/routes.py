@@ -6,18 +6,20 @@ from flask import (
     url_for,
     redirect,
     send_from_directory,
-    session,  # g
-    abort,  # g
-    flash,  # g
-    current_app,  # g
-    Response as FlaskResponse,  # g
+    session,
+    abort,
+    flash,
+    current_app,
+    Response as FlaskResponse,
+    get_flashed_messages,
+    make_response,
 )
 
 import pandas as pd
 import io
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
-from werkzeug.security import check_password_hash  # g
+from werkzeug.security import check_password_hash
 from sqlalchemy import select, insert, func
 import os
 from flask_login import current_user, login_required, login_user, logout_user  # type: ignore
@@ -43,7 +45,6 @@ from ucr_chatbot.db.models import (
     set_document_inactive,
     add_user_to_course,
     add_students_from_list,
-    Documents,
     Users,
 )
 
@@ -56,7 +57,6 @@ from ..api.embedding.embedding import embed_text
 bp = Blueprint("web_routes", __name__)
 
 
-# gwen add
 @bp.route("/")
 def home():
     """Login page for the user. If the user is already
@@ -68,10 +68,8 @@ def home():
     if current_user.is_authenticated:
         return redirect(url_for("web_routes.course_selection"))
     return render_template("index.html")
-    # return "hello"
 
 
-# gwen add
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     """Checks if the user has valid login credentials. If they do, the
@@ -80,6 +78,7 @@ def login():
     :return: a redirect response to the dashboard or the login page
     :rtype: flask.Response
     """
+    get_flashed_messages()  # clearing flash() messages
     config = cast(Mapping[str, Any], current_app.config)
     max_attempts = cast(int, config.get("MAX_LOGIN_ATTEMPTS", 3))
     cooldown_minutes = 5
@@ -117,10 +116,14 @@ def login():
             flash(
                 f"Invalid email or password. {remaining} attempt(s) remaining.", "error"
             )
-    return render_template("index.html")
+    rendered_template = render_template("index.html")
+    response = make_response(rendered_template)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
-# gwen add
 @bp.route("/logout")
 @login_required
 def logout():
@@ -134,7 +137,6 @@ def logout():
     return redirect(url_for("web_routes.home"))
 
 
-# gwen add
 @bp.route("/login/google")
 def login_google() -> Union[FlaskResponse, tuple[str, int]]:
     """This function starts the Google OAuth login process for
@@ -275,7 +277,7 @@ def get_conversation_ids(user_email: str, course_id: int):
         stmt = (
             select(Conversations.id)
             .where(
-                Conversations.initiated_by == user_email,  # changed ts
+                Conversations.initiated_by == user_email,
                 Conversations.course_id == course_id,
             )
             .order_by(Conversations.id.desc())
@@ -357,10 +359,10 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
 
 
 @bp.route("/course_selection")
-@login_required  # gwen add
+@login_required
 def course_selection():
     """Renders the main landing page with a list of the user's courses."""
-    user_email = current_user.email  # I changed this
+    user_email = current_user.email
     with Session(engine) as session:
         stmt = (
             select(Courses, ParticipatesIn.role)
@@ -373,12 +375,12 @@ def course_selection():
     return render_template(
         "landing_page.html",
         courses=courses,
-        email=current_user.email,  # gwen add
+        email=current_user.email,
     )
 
 
 @bp.route("/conversation/new/<int:course_id>/chat", methods=["GET", "POST"])
-@login_required  # gwen add
+@login_required
 def new_conversation(course_id: int):
     """Renders the conversation page for a new conversation.
 
@@ -390,7 +392,7 @@ def new_conversation(course_id: int):
     ):
         content = request.get_json()
         request_type = content["type"]
-        user_email = current_user.email  # I changed this
+        user_email = current_user.email
 
         if request_type == "ids":
             return get_conversation_ids(user_email, course_id)
@@ -401,7 +403,7 @@ def new_conversation(course_id: int):
 
 
 @bp.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
-@login_required  # gwen add
+@login_required
 def conversation(conversation_id: int):
     """Renders the conversation page for an existing conversation.
     :param conversation_id: The id of the conversation to be displayed.
@@ -494,6 +496,7 @@ def course_documents(course_id: int):
                 embedding = embed_text(seg)
                 store_embedding(embedding, seg_id)
             flash("File uploaded and processed successfully!", "success")
+            return redirect(url_for(".course_documents", course_id=course_id))
 
         except (ValueError, TypeError):
             if os.path.exists(full_local_path):
@@ -552,6 +555,9 @@ def delete_document(file_path: str):
     if current_user.is_anonymous:
         abort(403)
 
+    file_path = file_path.replace(os.path.sep, "/")
+    full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
@@ -568,9 +574,6 @@ def delete_document(file_path: str):
             )
 
         course_id = document.course_id
-
-        file_path = file_path.replace(os.path.sep, "/")
-        full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
 
         if os.path.exists(full_path):
             # os.remove(full_path)  # physical delete optional
@@ -599,7 +602,9 @@ def download_file(file_path: str):
     :rtype: flask.wrappers.Response
     """
     email = current_user.email
+    file_path = file_path.replace(os.path.sep, "/")
     with Session(engine) as session:
+        print(file_path)
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
             abort(404)
@@ -611,15 +616,16 @@ def download_file(file_path: str):
         )
         if not participation:
             abort(403)
-
+    print("here")
     directory, name = os.path.split(file_path)
     return send_from_directory(os.path.join(upload_folder, directory), name)
 
 
-@bp.route("course/<int:course_id>/add_user", methods=["POST"])
+@bp.route("/course/<int:course_id>/add_user", methods=["POST"])
 def add_student(course_id: int):
     """Adds a student to the current course.
-    :param course_id: The course the student will be added to."""
+    :param course_id: The course the student will be added to.
+    """
     user_email = request.form["email"]
     user_fname = request.form["fname"]
     user_lname = request.form["lname"]
@@ -628,10 +634,11 @@ def add_student(course_id: int):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
-@bp.route("course/<int:course_id>/add_from_csv", methods=["POST"])
+@bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
 def add_from_csv(course_id: int):
     """Adds multiple students an uploaded student list csv file.
-    :params course_id: The course the students will be added to."""
+    :params course_id: The course the students will be added to.
+    """
     if request.method == "POST":
         if "file" not in request.files:
             return redirect(request.url)

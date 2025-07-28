@@ -18,6 +18,8 @@ import os
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from typing import cast
+import secrets
+import string
 
 from flask_login import UserMixin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -186,7 +188,7 @@ class References(base):
 # base.metadata.create_all(engine)
 
 
-def add_new_user(email: str, first_name: str, last_name: str, password: str):
+def add_new_user(email: str, first_name: str, last_name: str):
     """Adds new user entry to Users table with the given parameters.
     :param email: new user's email address
     :param first_name: new user's first name
@@ -194,11 +196,13 @@ def add_new_user(email: str, first_name: str, last_name: str, password: str):
     """
     with Session(engine) as session:
         try:
+            alphabet = string.ascii_letters + string.digits
+            password = "".join(secrets.choice(alphabet) for _ in range(10))
             new_user = Users(
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                password_hash="",  # temporary, will set below
+                password_hash="",
             )
             new_user.set_password(password)
 
@@ -362,14 +366,3 @@ def create_upload_folder(course_id: int):
         os.makedirs(upload_folder)
 
     os.makedirs(os.path.join(upload_folder, str(course_id)))
-
-
-if __name__ == "__main__":
-    # Example: add a test user
-    add_new_user(
-        email="tylertulowitzki49@gmail.com",
-        first_name="Tyler",
-        last_name="T",
-        password="password123",
-    )
-    print("User added.")
