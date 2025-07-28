@@ -25,7 +25,7 @@ import os
 from flask_login import current_user, login_required, login_user, logout_user  # type: ignore
 from datetime import datetime, timedelta, timezone
 
-# from ucr_chatbot.decorators import roles_required
+from ucr_chatbot.decorators import roles_required
 from typing import cast, Union, Any, Dict, Mapping
 
 from ucr_chatbot.db.models import (
@@ -440,7 +440,7 @@ def conversation(conversation_id: int):
 
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 @login_required
-# @roles_required(["teacher"])
+@roles_required(["instructor"])
 def course_documents(course_id: int):
     """Page where user uploads and sees their documents for a specific course.
 
@@ -529,7 +529,7 @@ def course_documents(course_id: int):
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
 @login_required
-# @roles_required(["teacher"])
+@roles_required(["instructor"])
 def delete_document(file_path: str):
     """Deletes a document uploaded by a user in a specific course
 
@@ -584,7 +584,7 @@ def delete_document(file_path: str):
 
 @bp.route("/document/<path:file_path>/download", methods=["GET"])
 @login_required
-# @roles_required(["teacher"])
+@roles_required(["instructor"])
 def download_file(file_path: str):
     """this function delivers a file that was already uploaded by a user
     and it makes sure that only the authorized user can download the file
@@ -604,7 +604,6 @@ def download_file(file_path: str):
     email = current_user.email
     file_path = file_path.replace(os.path.sep, "/")
     with Session(engine) as session:
-        print(file_path)
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
             abort(404)
@@ -616,12 +615,14 @@ def download_file(file_path: str):
         )
         if not participation:
             abort(403)
-    print("here")
+
     directory, name = os.path.split(file_path)
     return send_from_directory(os.path.join(upload_folder, directory), name)
 
 
 @bp.route("/course/<int:course_id>/add_user", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
 def add_student(course_id: int):
     """Adds a student to the current course.
     :param course_id: The course the student will be added to.
@@ -635,6 +636,8 @@ def add_student(course_id: int):
 
 
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
 def add_from_csv(course_id: int):
     """Adds multiple students an uploaded student list csv file.
     :params course_id: The course the students will be added to.

@@ -70,6 +70,7 @@ class Users(base, UserMixin):
         :type password: str
 
         """
+        print("User " + self.email + " password:" + password)
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
@@ -82,7 +83,9 @@ class Users(base, UserMixin):
         False if otherwise
         :rtype: bool
         """
-        return check_password_hash(cast(str, self.password_hash), password)
+        return check_password_hash(
+            cast(str, self.password_hash), generate_password_hash(password)
+        )
 
     def get_id(self) -> str:
         """Return the ID used for Flask-Login session tracking."""
