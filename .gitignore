@@ -19,6 +19,12 @@ docs/
 
 .env
 
+.DS_Store
+ucr_chatbot/.DS_Store
+ucr_chatbot/web_interface/.DS_Store
+tests/.DS_Store
+
+
 ucr_chatbot/uploads
 ucr_chatbot/test_uploads
 ucr_chatbot/db/uploads
