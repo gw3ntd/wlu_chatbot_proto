@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 import ollama
-from typing import Generator, List
+from typing import Generator, List, Any
 from abc import ABC, abstractmethod
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -46,6 +46,109 @@ class LanguageModelClient(ABC):
         :raises ValueError: If the list contains more than 5 items."""
 
         pass
+
+
+class TestingClient(LanguageModelClient):
+    """A testing client that implements the LanguageModelClient interface.
+
+    This client is used for testing purposes and returns predictable responses
+    without requiring external API connections. It stores all parameters passed
+    to it and returns formatted responses showing what was received.
+    """
+
+    def __init__(self):
+        """Initialize the testing client with default values."""
+        self.temp: float = 1.0
+        self.stop_sequences: List[str] = []
+        self.last_prompt: str | None = None
+        self.last_max_tokens: int | None = None
+        self.last_temperature: float | None = None
+        self.last_stop_sequences: List[str] | None = None
+
+    def get_response(self, prompt: str, max_tokens: int = 3000, **kwargs: Any) -> str:
+        """Gets a single response from the testing client.
+
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :param kwargs: Additional keyword arguments (temperature, stop_sequences, etc.)
+        :return: A formatted string showing the parameters that were passed.
+        """
+        # Store the parameters for testing purposes
+        self.last_prompt = prompt
+        self.last_max_tokens = max_tokens
+        self.last_temperature = kwargs.get("temperature", self.temp)
+        self.last_stop_sequences = kwargs.get("stop_sequences", self.stop_sequences)
+
+        # Return a formatted response showing what was passed
+        response_parts = [
+            f"You passed in arguments: prompt='{prompt}', max_tokens={max_tokens}"
+        ]
+
+        if "temperature" in kwargs:
+            response_parts.append(f"temperature={kwargs['temperature']}")
+        if "stop_sequences" in kwargs:
+            response_parts.append(f"stop_sequences={kwargs['stop_sequences']}")
+
+        return " | ".join(response_parts)
+
+    def stream_response(
+        self, prompt: str, max_tokens: int = 3000, **kwargs: Any
+    ) -> Generator[str, None, None]:
+        """Streams a response from the testing client.
+
+        :param prompt: The prompt to feed into the language model.
+        :param max_tokens: The maximal number of tokens to generate.
+        :param kwargs: Additional keyword arguments (temperature, stop_sequences, etc.)
+        :yields: A generator yielding parts of the response.
+        """
+        # Store the parameters for testing purposes
+        self.last_prompt = prompt
+        self.last_max_tokens = max_tokens
+        self.last_temperature = kwargs.get("temperature", self.temp)
+        self.last_stop_sequences = kwargs.get("stop_sequences", self.stop_sequences)
+
+        # Yield a formatted response showing what was passed
+        response_parts = [
+            f"You passed in arguments: prompt='{prompt}', max_tokens={max_tokens}"
+        ]
+
+        if "temperature" in kwargs:
+            response_parts.append(f"temperature={kwargs['temperature']}")
+        if "stop_sequences" in kwargs:
+            response_parts.append(f"stop_sequences={kwargs['stop_sequences']}")
+
+        full_response = " | ".join(response_parts)
+
+        # Split the response into chunks for streaming
+        words = full_response.split()
+        chunk_size = max(1, len(words) // 3)  # Split into roughly 3 chunks
+
+        for i in range(0, len(words), chunk_size):
+            chunk_words = words[i : i + chunk_size]
+            yield " ".join(chunk_words) + (" " if i + chunk_size < len(words) else "")
+
+    def set_temp(self, temp: float) -> None:
+        """Sets the generation temperature for the model.
+
+        :param temp: The temperature for generation, between 0.0 and 2.0.
+        :raises ValueError: If the temperature is not in the valid range.
+        """
+        if not (0.0 <= temp <= 2.0):
+            raise ValueError("Temperature must be between 0.0 and 2.0.")
+        self.temp = temp
+
+    def set_stop_sequences(self, stop: List[str]) -> None:
+        """Sets the stop sequences for the model.
+
+        :param stop: A list of strings that will stop the generation when encountered.
+        :raises TypeError: If stop is not a list of strings.
+        :raises ValueError: If the list contains more than 5 items.
+        """
+        if len(stop) > 5:
+            raise ValueError(
+                "The list of stop sequences cannot contain more than 5 items."
+            )
+        self.stop_sequences = stop
 
 
 # --- Client Classes ---
@@ -189,4 +292,4 @@ if MODE == "production":
 elif MODE == "development":
     client = Ollama(host="http://localhost:11434")
 elif MODE == "testing":
-    client = None  # type: ignore
+    client = TestingClient()

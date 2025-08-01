@@ -5,44 +5,50 @@ from unittest.mock import MagicMock
 def test_generate_non_stream_success(client, monkeypatch):
     """
     Tests a successful non-streaming POST request to /generate.
+    Uses TestingClient for language model but mocks retriever to avoid database issues.
     """
-    # 1. Mock the dependencies that the route calls
-    mock_llm_client = MagicMock()
+    # Mock the retriever to avoid database connection issues
     mock_retriever = MagicMock()
-
-    # Configure the return values for the mocked dependencies
-    mock_retriever.get_segments_for.return_value = [MagicMock(id=10, text="fact 1")]
-    mock_llm_client.get_response.return_value = "Mocked LLM response."
-
-    # Use monkeypatch to replace the real objects with our mocks
-    monkeypatch.setattr("ucr_chatbot.api.routes.client", mock_llm_client)
+    mock_segments = [
+        MagicMock(id=1, text="First relevant context"),
+        MagicMock(id=2, text="Second relevant context"),
+        MagicMock(id=3, text="Third relevant context")
+    ]
+    mock_retriever.get_segments_for.return_value = mock_segments
     monkeypatch.setattr("ucr_chatbot.api.routes.retriever", mock_retriever)
 
-    # 2. Make the request to the endpoint
+    # Make the request to the endpoint
     response = client.post(
         '/api/generate',
         json={"prompt": "What is Python?", "conversation_id": 55}
     )
 
-    # 3. Assert the results
+    # Assert the results
     assert response.status_code == 200
     response_data = response.get_json()
-    assert response_data["text"] == "Mocked LLM response."
+    
+    # Verify response structure
+    assert "text" in response_data
+    assert "conversation_id" in response_data
+    assert "sources" in response_data
+    
+    # Verify response values
     assert response_data["conversation_id"] == 55
-    assert response_data["sources"] == [{"segment_id": 10}]
+    assert "You passed in arguments" in response_data["text"]
+    assert "What is Python?" in response_data["text"]
+    
+    # Verify retriever was called
+    mock_retriever.get_segments_for.assert_called_once_with("What is Python?", num_segments=3)
 
 
 def test_generate_stream_success(client, monkeypatch):
     """
     Tests a successful streaming POST request to /generate.
+    Uses TestingClient for language model but mocks retriever to avoid database issues.
     """
-    mock_llm_client = MagicMock()
+    # Mock the retriever to avoid database connection issues
     mock_retriever = MagicMock()
-
     mock_retriever.get_segments_for.return_value = []
-    mock_llm_client.stream_response.return_value = iter(["Mock ", "stream."])
-
-    monkeypatch.setattr("ucr_chatbot.api.routes.client", mock_llm_client)
     monkeypatch.setattr("ucr_chatbot.api.routes.retriever", mock_retriever)
 
     response = client.post(
@@ -52,24 +58,26 @@ def test_generate_stream_success(client, monkeypatch):
 
     assert response.status_code == 200
     assert response.mimetype == "text/event-stream"
+    
     # Verify the server-sent event formatting
-    expected_data = 'data: {"text": "Mock "}\n\ndata: {"text": "stream."}\n\n'
-    assert response.get_data(as_text=True) == expected_data
+    response_data = response.get_data(as_text=True)
+    assert "data: " in response_data
+    assert "You passed in arguments" in response_data
+    assert "Tell me a story" in response_data
 
 
 def test_generate_passes_parameters_to_client(client, monkeypatch):
     """
     Tests that optional parameters are correctly extracted from the JSON
     and passed to the language model client.
+    Uses TestingClient to verify parameters are passed correctly.
     """
-    mock_llm_client = MagicMock()
-    mock_llm_client.get_response.return_value = "mocked llm response"
+    # Mock the retriever to avoid database connection issues
     mock_retriever = MagicMock()
     mock_retriever.get_segments_for.return_value = []
-    monkeypatch.setattr("ucr_chatbot.api.routes.client", mock_llm_client)
     monkeypatch.setattr("ucr_chatbot.api.routes.retriever", mock_retriever)
 
-    client.post(
+    response = client.post(
         '/api/generate',
         json={
             "prompt": "test",
@@ -79,13 +87,59 @@ def test_generate_passes_parameters_to_client(client, monkeypatch):
         }
     )
 
-    # Assert that the client's get_response method was called once
-    mock_llm_client.get_response.assert_called_once()
-    # Inspect the keyword arguments of that call
-    _, call_kwargs = mock_llm_client.get_response.call_args
-    assert call_kwargs['temperature'] == 0.99
-    assert call_kwargs['max_tokens'] == 512
-    assert call_kwargs['stop_sequences'] == ["\n", "User:"]
+    assert response.status_code == 200
+    response_data = response.get_json()
+    
+    # Verify that the TestingClient received and formatted the parameters
+    assert "temperature=0.99" in response_data["text"]
+    assert "max_tokens=512" in response_data["text"]
+    assert "stop_sequences=" in response_data["text"]
+
+
+def test_generate_with_all_parameters(client, monkeypatch):
+    """
+    Tests the /api/generate endpoint with ALL valid parameters to ensure
+    comprehensive coverage of the API functionality.
+    Uses TestingClient for language model but mocks retriever to avoid database issues.
+    """
+    # Mock the retriever to avoid database connection issues
+    mock_retriever = MagicMock()
+    mock_segments = [
+        MagicMock(id=1, text="First relevant context"),
+        MagicMock(id=2, text="Second relevant context"),
+        MagicMock(id=3, text="Third relevant context")
+    ]
+    mock_retriever.get_segments_for.return_value = mock_segments
+    monkeypatch.setattr("ucr_chatbot.api.routes.retriever", mock_retriever)
+
+    # Test with ALL valid parameters
+    request_data = {
+        "prompt": "What is the difference between Python and JavaScript?",
+        "conversation_id": 12345,
+        "stream": False,
+        "temperature": 0.7,
+        "max_tokens": 1500,
+        "stop_sequences": ["\n\n", "Question:", "Answer:"]
+    }
+
+    response = client.post('/api/generate', json=request_data)
+
+    # Assert response status and structure
+    assert response.status_code == 200
+    response_data = response.get_json()
+    
+    # Verify response contains expected fields
+    assert "text" in response_data
+    assert "sources" in response_data
+    assert "conversation_id" in response_data
+    
+    # Verify response values
+    assert response_data["conversation_id"] == 12345
+    assert "You passed in arguments" in response_data["text"]
+    assert "What is the difference between Python and JavaScript?" in response_data["text"]
+    assert "temperature=0.7" in response_data["text"]
+    assert "max_tokens=1500" in response_data["text"]
+    assert "stop_sequences=" in response_data["text"]
 
 
 def test_generate_missing_prompt_returns_400(client):

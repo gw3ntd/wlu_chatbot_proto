@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 
 from sqlalchemy import insert, select, delete, inspect
 
@@ -10,7 +11,7 @@ from sqlalchemy.engine import Connection
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from ucr_chatbot.db.models import *
 from helper_functions import *

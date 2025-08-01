@@ -2,12 +2,7 @@ import shutil
 from tabulate import tabulate
 import typing
 import sys
-
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-
+from pathlib import Path
 from ucr_chatbot.db.models import *
 
 def initialize_db():
@@ -21,11 +16,11 @@ def clear_db():
 
 def delete_uploads_folder():
     """Deletes uploads folder and all files within it."""
-    uploads_folder_path = upload_folder
-    if os.path.exists(uploads_folder_path):
-      shutil.rmtree(uploads_folder_path)
+    uploads_folder_path = Path(upload_folder)
+    if uploads_folder_path.exists():
+        shutil.rmtree(uploads_folder_path)
     else:
-      print("Uploads folder not found.")
+        print("Uploads folder not found.")
 
 def add_courses():
     """Adds all courses needed for testing to Courses table"""

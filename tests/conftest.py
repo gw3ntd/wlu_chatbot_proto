@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -10,7 +11,7 @@ from ucr_chatbot import create_app
 from dotenv import load_dotenv
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 @pytest.fixture
@@ -45,3 +46,5 @@ def db(app: Flask):
     engine = create_engine(db_connect)
     conn = engine.connect()
     yield conn
+
+

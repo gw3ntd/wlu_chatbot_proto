@@ -28,3 +28,5 @@ tests/.DS_Store
 ucr_chatbot/uploads
 ucr_chatbot/test_uploads
 ucr_chatbot/db/uploads
+
+bin/

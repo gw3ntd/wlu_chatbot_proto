@@ -15,18 +15,19 @@ from flask import (
     make_response,
 )
 
+from sqlalchemy import select, insert, func
+from pathlib import Path
 import pandas as pd
 import io
+import os
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash
-from sqlalchemy import select, insert, func
-import os
 from flask_login import current_user, login_required, login_user, logout_user  # type: ignore
 from datetime import datetime, timedelta, timezone
-
 from ucr_chatbot.decorators import roles_required
 from typing import cast, Union, Any, Dict, Mapping
+
 
 from ucr_chatbot.db.models import (
     Session,
@@ -479,46 +480,51 @@ def course_documents(course_id: int):
             flash("No selected file", "error")
             return redirect(request.url)
 
-        full_local_path = ""
+        full_local_path = None
         try:
             filename = secure_filename(file.filename)
-            relative_path = os.path.join(str(course_id), filename).replace(
-                os.path.sep, "/"
+            relative_path = Path(str(course_id)) / filename
+            full_local_path = curr_path / relative_path
+
+            file.save(str(full_local_path))
+
+            segments = parse_file(str(full_local_path))
+            add_new_document(
+                str(relative_path).replace(str(Path().anchor), ""), course_id
             )
-            full_local_path = os.path.join(curr_path, relative_path)
-
-            file.save(full_local_path)
-
-            segments = parse_file(full_local_path)
-            add_new_document(relative_path, course_id)
             for seg in segments:
-                seg_id = store_segment(seg, relative_path)
+                seg_id = store_segment(
+                    seg, str(relative_path).replace(str(Path().anchor), "")
+                )
+
                 embedding = embed_text(seg)
                 store_embedding(embedding, seg_id)
             flash("File uploaded and processed successfully!", "success")
             return redirect(url_for(".course_documents", course_id=course_id))
 
         except (ValueError, TypeError):
-            if os.path.exists(full_local_path):
-                os.remove(full_local_path)
+            if full_local_path and full_local_path.exists():
+                full_local_path.unlink()
             error_msg = "<p style='color:red;'>You can't upload this type of file</p>"
 
     docs_html = ""
     active_docs = get_active_documents()
-    docs_dir = os.path.join(curr_path, str(course_id))
-    if os.path.isdir(docs_dir):
-        for idx, doc in enumerate(os.listdir(docs_dir), 1):
-            file_path = os.path.join(str(course_id), secure_filename(doc)).replace(
-                os.path.sep, "/"
-            )
+    docs_dir = Path(curr_path) / str(course_id)
+    if docs_dir.is_dir():
+        for idx, doc in enumerate(docs_dir.iterdir(), 1):
+            if not doc.is_file():
+                continue
+            file_path = f"{course_id}/{secure_filename(doc.name)}"
+
             if file_path not in active_docs:
                 continue
 
             docs_html += f"""
               <div style="margin-bottom:4px;">
-                  {idx}. <a href="{url_for(".download_file", file_path=file_path)}">{doc}</a>
+                  {idx}. <a href="{url_for(".download_file", file_path=file_path)}">{doc.name}</a>
                   <form action="{url_for(".delete_document", file_path=file_path)}" method="post" style="display:inline;">
-                      <button type="submit" onclick="return confirm('Delete {doc}?');">Delete</button>
+                      <button type="submit" onclick="return confirm('Delete {doc.name}?');">Delete</button>
+
                   </form>
               </div>
             """
@@ -555,8 +561,8 @@ def delete_document(file_path: str):
     if current_user.is_anonymous:
         abort(403)
 
-    file_path = file_path.replace(os.path.sep, "/")
-    full_path = os.path.join(upload_folder, file_path).replace(os.path.sep, "/")
+    file_path = file_path.replace(os.sep, "/")
+    full_path = str(Path(upload_folder) / file_path)
 
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
@@ -575,8 +581,7 @@ def delete_document(file_path: str):
 
         course_id = document.course_id
 
-        if os.path.exists(full_path):
-            # os.remove(full_path)  # physical delete optional
+        if Path(full_path).exists():
             set_document_inactive(file_path)
 
     return redirect(url_for(".course_documents", course_id=course_id))
@@ -602,7 +607,7 @@ def download_file(file_path: str):
     :rtype: flask.wrappers.Response
     """
     email = current_user.email
-    file_path = file_path.replace(os.path.sep, "/")
+    file_path = file_path.replace(os.sep, "/")
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
@@ -616,8 +621,10 @@ def download_file(file_path: str):
         if not participation:
             abort(403)
 
-    directory, name = os.path.split(file_path)
-    return send_from_directory(os.path.join(upload_folder, directory), name)
+    path_obj = Path(file_path)
+    directory = str(path_obj.parent)
+    name = path_obj.name
+    return send_from_directory(str(Path(upload_folder) / directory), name)
 
 
 @bp.route("/course/<int:course_id>/add_user", methods=["POST"])

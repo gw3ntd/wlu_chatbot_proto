@@ -40,7 +40,7 @@ def roles_required(
                     Optional[str], kwargs.get("file_path")
                 ) or request.args.get("file_path")
                 if file_path:
-                    file_path = file_path.replace(os.path.sep, "/")
+                    file_path = file_path.replace(os.sep, "/")
                     with DBSession(engine) as db:
                         doc = db.query(Documents).filter_by(file_path=file_path).first()
                         if doc:

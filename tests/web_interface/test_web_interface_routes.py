@@ -1,7 +1,10 @@
 from flask.testing import FlaskClient
 import io
 import os
+import sys
+from pathlib import Path
 from ucr_chatbot.db.models import upload_folder, Users, engine, Session, ParticipatesIn
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from db.helper_functions import *
 from unittest.mock import MagicMock
 from sqlalchemy import insert, select, delete, inspect
@@ -34,11 +37,12 @@ def test_file_upload(client: FlaskClient, monkeypatch, app):
     assert response.status_code == 200
     assert b"test_file.txt" in response.data
 
-    file_path = os.path.join(upload_folder, "1", "test_file.txt")
-    assert os.path.exists(file_path)
-    with open(file_path, "rb") as f:
+    app_instance = client.application
+    file_path = Path(upload_folder) / "1" / "test_file.txt"
+    assert file_path.exists()
+    with file_path.open("rb") as f:
         assert f.read() == b"Test file for CS009A"
-    os.remove(file_path)
+    file_path.unlink()
 
 
 def test_file_upload_empty(client: FlaskClient):
@@ -102,44 +106,31 @@ def test_file_download(client: FlaskClient, monkeypatch, app):
     )
     assert response.status_code == 200
 
-    file_path = os.path.join("1", "test_file_download.txt")
-    response = client.get(f"/document/{file_path}/download")
+    file_path_rel = "1/test_file_download.txt"
+    response = client.get(f"/document/{file_path_rel}/download")
 
     #assert response.status_code == 200
     print(response.data)
     assert response.data == b"Test file for CS009A"
 
-    full_file_path = os.path.join(upload_folder, "1", "test_file_download.txt")
-    assert os.path.exists(full_file_path)
-    with open(full_file_path, "rb") as f:
+    file_path_abs = Path(upload_folder) / file_path_rel
+    assert file_path_abs.exists()
+    with file_path_abs.open("rb") as f:
+
         assert f.read() == b"Test file for CS009A"
     
     response = client.get("/course/1/documents")
     assert response.status_code == 200
-    os.remove(full_file_path)
+    os.remove(str(file_path_abs))
+
+
+
 
 
 def test_file_delete(client: FlaskClient, monkeypatch, app):
     with app.app_context():
-        with Session(engine) as session:
-            existing_user = session.query(Users).filter_by(email="testdelete@ucr.edu").first()
-            if existing_user:
-                session.query(ParticipatesIn).filter_by(email="testdelete@ucr.edu").delete()
-                session.delete(existing_user)
-                session.commit()
-
-            user = Users(
-                email="testdelete@ucr.edu",
-                first_name="John",
-                last_name="Doe",
-                password_hash=generate_password_hash("test123"),
-            )
-            session.add(user)
-            session.commit()
-
-            participation = ParticipatesIn(email="testdelete@ucr.edu", course_id=1, role="instructor")
-            session.add(participation)
-            session.commit()
+        add_new_user("testdelete@ucr.edu", "John", "Doe")
+        add_user_to_course("testdelete@ucr.edu", "John", "Doe", 1, "instructor")
 
     with client.session_transaction() as sess:
         sess["_user_id"] = "testdelete@ucr.edu"
@@ -159,17 +150,71 @@ def test_file_delete(client: FlaskClient, monkeypatch, app):
     assert response.status_code == 200
     assert b"test_file_delete.txt" in response.data
 
-    file_path = os.path.join("1", "test_file_delete.txt")
+    file_path_rel = "1/test_file_delete.txt"
+    response = client.post(f"/document/{file_path_rel}/delete")
 
-    response = client.post(f"/document/{file_path}/delete", follow_redirects=False)
     assert response.status_code == 302
 
-    full_path = os.path.join(upload_folder, file_path)
-    assert os.path.exists(full_path)
-    with open(full_path, "rb") as f:
-        assert f.read() == b"Test file for CS009A"
+    with app.app_context():
+        with Session(engine) as session:
+            document = session.query(Documents).filter_by(file_path=file_path_rel).first()
+            assert document is not None
+            assert not document.is_active
 
-    os.remove(full_path)
+def test_chatroom_conversation_flow(client: FlaskClient, app):
+    with app.app_context():
+        from ucr_chatbot.db.models import add_new_user, add_new_course, add_user_to_course
+
+        add_new_user("test@ucr.edu", "Test", "User")
+        add_new_course("Test Course")
+        add_user_to_course("test@ucr.edu", "Test", "User", 1, "student")
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = "test@ucr.edu"
+
+    course_id = 1
+    init_message = "Hello, I need help with my homework."
+    response = client.post(
+        f"/conversation/new/{course_id}/chat",
+        json={"type": "create", "message": init_message},
+        headers={"Accept": "application/json"}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "conversationId" in data
+    conversation_id = data["conversationId"]
+
+    response = client.post(
+        f"/conversation/{conversation_id}",
+        json={"type": "reply", "message": init_message},
+        headers={"Accept": "application/json"}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "reply" in data
+    assert isinstance(data["reply"], str)
+    assert len(data["reply"]) > 0
+
+    followup_message = "Can you explain recursion?"
+    response = client.post(
+        f"/conversation/{conversation_id}",
+        json={"type": "send", "message": followup_message},
+        headers={"Accept": "application/json"}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "200"
+
+    response = client.post(
+        f"/conversation/{conversation_id}",
+        json={"type": "reply", "message": followup_message},
+        headers={"Accept": "application/json"}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "reply" in data
+    assert isinstance(data["reply"], str)
+    assert len(data["reply"]) > 0
 
 def test_add_user(client: FlaskClient, app):
     with app.app_context():
@@ -202,4 +247,5 @@ def test_add_students_from_list(client: FlaskClient, app):
 
     response = client.post("/course/1/add_from_csv", data=data, content_type="multipart/form-data")
     assert "302 FOUND" == response.status
+
 
