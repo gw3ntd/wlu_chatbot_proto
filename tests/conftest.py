@@ -1,15 +1,10 @@
 import sys
-import os
 from pathlib import Path
 import pytest
 from flask import Flask
-from flask.testing import FlaskClient
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection
-from typing import Generator
+
 from ucr_chatbot import create_app
-from dotenv import load_dotenv
-import os
+from ucr_chatbot.db.models import engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -33,18 +28,9 @@ def runner(app: Flask):
 
 
 @pytest.fixture
-def db(app: Flask):
-    
-    load_dotenv()
-    password = os.getenv("DB_PASSWORD")
-    db_connect = ""
-    if app.config['TESTING']:
-        db_connect = f"postgresql+psycopg://postgres:{password}@127.0.0.1:5432/testing_tutor"
-    else:
-        db_connect = f"postgresql+psycopg://postgres:{password}@127.0.0.1:5432/prod_tutor"
-
-    engine = create_engine(db_connect)
-    conn = engine.connect()
-    yield conn
+def db():
+    connection = engine.connect()
+    yield connection
+    connection.close()
 
 

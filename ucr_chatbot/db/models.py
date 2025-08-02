@@ -13,8 +13,6 @@ from sqlalchemy.orm import declarative_base, mapped_column, relationship, Sessio
 import enum
 from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
-from dotenv import load_dotenv
-import os
 from pathlib import Path
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
@@ -27,15 +25,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from typing import Sequence
 
-load_dotenv()
+
+from ucr_chatbot.config import Config
+
 
 upload_folder: str = str(Path(__file__).resolve().parent / "uploads")
 
 
-password = os.getenv("DB_PASSWORD")
-
 engine = create_engine(
-    f"postgresql+psycopg2://postgres:{password}@127.0.0.1:5432/testing_tutor"
+    f"""postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_URL}/{Config.DB_NAME}"""
 )
 
 base = declarative_base()
