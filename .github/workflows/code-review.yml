@@ -12,10 +12,10 @@ on:
         type: number
 
 env:
-  PG_DB: testing_tutor
-  PG_USER: postgres
-  PG_PASSWORD: test_password
-  PG_HOST: localhost
+  DB_NAME: testing_tutor
+  DB_USER: postgres
+  DB_PASSWORD: test_password
+  DB_URL: localhost
 
 jobs:
   review:
@@ -25,9 +25,9 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg17
         env:
-          POSTGRES_DB: ${{ env.PG_DB }} 
-          POSTGRES_USER: ${{ env.PG_USER }}
-          POSTGRES_PASSWORD: ${{ env.PG_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }} 
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
@@ -73,13 +73,16 @@ jobs:
 
     - name: Install pgvector extension
       run: |
-        psql -h ${{ env.PG_HOST }} -p 5432 -U ${{ env.PG_USER }} -d ${{ env.PG_DB }} -c "CREATE EXTENSION vector;"
+        psql -h ${{ env.DB_URL }} -p 5432 -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -c "CREATE EXTENSION vector;"
       env:
-        PGPASSWORD: ${{ env.PG_PASSWORD }}
+        PGPASSWORD: ${{ env.DB_PASSWORD }}
 
     - name: Run code review script
       run: |
         python review_code.py
       env:
+        DB_USER: ${{ env.DB_USER }}
+        DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        DB_URL: ${{ env.DB_URL }}
+        DB_NAME: ${{ env.DB_NAME }}
         LLM_MODE: testing
-        DB_PASSWORD: ${{ env.PG_PASSWORD }}
