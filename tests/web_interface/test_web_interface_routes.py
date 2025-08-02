@@ -3,14 +3,12 @@ import io
 import os
 import sys
 from pathlib import Path
-from ucr_chatbot.db.models import upload_folder, Users, engine, Session, ParticipatesIn
+from ucr_chatbot.db.models import engine, Session
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from db.helper_functions import *
 from unittest.mock import MagicMock
-from sqlalchemy import insert, select, delete, inspect
 
-from flask_login import login_user
-from werkzeug.security import generate_password_hash
+from ucr_chatbot.config import Config
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
@@ -38,7 +36,7 @@ def test_file_upload(client: FlaskClient, monkeypatch, app):
     assert b"test_file.txt" in response.data
 
     app_instance = client.application
-    file_path = Path(upload_folder) / "1" / "test_file.txt"
+    file_path = Path(Config.FILE_STORAGE_PATH) / "1" / "test_file.txt"
     assert file_path.exists()
     with file_path.open("rb") as f:
         assert f.read() == b"Test file for CS009A"
@@ -113,7 +111,7 @@ def test_file_download(client: FlaskClient, monkeypatch, app):
     print(response.data)
     assert response.data == b"Test file for CS009A"
 
-    file_path_abs = Path(upload_folder) / file_path_rel
+    file_path_abs = Path(Config.FILE_STORAGE_PATH) / file_path_rel
     assert file_path_abs.exists()
     with file_path_abs.open("rb") as f:
 

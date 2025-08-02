@@ -4,6 +4,7 @@ import typing
 import sys
 from pathlib import Path
 from ucr_chatbot.db.models import *
+from ucr_chatbot.config import Config
 
 def initialize_db():
     """Creates database using specified engine."""
@@ -16,7 +17,7 @@ def clear_db():
 
 def delete_uploads_folder():
     """Deletes uploads folder and all files within it."""
-    uploads_folder_path = Path(upload_folder)
+    uploads_folder_path = Path(Config.FILE_STORAGE_PATH)
     if uploads_folder_path.exists():
         shutil.rmtree(uploads_folder_path)
     else:

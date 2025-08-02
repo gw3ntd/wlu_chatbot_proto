@@ -29,9 +29,6 @@ from typing import Sequence
 from ucr_chatbot.config import Config
 
 
-upload_folder: str = str(Path(__file__).resolve().parent / "uploads")
-
-
 engine = create_engine(
     f"""postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_URL}/{Config.DB_NAME}"""
 )
@@ -364,7 +361,7 @@ def create_upload_folder(course_id: int):
     """Creates a folder named after the course id within the uploads folder.
     :param course_id: name of the folder to be created
     """
-    upload_path = Path(upload_folder)
+    upload_path = Path(Config.FILE_STORAGE_PATH)
     if not upload_path.is_dir():
         upload_path.mkdir(parents=True, exist_ok=True)
 

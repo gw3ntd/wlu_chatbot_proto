@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from enum import Enum
+from pathlib import Path
 
 load_dotenv()
 
@@ -37,3 +38,7 @@ class Config:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     LLM_MODE = LLMMode.from_str(os.getenv("LLM_MODE", "testing"))
+
+    FILE_STORAGE_PATH = Path(
+        os.getenv("FILE_STORAGE_PATH", Path(__file__).parent / "db" / "uploads")
+    )

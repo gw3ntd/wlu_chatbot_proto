@@ -38,7 +38,6 @@ from ucr_chatbot.db.models import (
     Courses,
     ParticipatesIn,
     Documents,
-    upload_folder,
     add_new_document,
     store_segment,
     store_embedding,
@@ -48,6 +47,7 @@ from ucr_chatbot.db.models import (
     add_students_from_list,
     Users,
 )
+from ucr_chatbot.config import Config
 
 # from ucr_chatbot.web_interface.routes.auth import get_google_auth
 # from .auth import get_google_auth
@@ -467,7 +467,7 @@ def course_documents(course_id: int):
         user = session.query(Users).filter_by(email=email).first()
     if user is None:
         abort(404, description="User not found")
-    curr_path = upload_folder
+    curr_path = Config.FILE_STORAGE_PATH
     error_msg = ""
 
     if request.method == "POST":
@@ -562,7 +562,7 @@ def delete_document(file_path: str):
         abort(403)
 
     file_path = file_path.replace(os.sep, "/")
-    full_path = str(Path(upload_folder) / file_path)
+    full_path = str(Path(Config.FILE_STORAGE_PATH) / file_path)
 
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
@@ -624,7 +624,7 @@ def download_file(file_path: str):
     path_obj = Path(file_path)
     directory = str(path_obj.parent)
     name = path_obj.name
-    return send_from_directory(str(Path(upload_folder) / directory), name)
+    return send_from_directory(str(Path(Config.FILE_STORAGE_PATH) / directory), name)
 
 
 @bp.route("/course/<int:course_id>/add_user", methods=["POST"])
