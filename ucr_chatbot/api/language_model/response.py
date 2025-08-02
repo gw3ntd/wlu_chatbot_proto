@@ -1,11 +1,8 @@
-import os
 import google.generativeai as genai
 import ollama
 from typing import Generator, List, Any
 from abc import ABC, abstractmethod
-
-API_KEY = os.environ.get("GEMINI_API_KEY")
-MODE = os.environ.get("LLM_MODE", "testing")
+from ucr_chatbot.config import Config, LLMMode
 
 
 class LanguageModelClient(ABC):
@@ -282,14 +279,12 @@ class Ollama(LanguageModelClient):
         self.stop_sequences = stop
 
 
-# Set mode to Gemini (production) or Ollama (testing)
-if MODE == "production":
-    if not API_KEY:
-        raise ValueError(
-            "GEMINI_API_KEY environment variable not set for production mode."
-        )
-    client: LanguageModelClient = Gemini(key=API_KEY)
-elif MODE == "development":
-    client = Ollama(host="http://localhost:11434")
-elif MODE == "testing":
-    client = TestingClient()
+match Config.LLM_MODE:
+    case LLMMode.TESTING:
+        client = TestingClient()
+    case LLMMode.OLLAMA:
+        client = Ollama(host=Config.OLLAMA_URL)
+    case LLMMode.GEMINI:
+        if not Config.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY environment variable not set.")
+        client: LanguageModelClient = Gemini(key=Config.GEMINI_API_KEY)

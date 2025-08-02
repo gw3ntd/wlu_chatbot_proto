@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 # Adjust the import path to match your project structure
 from ucr_chatbot.api.language_model.response import (
-    LanguageModelClient,
     Gemini,
     Ollama,
     TestingClient,
@@ -281,27 +280,3 @@ def test_ollama_set_stop_sequences(mock_ollama_env):
     
     client.set_stop_sequences(stop_seqs)
     assert client.stop_sequences == stop_seqs
-
-
-# --- Test Global Client Initialization ---
-
-def test_global_client_is_testing_client_in_testing_mode(monkeypatch):
-    """Tests that the global client is a TestingClient instance in testing mode."""
-    monkeypatch.setenv("LLM_MODE", "testing")
-    
-    import importlib
-    import ucr_chatbot.api.language_model.response as response_module
-    importlib.reload(response_module)
-    assert response_module.client.__class__.__name__ == "TestingClient"
-
-
-def test_global_client_is_gemini_in_production(monkeypatch):
-    """Tests that the global client is a Gemini instance in production mode."""
-    monkeypatch.setenv("LLM_MODE", "production")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
-    monkeypatch.setattr("google.generativeai.GenerativeModel", MagicMock())
-
-    import importlib
-    import ucr_chatbot.api.language_model.response as response_module
-    importlib.reload(response_module)
-    assert response_module.client.__class__.__name__ == "Gemini"

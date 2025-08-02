@@ -1,7 +1,27 @@
 import os
 from dotenv import load_dotenv
+from enum import Enum
 
 load_dotenv()
+
+
+class LLMMode(Enum):
+    TESTING = 1
+    GEMINI = 2
+    OLLAMA = 3
+
+    @staticmethod
+    def from_str(enum_name: str) -> "LLMMode":
+        match enum_name.lower():
+            case "testing":
+                return LLMMode.TESTING
+            case "gemini":
+                return LLMMode.GEMINI
+            case "ollama":
+                return LLMMode.OLLAMA
+            case invalid_name:
+                raise ValueError(f"Invalid LLM mode '{invalid_name}'")
+
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(32))
@@ -14,3 +34,6 @@ class Config:
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_SECRET = os.getenv("GOOGLE_SECRET")
 
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    LLM_MODE = LLMMode.from_str(os.getenv("LLM_MODE", "testing"))
