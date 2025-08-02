@@ -7,12 +7,15 @@ load_dotenv()
 
 
 class LLMMode(Enum):
+    """The mode in which the LLM is to run."""
+
     TESTING = 1
     GEMINI = 2
     OLLAMA = 3
 
     @staticmethod
     def from_str(enum_name: str) -> "LLMMode":
+        """Creates an LLMMode from a string."""
         match enum_name.lower():
             case "testing":
                 return LLMMode.TESTING
@@ -25,6 +28,8 @@ class LLMMode(Enum):
 
 
 class Config:
+    """The global configuration for the UCR Chatbot."""
+
     SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(32))
 
     DB_NAME = os.environ["DB_NAME"]
