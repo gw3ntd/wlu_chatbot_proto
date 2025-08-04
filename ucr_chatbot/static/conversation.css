@@ -45,6 +45,7 @@ header {
 header h1 {
   margin: 0;
   font-family: "Oswald", sans-serif;
+  font-weight: 500;
 }
 header img {
   height: 50px;
@@ -65,6 +66,7 @@ header img {
   font-size: 1.5rem;
   margin-bottom: 1rem;
   color: #003DA5;
+  font-weight: 500;
 }
 
 .conversation-item {
@@ -142,7 +144,12 @@ header img {
   border: 1px solid #003DA5;
 }
 
-#input-form button {
+#input-form textarea:focus {
+  outline: 2px solid #FFB81C;
+  border: 1px solid #FFB81C;
+}
+
+#sendButton{
   padding: 0.75rem 1rem;
   font-size: 1rem;
   border-radius: 6px;
@@ -152,7 +159,23 @@ header img {
   cursor: pointer;
 }
 
-#input-form button:hover {
+#sendButton:hover {
   background-color: #FFB81C;
+  color: black;
+}
+
+#redirectButton {
+  background-color: #003DA5;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #3364B7;
+  color: white;
+  cursor: pointer;
+}
+
+#redirectButton:hover {
+  background-color: #FFC649;
   color: black;
 }

@@ -1,6 +1,7 @@
 const chatContainer = document.getElementById("chat-container");
 const sidebarMessages = document.getElementById("sidebar-messages");
 const userMessageTextarea = document.getElementById("userMessage");
+const redirectButton = document.getElementById("redirectButton");
 
 let conversationId = document.body.dataset.conversationId
   ? Number(document.body.dataset.conversationId)
@@ -12,7 +13,8 @@ let courseId = document.body.dataset.courseId
 
 let isNewConversation = courseId !== null;
 
-//Loads conversation ids for sidebar
+let isResolved = false;
+
 async function loadAllConversationIds() {
   if (!courseId && !conversationId) return;
 
@@ -45,7 +47,6 @@ async function loadAllConversationIds() {
   });
 }
 
-//loads a conversation's messages
 async function loadAllConversationsForUser() {
   if (!conversationId) return;
 
@@ -73,7 +74,6 @@ async function loadAllConversationsForUser() {
   });
 }
 
-//loads a conversation's messages
 async function loadAllConversationsForUser() {
   if (!conversationId) return;
 
@@ -102,7 +102,6 @@ if (!isNewConversation && conversationId) {
   loadAllConversationsForUser();
 }
 
-// Send message on Enter key press
 userMessageTextarea.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
@@ -110,7 +109,6 @@ userMessageTextarea.addEventListener("keydown", (event) => {
   }
 });
 
-// Send message to interface
 async function handleSend(e) {
   e.preventDefault();
   const textarea = document.getElementById("userMessage");
@@ -180,7 +178,6 @@ function addSidebarMessage(label, convoId) {
   sidebarMessages.insertBefore(item, sidebarMessages.firstChild);
 }
 
-// Send message to backend for LM
 async function sendMessage(message) {
   await fetch(`/conversation/${conversationId}`, {
     method: "POST",
@@ -197,7 +194,6 @@ async function sendMessage(message) {
   });
 }
 
-// Get LM response from backend
 async function fetchBotReply(userMessage) {
   const res = await fetch(`/conversation/${conversationId}`, {
     method: "POST",
@@ -216,3 +212,53 @@ async function fetchBotReply(userMessage) {
   const data = await res.json();
   return data.reply;
 }
+
+// redirect conversation to assistant or mark as resolved
+redirectButton.addEventListener("click", async () => {
+  if (!conversationId) {
+    alert("No conversation selected.");
+    return;
+  }
+
+  if (!isResolved) {
+    try {
+      const res = await fetch(`/conversation/${conversationId}/redirect`, {
+        // BACKEND: update this endpoint to handle redirects to assistant
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ type: "redirect" }),
+      });
+
+      if (!res.ok) throw new Error("Redirect request failed");
+
+      redirectButton.textContent = "Mark as Resolved";
+      isResolved = true;
+    } catch (error) {
+      console.error("Redirect error:", error);
+      alert("Failed to redirect to tutor.");
+    }
+  } else {
+    try {
+      const res = await fetch(`/conversation/${conversationId}/resolve`, {
+        // BACKEND: update this endpoint to handle resolution of conversation
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ type: "resolve" }),
+      });
+
+      if (!res.ok) throw new Error("Mark as resolved failed");
+
+      redirectButton.textContent = "Resolved";
+      redirectButton.disabled = true;
+    } catch (error) {
+      console.error("Resolve error:", error);
+      alert("Failed to mark as resolved.");
+    }
+  }
+});
