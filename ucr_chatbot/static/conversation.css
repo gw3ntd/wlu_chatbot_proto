@@ -50,6 +50,9 @@ header h1 {
 header img {
   height: 50px;
 }
+h1 span {
+    color: #FFB81C; /* Choose your desired color */
+}
 
 /* SIDEBAR */
 #sidebar {
