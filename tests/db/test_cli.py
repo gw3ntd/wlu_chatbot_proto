@@ -17,7 +17,7 @@ def test_main(capsys):
   base.metadata.drop_all(engine)
   main(shlex.split('initialize'))
   output = capsys.readouterr().out.rstrip()
-  assert output == "Database initialized."
+  assert "Database initialized." in output
 
 def test_initialize():
   """Tests that dataabase is initialized correctly"""

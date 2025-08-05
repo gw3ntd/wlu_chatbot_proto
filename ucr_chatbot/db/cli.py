@@ -27,7 +27,7 @@ This file contains the following functions:
 """
 
 import argparse
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 
 try:
     from ucr_chatbot.db.models import (
@@ -57,12 +57,25 @@ except ModuleNotFoundError:
 inspector = inspect(engine)
 
 
+def create_vector_extension():
+    """Connects to the database and runs CREATE EXTENSION IF NOT EXISTS vector."""
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+
+        print("'vector' extension created successfully.")
+    except Exception as e:
+        print(f"Error creating 'vector' extension: {e}")
+        raise
+
+
 def initialize(force: bool):
     """Creates all tables in the database if they do not already exist.
     If --force is also passed, all tables and the uploads folder will
     be deleted first and then the tables will be re-created.
     :param force: If True, clears existing tables and creates empty tables.
     """
+    create_vector_extension()
     if not inspector.has_table("Users"):
         base.metadata.create_all(engine)
         print("Database initialized.")
@@ -79,6 +92,8 @@ def mock():
     """Adds mock courses and users with varying roles to the database.
     Only adds mock data if the Users and Courses tables are empty.
     """
+    create_vector_extension()
+
     if not inspector.has_table("Users"):
         base.metadata.create_all(engine)
 

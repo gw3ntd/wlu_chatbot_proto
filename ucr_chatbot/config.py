@@ -6,6 +6,14 @@ from pathlib import Path
 load_dotenv()
 
 
+def get_non_empty_env[T](var_name: str, default: str | T = None) -> str | T:
+    """Get the environment variable or return a default value. Default is returned if var_name is an empty string."""
+    value = os.getenv(var_name, default)
+    if value == "":
+        return default
+    return value
+
+
 class LLMMode(Enum):
     """The mode in which the LLM is to run."""
 
@@ -37,13 +45,13 @@ class Config:
     DB_PASSWORD = os.environ["DB_PASSWORD"]
     DB_URL = os.environ["DB_URL"]
 
-    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-    GOOGLE_SECRET = os.getenv("GOOGLE_SECRET")
+    GOOGLE_CLIENT_ID = get_non_empty_env("GOOGLE_CLIENT_ID")
+    GOOGLE_SECRET = get_non_empty_env("GOOGLE_SECRET")
 
-    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    LLM_MODE = LLMMode.from_str(os.getenv("LLM_MODE", "testing"))
+    OLLAMA_URL = get_non_empty_env("OLLAMA_URL", "http://localhost:11434")
+    GEMINI_API_KEY = get_non_empty_env("GEMINI_API_KEY")
+    LLM_MODE = LLMMode.from_str(get_non_empty_env("LLM_MODE", "testing"))
 
     FILE_STORAGE_PATH = Path(
-        os.getenv("FILE_STORAGE_PATH", Path(__file__).parent / "db" / "uploads")
+        get_non_empty_env("FILE_STORAGE_PATH", Path(__file__).parent / "db" / "uploads")
     )
