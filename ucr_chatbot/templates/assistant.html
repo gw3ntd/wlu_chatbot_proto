@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
-    <link rel="stylesheet" href="../static/assistant.css">
+    <link rel="stylesheet" href="../static/css/assistant.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,12 +12,11 @@
       href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
       rel="stylesheet"
     />
+
+    <script type="module" src="../static/js/main.js"></script> 
   </head>
   <body>
-    <header>
-      <h1>Scott<span><b>GPT</b></span></h1>
-      <img src="../static/images/UC_Riverside_Horiz_BluBG.png" alt="UCR Logo">
-    </header>
+    <scotty-header></scotty-header>
 
     <div id="main-layout" class="oswald">
       <h1>REDIRECTED CONVERSATIONS</h1>
@@ -32,6 +31,6 @@
       <h2>🟡 IN PROGRESS</h2>
       <div id="in-progress-list"></div>
     </section>
-  <script src="../static/assistant.js"></script>
+  <script src="../static/js/assistant.js"></script>
   </body>
 </html>

@@ -63,14 +63,13 @@
 </html> -->
 
 <!-- This version has links straight to other files, not like {{dfkdhskjfhdsjkhf}} -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
-    <link rel="stylesheet" href="../static/conversation.css">
+    <link rel="stylesheet" href="../static/css/conversation.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -78,6 +77,8 @@
       href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
       rel="stylesheet"
     />
+
+    <script type="module" src="../static/js/main.js"></script>
   </head>
   <body
     {%
@@ -95,11 +96,8 @@
     endif
     %}
   >
-    <header>
-      <h1>Scott<span><b>GPT</b></span></h1>
-      <img src="../static/images/UC_Riverside_Horiz_BluBG.png" alt="UCR Logo">
-    </header>
-
+    <scotty-header></scotty-header>
+    
     <div id="main-layout">
       <div id="sidebar" class="oswald">
         <h2>CONVERSATIONS</h2>
@@ -122,8 +120,7 @@
         </div>
       </div>
     </div>
-
-  </script>
-  <script src="../static/conversation.js"></script>
+  
+    <script src="../static/js/conversation.js"></script>
   </body>
 </html>

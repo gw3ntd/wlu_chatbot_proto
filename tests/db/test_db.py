@@ -46,9 +46,6 @@ def test_add_new_course(db: Connection):
 #     captured = capsys.readouterr()
 #     assert "Error adding new course.\n\n" in captured.out
     
-
-
-
 def test_add_new_user(db: Connection):
     """tests the add_new_user wrapper function"""
     add_new_user("test@ucr.edu", "John", "Doe")

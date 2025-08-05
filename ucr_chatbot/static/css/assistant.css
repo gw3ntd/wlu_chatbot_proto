@@ -13,7 +13,7 @@ body {
 
 #main-layout {
   color: #003da5;
-  padding: 0.5rem 0.5rem;
+  margin: 1.5rem;
 }
 
 /* FONTS */
@@ -52,7 +52,7 @@ header img {
   height: 50px;
 }
 h1 span {
-    color: #FFB81C; 
+  color: #FFB81C; 
 }
 
 /* LIST OF CONVERSATIONS */
@@ -69,8 +69,6 @@ h2 {
   transition: background-color 0.2s ease;
   font-size: 1.5rem;
 }
-
-/* REDIRECTED CONVOS */
 .section {
     margin-bottom: 1rem;
 }
