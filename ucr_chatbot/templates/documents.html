@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UCR</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing_page.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}" />
 
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,7 +61,8 @@
             <label for="fname">First name:</label><br>
             <input type="text" id="fname" name="fname"><br>
             <label for="lname">Last name:</label><br>
-            <input type="text" id="lname" name="lname"><br><br>
+            <input type="text" id="lname" name="lname"><br>
+            <input type="hidden" name="role" value="student"><br><br>
             <input type=submit value=Add>
         </form>
         <h3>Add students from csv:</h3>
@@ -69,6 +70,7 @@
             <input type=file name="file">
             <input type=submit value="Add">
         </form>
+<<<<<<< HEAD
 
         <h1>Generate Summary</h1>
         <form action="{{ url_for('web_routes.generate_summary', course_id=course_id) }}" method="post">
@@ -82,5 +84,24 @@
   <button type="submit">Download Report</button>
   
             </form>
+=======
+        <h1>Add Assistants to Course</h1>
+        <h3>Add assistant manually:</h3>
+        <form method=post action="{{ url_for('web_routes.add_assistant', course_id=course_id) }}" enctype=multipart/form-data>
+            <label for="email">ULA email:</label><br>
+            <input type="text" id="email" name="email"><br>
+            <label for="fname">First name:</label><br>
+            <input type="text" id="fname" name="fname"><br>
+            <label for="lname">Last name:</label><br>
+            <input type="text" id="lname" name="lname"><br>
+            <input type="hidden" name="role" value="assistant"><br><br>
+            <input type=submit value=Add>
+        </form>
+        <h3>Add assistants from csv:</h3>
+        <form method=post action="{{ url_for('web_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <input type=file name="file">
+            <input type=submit value="Add">
+        </form>
+>>>>>>> 592d8ec (Added assistants form and fixed CSS paths)
     </section>
 </html>

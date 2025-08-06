@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='conversation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -69,7 +69,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
-    <link rel="stylesheet" href="../static/css/conversation.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -78,7 +78,7 @@
       rel="stylesheet"
     />
 
-    <script type="module" src="../static/js/main.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
   </head>
   <body
     {%
@@ -96,7 +96,10 @@
     endif
     %}
   >
-    <scotty-header></scotty-header>
+    <header>
+      <h1>SCOTTGPT</h1>
+      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
+    </header>
     
     <div id="main-layout">
       <div id="sidebar" class="oswald">
@@ -121,6 +124,6 @@
       </div>
     </div>
   
-    <script src="../static/js/conversation.js"></script>
+    <script src="{{ url_for('static', filename='js/conversation.js') }}"></script>
   </body>
 </html>

@@ -260,6 +260,21 @@ def add_students_from_list(data: pd.DataFrame, course_id: int):
                 add_user_to_course(email, fname, lname, course_id, "student")
 
 
+def add_assistants_from_list(data: pd.DataFrame, course_id: int):
+    """Adds assistants to course from a passed in list.
+    :param data: Pandas dataframe containing assistant information.
+    :param course_id: Course the assistants will be added to."""
+    with Session(engine) as session:
+        course = session.query(Courses).filter(Courses.id == course_id).first()
+        if course:
+            for _, row in data.iterrows():
+                row: pd.Series
+                email = str(row["SIS User ID"]) + "@ucr.edu"
+                fname = str(row["First Name"])
+                lname = str(row["Last Name"])
+                add_user_to_course(email, fname, lname, course_id, "assistant")
+
+
 def add_new_course(name: str):
     """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.
     :param id: id for course to be added

@@ -114,9 +114,15 @@ if __name__ == "__main__":
         clear_db()
         initialize_db()
         add_courses()
+<<<<<<< HEAD
         add_new_user("gnico007@ucr.edu", "test", "user")
         add_user_to_course("gnico007@ucr.edu", "test", "user", 1, "instructor")
         add_user_to_course("gnico007@ucr.edu", "test", "user", 9, "student")\
+=======
+        add_new_user("snall008@ucr.edu", "test", "user")
+        add_user_to_course("snall008@ucr.edu", "test", "user", 1, "instructor")
+        add_user_to_course("snall008@ucr.edu", "test", "user", 9, "student")
+>>>>>>> 592d8ec (Added assistants form and fixed CSS paths)
         print("Database reset.")
     # elif "print" in sys.argv:
     #     print_users()

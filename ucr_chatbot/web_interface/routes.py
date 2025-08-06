@@ -47,6 +47,7 @@ from ucr_chatbot.db.models import (
     set_document_inactive,
     add_user_to_course,
     add_students_from_list,
+    add_assistants_from_list,
     Users,
 )
 from ucr_chatbot.config import Config
@@ -764,7 +765,7 @@ def download_file(file_path: str):
     return send_from_directory(str(Path(Config.FILE_STORAGE_PATH) / directory), name)
 
 
-@bp.route("/course/<int:course_id>/add_user", methods=["POST"])
+@bp.route("/course/<int:course_id>/add_student", methods=["POST"])
 @login_required
 @roles_required(["instructor"])
 def add_student(course_id: int):
@@ -774,8 +775,9 @@ def add_student(course_id: int):
     user_email = request.form["email"]
     user_fname = request.form["fname"]
     user_lname = request.form["lname"]
+    role = request.form.get("role", "student")  # Default to student if not provided
 
-    add_user_to_course(user_email, user_fname, user_lname, course_id, "student")
+    add_user_to_course(user_email, user_fname, user_lname, course_id, role)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
@@ -973,6 +975,55 @@ def add_from_csv(course_id: int):
                 data["Student"] = data["Student"].str.strip()
                 data[["Last Name", "First Name"]] = data["Student"].str.split(",")
                 add_students_from_list(data, course_id)
+        except Exception:
+            return redirect(request.url)
+
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
+@bp.route("/course/<int:course_id>/add_assistant", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
+def add_assistant(course_id: int):
+    """Adds an assistant to the current course.
+    :param course_id: The course the assistant will be added to.
+    """
+    user_email = request.form["email"]
+    user_fname = request.form["fname"]
+    user_lname = request.form["lname"]
+    role = request.form.get("role", "assistant")  # Default to assistant if not provided
+
+    add_user_to_course(user_email, user_fname, user_lname, course_id, role)
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
+@bp.route("/course/<int:course_id>/add_assistant_from_csv", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
+def add_assistant_from_csv(course_id: int):
+    """Adds multiple assistants an uploaded assistant list csv file.
+    :params course_id: The course the assistants will be added to.
+    """
+    if request.method == "POST":
+        if "file" not in request.files:
+            return redirect(request.url)
+
+        file: FileStorage = request.files["file"]
+        if not file or not file.filename or not file.filename.endswith(".csv"):
+            return redirect(request.url)
+        try:
+            if file and file.filename.endswith(".csv"):
+                stream = io.TextIOWrapper(file.stream, encoding="utf-8")
+                data: pd.DataFrame = pd.read_csv(  # type: ignore
+                    stream,
+                    header=0,
+                    skiprows=[1, 2],
+                    usecols=["Assistant", "SIS User ID"],
+                    dtype=str,  # type: ignore
+                )
+                data["Assistant"] = data["Assistant"].str.strip()
+                data[["Last Name", "First Name"]] = data["Assistant"].str.split(",")
+                add_assistants_from_list(data, course_id)
         except Exception:
             return redirect(request.url)
 
