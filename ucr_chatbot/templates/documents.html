@@ -28,10 +28,17 @@
     <section style="margin-left: 20px;">
         <title>Upload New File</title>
         <h1>Upload new File</h1>
-        <form method=post enctype=multipart/form-data>
-            <input type=file name=file>
-            <input type=submit value=Upload>
+        <form method=post enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
+            <input type=file name=file required>
+            <input type=submit id="uploadButton" value=Upload>
         </form>
+        <script>
+            function disableUploadButton(){
+                const button = document.getElementById('uploadButton');
+                button.disabled = true;
+                button.value = "Uploading...";
+            }
+        </script>
         <body>
             <p>{{body | safe}}</p>
         </body>
