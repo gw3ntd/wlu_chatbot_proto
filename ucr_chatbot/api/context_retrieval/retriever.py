@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 # --- Import from your other project files ---
 # Import the engine and table classes from your database file
-from ...db.models import engine, Segments, Embeddings
+from ...db.models import engine, Segments, Embeddings, Documents
 
 # Import your embedding function
 from ..embedding.embedding import embed_text
@@ -30,7 +30,10 @@ class Retriever:
     """
 
     def get_segments_for(
-        self, prompt: str, num_segments: int = 3
+        self,
+        prompt: str,
+        course_id: int,
+        num_segments: int = 3,
     ) -> List[RetrievedSegment]:
         """
         Gets relevant segments from the database by performing a vector similarity search.
@@ -50,6 +53,8 @@ class Retriever:
             results = (
                 session.query(Segments)
                 .join(Embeddings)
+                .join(Documents)
+                .filter(Documents.course_id == course_id)
                 .order_by(Embeddings.vector.l2_distance(prompt_embedding))
                 .limit(num_segments)
                 .all()

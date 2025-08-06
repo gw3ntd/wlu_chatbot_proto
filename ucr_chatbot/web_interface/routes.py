@@ -20,12 +20,15 @@ from pathlib import Path
 import pandas as pd
 import io
 import os
+import json
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash
 from flask_login import current_user, login_required, login_user, logout_user  # type: ignore
 from datetime import datetime, timedelta, timezone
 from ucr_chatbot.decorators import roles_required
+from ucr_chatbot.api.language_model.response import client as response_client
+from ucr_chatbot.api.context_retrieval.retriever import retriever
 from typing import cast, Union, Any, Dict, Mapping
 
 
@@ -38,6 +41,7 @@ from ucr_chatbot.db.models import (
     Courses,
     ParticipatesIn,
     Documents,
+    References,
     add_new_document,
     store_segment,
     store_embedding,
@@ -56,6 +60,23 @@ from ..api.file_parsing.file_parsing import parse_file
 from ..api.embedding.embedding import embed_text
 
 bp = Blueprint("web_routes", __name__)
+
+SYSTEM_PROMPT = """# Main directive
+You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
+You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer. The conversation history for the last 10 messages is also provided. 
+Do not explicitly say that you got information from the context or the references/numbers they come from. Only answer the students questions as if the information is coming from you.
+
+If the context is not relevant, or if it is not a follow up question, then you should tell the student, "I cannot find any relevant course materials to help answer your question."
+
+## Context
+{context}
+
+## History
+{history}
+
+## Question
+{question}
+"""
 
 
 @bp.route("/")
@@ -315,6 +336,85 @@ def create_conversation(course_id: int, user_email: str, message: str):
     return jsonify({"conversationId": conv_id})
 
 
+def generate_response(
+    prompt: str,
+    conversation_id: int,
+    stream: bool = False,
+    history: int = 5,
+    temperature: float = 1.0,
+    max_tokens: int = 5000,
+    stop_sequences: list[str] | None = None,
+) -> FlaskResponse:
+    """Generates RAG assisted response for the reply in a user conversation
+
+    :param prompt: The user defined query for the LLM
+    :param conversation_id: The ID of the current conversation.
+    :param stream: Single response or continuous conversation
+    :param history: The number of student/bot history responses included in the prompt
+    :param temperature: How creative the response is
+    :param max_tokens: The maximum number of tokens that can be input to a single query
+    :stop_sequences: A list of stop sequences for the prompt
+
+    :return: Response of the LLM and its sources
+    """
+
+    if stop_sequences is None:
+        stop_sequences = []
+
+    with Session(engine) as session:
+        course_id_row = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+
+    if course_id_row is None:
+        return jsonify(
+            {
+                "text": "An error has occured.",
+                "sources": [{"source_id": 0}],
+                "conversation_id": conversation_id,
+            }
+        )
+
+    course_id = course_id_row.course_id
+
+    segments = retriever.get_segments_for(prompt, course_id=course_id, num_segments=10)  # type: ignore
+    context = "\n".join(
+        # Assuming each 's' object has 'segment_id' and 'text' attributes
+        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
+    )
+
+    prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt, history=get_conv_messages(conversation_id).get_json()["messages"][-(history*2):])
+
+    generation_params = {  # type: ignore
+        "prompt": prompt_with_context,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "stop_sequences": stop_sequences,
+    }
+
+    if stream:
+        # Define a generator function to format the stream as Server-Sent Events (SSE)
+        def stream_generator():
+            for chunk in response_client.stream_response(**generation_params):  # type: ignore
+                # Format each chunk as a Server-Sent Event
+                yield f"data: {json.dumps({'text': chunk})}\n\n"
+
+        return FlaskResponse(stream_generator(), mimetype="text/event-stream")
+    else:
+        response_text = response_client.get_response(**generation_params)  # type: ignore
+
+        # Dynamically create the list of source IDs
+        sources = [{"segment_id": s.id} for s in segments]  # type: ignore
+
+        return jsonify(
+            {
+                "text": response_text,
+                "sources": sources,
+                "conversation_id": conversation_id,
+            }
+        )
+
+
 def reply_conversation(conversation_id: int, user_email: str, message: str):
     """Retrieves the LLM response to a user's message
 
@@ -323,17 +423,32 @@ def reply_conversation(conversation_id: int, user_email: str, message: str):
     :param message: the user's message the LLM is responding to
 
     """
-    _ = message
-    llm_response = "LLM response"
+    llm_response_data = generate_response(
+        prompt=message, conversation_id=conversation_id, stream=False, history=5
+    ).get_json()
+    llm_response = llm_response_data["text"]
     with Session(engine) as session:
-        insert_msg = insert(Messages).values(
-            body=llm_response,
-            conversation_id=conversation_id,
-            type=MessageType.BOT_MESSAGES,
-            written_by=user_email,
+        insert_msg = (
+            insert(Messages)
+            .values(
+                body=llm_response,
+                conversation_id=conversation_id,
+                type=MessageType.BOT_MESSAGES,
+                written_by=user_email,
+            )
+            .returning(Messages.id)
         )
-        session.execute(insert_msg)
+        result = session.execute(insert_msg)
+        message_id = result.scalar_one()
         session.commit()
+        if message_id:
+            for seg in llm_response_data["sources"]:
+                insert_ref = insert(References).values(
+                    message=message_id,
+                    segment=seg["segment_id"],
+                )
+                session.execute(insert_ref)
+                session.commit()
 
     return jsonify({"reply": llm_response})
 
@@ -490,11 +605,15 @@ def course_documents(course_id: int):
 
             segments = parse_file(str(full_local_path))
             add_new_document(
-                str(relative_path).replace(str(Path().anchor), ""), course_id
+                str(relative_path).replace(str(Path().anchor), "").replace(os.sep, "/"),
+                course_id,
             )
             for seg in segments:
                 seg_id = store_segment(
-                    seg, str(relative_path).replace(str(Path().anchor), "")
+                    seg,
+                    str(relative_path)
+                    .replace(str(Path().anchor), "")
+                    .replace(os.sep, "/"),
                 )
 
                 embedding = embed_text(seg)

@@ -38,7 +38,7 @@ def test_generate_non_stream_success(client, monkeypatch):
     assert "What is Python?" in response_data["text"]
     
     # Verify retriever was called
-    mock_retriever.get_segments_for.assert_called_once_with("What is Python?", num_segments=3)
+    mock_retriever.get_segments_for.assert_called_once_with("What is Python?", 0, num_segments=3)
 
 
 def test_generate_stream_success(client, monkeypatch):

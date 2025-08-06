@@ -42,7 +42,7 @@ def parse_file(path: str) -> list[str]:
         elif extension == "md":
             return _parse_md(f, 1000)
         elif extension == "pdf":
-            return _parse_pdf(f, 1000, 1)
+            return _parse_pdf(f, chars_per_seg=1000, overlap=2)
         else:
             raise InvalidFileExtensionError(extension)
 

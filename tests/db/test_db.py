@@ -397,8 +397,9 @@ def test_store_segment(db: Connection):
 def test_store_embedding(db: Connection):
     """Tests the store_embedding wrapper function"""
     segment_id = store_segment("Text string", "slide_2.pdf")
-    store_embedding([1.0, 2.0, 3.0], segment_id)
-    s = select(Embeddings).where(Embeddings.vector==[1.0, 2.0, 3.0], Embeddings.segment_id==segment_id)
+    embedding = [i for i in range(100)]
+    store_embedding(embedding, segment_id)
+    s = select(Embeddings).where(Embeddings.vector==embedding, Embeddings.segment_id==segment_id)
     result = db.execute(s)
 
     answer = None
@@ -407,5 +408,5 @@ def test_store_embedding(db: Connection):
     assert answer is not None
     id, vector, seg_id = answer
     assert id == 1
-    assert np.allclose(vector, [1.0, 2.0, 3.0])
+    assert np.allclose(vector, embedding)
     assert seg_id == segment_id

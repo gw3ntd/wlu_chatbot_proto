@@ -13,12 +13,15 @@ bp = Blueprint("routes", __name__)
 
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
-You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer.
+You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer. The conversation history is also provided.
 
-If the context is not relevant, than you should tell the student, "I cannot find any relevant course materials to help answer your question."
+If the context is not relevant, thn you should tell the student, "I cannot find any relevant course materials to help answer your question."
 
 ## Context
 {context}
+
+## History
+{history}
 
 ## Question
 {question}
@@ -46,7 +49,7 @@ def generate():
     stop_sequences = params.get("stop_sequences", [])
 
     # 2. Retrieve context from your context_retrieval module
-    segments = retriever.get_segments_for(prompt, num_segments=3)
+    segments = retriever.get_segments_for(prompt, 0, num_segments=3)
     context = "\n".join(
         # Assuming each 's' object has 'segment_id' and 'text' attributes
         map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
