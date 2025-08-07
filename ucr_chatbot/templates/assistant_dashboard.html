@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assistant Dashboard - UCR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}" />
+    
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .conversation-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .conversation-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .conversation-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #003da5;
+        }
+        
+        .conversation-meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .course-badge {
+            background: #003da5;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        
+        .student-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #003da5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #002d7a;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            color: #003da5;
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
+        rel="stylesheet"
+    />
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <h1>Assistant Dashboard</h1>
+        <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
+    </header>
+    
+    <div class="dashboard-container">
+        <!-- Ongoing Conversations Section -->
+        <h2>🔄 Ongoing Conversations</h2>
+        
+        {% if ongoing_conversations %}
+            <p>You have {{ ongoing_conversations|length }} ongoing conversation(s) to handle:</p>
+            
+            {% for conversation in ongoing_conversations %}
+            <div class="conversation-card">
+                <div class="conversation-header">
+                    <div class="conversation-title">
+                        Conversation #{{ conversation.id }}
+                    </div>
+                    <span class="course-badge">{{ course_names[conversation.course_id] }}</span>
+                </div>
+                
+                <div class="conversation-meta">
+                    <strong>Student:</strong> {{ conversation.initiated_by }}<br>
+                    <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
+                    <strong>Started:</strong> {{ conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if conversation.messages and conversation.messages|length > 0 else 'Unknown' }}
+                </div>
+                
+                <div class="student-info">
+                    <strong>Latest Message:</strong><br>
+                    {% if conversation.messages and conversation.messages|length > 0 %}
+                        {% set latest_message = conversation.messages[-1] %}
+                        "{{ latest_message.body[:100] }}{% if latest_message.body|length > 100 %}...{% endif %}"
+                    {% else %}
+                        No messages yet
+                    {% endif %}
+                </div>
+                
+                <a href="{{ url_for('web_routes.assistant_conversation', conversation_id=conversation.id) }}" 
+                   class="btn btn-primary">
+                    Handle Conversation
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>🎉 All Caught Up!</h3>
+                <p>There are no ongoing conversations at the moment.</p>
+                <p>Check back later for new student requests.</p>
+            </div>
+        {% endif %}
+        
+        <!-- Resolved Conversations Section -->
+        <h2 style="margin-top: 40px;">✅ Resolved Conversations</h2>
+        
+        {% if resolved_conversations %}
+            <p>You have {{ resolved_conversations|length }} resolved conversation(s):</p>
+            
+            {% for conversation in resolved_conversations %}
+            <div class="conversation-card" style="opacity: 0.7; background-color: #f8f9fa;">
+                <div class="conversation-header">
+                    <div class="conversation-title">
+                        Conversation #{{ conversation.id }}
+                    </div>
+                    <span class="course-badge" style="background-color: #28a745;">Resolved</span>
+                </div>
+                
+                <div class="conversation-meta">
+                    <strong>Student:</strong> {{ conversation.initiated_by }}<br>
+                    <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
+                    <strong>Started:</strong> {{ conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if conversation.messages and conversation.messages|length > 0 else 'Unknown' }}
+                </div>
+                
+                <div class="student-info">
+                    <strong>Latest Message:</strong><br>
+                    {% if conversation.messages and conversation.messages|length > 0 %}
+                        {% set latest_message = conversation.messages[-1] %}
+                        "{{ latest_message.body[:100] }}{% if latest_message.body|length > 100 %}...{% endif %}"
+                    {% else %}
+                        No messages yet
+                    {% endif %}
+                </div>
+                
+                <span class="btn" style="background-color: #6c757d; cursor: default;">
+                    Resolved
+                </span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <h3>📝 No Resolved Conversations</h3>
+                <p>You haven't resolved any conversations yet.</p>
+                <p>Start helping students to see resolved conversations here!</p>
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="{{ url_for('web_routes.course_selection') }}" class="btn btn-primary">
+                Back to Course Selection
+            </a>
+        </div>
+    </div>
+</body>
+</html> 

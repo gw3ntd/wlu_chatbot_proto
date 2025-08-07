@@ -104,6 +104,16 @@
   color: black;
 }
 
+.system {
+  align-self: center;
+  background-color: #ff6b6b;
+  color: white;
+  font-style: italic;
+  text-align: center;
+  max-width: 500px;
+}
+
+/* MESSAGE INPUT */
 #message-input {
   padding: 1rem;
   border-top: 1px solid #003DA5;

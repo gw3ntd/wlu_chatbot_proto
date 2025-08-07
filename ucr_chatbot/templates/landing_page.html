@@ -51,6 +51,10 @@
             {{ course.name }} (ULA View)
           </a>
         </li>
+          <a href="{{ url_for('web_routes.assistant_dashboard') }}">
+            {{ course.name }} (ULA)
+          </a>
+        </li>    
         {% endif %}  
         {% endfor %}
       </ul>

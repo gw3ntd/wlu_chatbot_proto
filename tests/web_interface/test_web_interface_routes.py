@@ -218,8 +218,8 @@ def test_add_user(client: FlaskClient, app):
     with client.session_transaction() as sess:
         sess["_user_id"] = "testadd_instructor@ucr.edu"
 
-    data = {"email": "testadd@ucr.edu", "fname": "testadd_fname", "lname": "testadd_lname"}
-    response = client.post("/course/1/add_user", data=data, content_type="multipart/form-data")
+    data = {"email": "testadd@ucr.edu", "fname": "testadd_fname", "lname": "testadd_lname", "role": "student"}
+    response = client.post("/course/1/add_student", data=data, content_type="multipart/form-data")
     assert "302 FOUND" == response.status
 
 def test_add_students_from_list(client: FlaskClient, app):

@@ -112,7 +112,7 @@ def test_insert_conversations(db: Connection):
     """tests if a conversation can be inserted and selected out of db"""
 
 
-    stmt = insert(Conversations).values(id =100, initiated_by = 'test@ucr.edu', course_id = 1)
+    stmt = insert(Conversations).values(id=100, initiated_by='test@ucr.edu', course_id=1, resolved=False, redirected=False)
     db.execute(stmt)
     db.commit()
 
@@ -124,7 +124,7 @@ def test_insert_conversations(db: Connection):
     for row in result:
         answer = row
     assert answer is not None
-    assert answer == (100, 'test@ucr.edu',1)
+    assert answer == (100, 'test@ucr.edu', 1, False, False)  # Added resolved and redirected columns
 
 def test_insert_messages(db: Connection): 
     """tests if a message can be inserted and selected out of db"""

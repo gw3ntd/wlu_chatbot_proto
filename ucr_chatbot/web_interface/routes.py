@@ -430,10 +430,37 @@ def reply_conversation(conversation_id: int, user_email: str, message: str):
     :param message: the user's message the LLM is responding to
 
     """
+    with Session(engine) as session:
+        # Check if conversation has been redirected to ULA
+        conversation = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+        if not conversation:
+            return jsonify({"error": "Conversation not found"}), 404
+
+        # If conversation is redirected, don't let the LLM respond
+        if hasattr(conversation, "redirected") and bool(conversation.redirected):  # type: ignore
+            return jsonify(
+                {
+                    "error": "conversation_redirected",
+                    "reply": "This conversation has been redirected to a ULA. Please wait for assistance.",
+                }
+            ), 403
+
+        # If conversation is resolved, don't let the LLM respond
+        if bool(conversation.resolved):  # type: ignore
+            return jsonify(
+                {
+                    "error": "conversation_resolved",
+                    "reply": "This conversation has been resolved.",
+                }
+            ), 403
+            
     llm_response_data = generate_response(
         prompt=message, conversation_id=conversation_id, stream=False, history=5
     ).get_json()
     llm_response = llm_response_data["text"]
+
     with Session(engine) as session:
         insert_msg = (
             insert(Messages)
@@ -605,7 +632,6 @@ def ula_conversation(conversation_id: int):
     )
 
 
-
 def create_upload_folder(course_id: int):
     """Creates a folder named after the course id within the uploads folder.
     :param course_id: name of the folder to be created
@@ -617,6 +643,251 @@ def create_upload_folder(course_id: int):
     course_path = upload_path / str(course_id)
     if not course_path.is_dir():
         course_path.mkdir(parents=True, exist_ok=True)
+
+
+@bp.route("/conversation/<int:conversation_id>/redirect", methods=["POST"])
+@login_required
+def redirect_conversation(conversation_id: int):
+    """Redirects a conversation to an assistant for manual handling.
+    :param conversation_id: The ID of the conversation to redirect.
+    """
+    user_email = current_user.email
+
+    with Session(engine) as session:
+        conversation = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+        if not conversation:
+            return jsonify({"error": "Conversation not found"}), 404
+
+        # Check if user is the initiator or has permission
+        if conversation.initiated_by != user_email:
+            # Check if user is an assistant for this course
+            participation = (
+                session.query(ParticipatesIn)
+                .filter_by(
+                    email=user_email, course_id=conversation.course_id, role="assistant"
+                )
+                .first()
+            )
+            if not participation:
+                return jsonify({"error": "Unauthorized"}), 403
+
+        # Mark conversation as redirected but not resolved
+        try:
+            conversation.redirected = True  # type: ignore
+            session.commit()
+        except Exception as e:
+            # If redirected column doesn't exist, just return success
+            print(f"Warning: redirected column not found, skipping redirect flag: {e}")
+            session.rollback()
+
+        return jsonify(
+            {"status": "redirected", "message": "Conversation redirected to assistant"}
+        )
+
+
+@bp.route("/conversation/<int:conversation_id>/resolve", methods=["POST"])
+@login_required
+def resolve_conversation(conversation_id: int):
+    """Marks a conversation as resolved.
+    :param conversation_id: The ID of the conversation to resolve.
+    """
+    user_email = current_user.email
+
+    with Session(engine) as session:
+        conversation = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+        if not conversation:
+            return jsonify({"error": "Conversation not found"}), 404
+
+        # Check if user is the initiator or has permission
+        if conversation.initiated_by != user_email:
+            # Check if user is an assistant for this course
+            participation = (
+                session.query(ParticipatesIn)
+                .filter_by(
+                    email=user_email, course_id=conversation.course_id, role="assistant"
+                )
+                .first()
+            )
+            if not participation:
+                return jsonify({"error": "Unauthorized"}), 403
+
+        # Mark conversation as resolved
+        conversation.resolved = True  # type: ignore
+        session.commit()
+
+        return jsonify(
+            {"status": "resolved", "message": "Conversation marked as resolved"}
+        )
+
+
+@bp.route("/assistant/dashboard")
+@login_required
+def assistant_dashboard():
+    """Dashboard for assistants to view and handle redirected conversations."""
+    user_email = current_user.email
+
+    with Session(engine) as session:
+        # Get all courses where the user is an assistant
+        assistant_courses = (
+            session.query(ParticipatesIn)
+            .filter_by(email=user_email, role="assistant")
+            .all()
+        )
+
+        if not assistant_courses:
+            flash("You do not have assistant permissions for any courses.", "danger")
+            return redirect(url_for("web_routes.course_selection"))
+
+        course_ids = [ac.course_id for ac in assistant_courses]
+
+        # Get all redirected but unresolved conversations from these courses (ongoing)
+        # Temporarily handle missing redirected column
+        try:
+            ongoing_conversations = (
+                session.query(Conversations)
+                .filter(
+                    Conversations.course_id.in_(course_ids),
+                    Conversations.redirected == True,
+                    Conversations.resolved == False,
+                )
+                .all()
+            )
+        except Exception as e:
+            # If redirected column doesn't exist, show all unresolved conversations
+            print(
+                f"Warning: redirected column not found, showing all unresolved conversations: {e}"
+            )
+            ongoing_conversations = (
+                session.query(Conversations)
+                .filter(
+                    Conversations.course_id.in_(course_ids),
+                    Conversations.resolved == False,
+                )
+                .all()
+            )
+
+        # Load messages for each conversation to avoid template errors
+        for conversation in ongoing_conversations:
+            conversation.messages = (
+                session.query(Messages).filter_by(conversation_id=conversation.id).all()
+            )
+
+        # Get all resolved conversations from these courses
+        resolved_conversations = (
+            session.query(Conversations)
+            .filter(
+                Conversations.course_id.in_(course_ids), Conversations.resolved == True
+            )
+            .all()
+        )
+
+        # Load messages for each resolved conversation to avoid template errors
+        for conversation in resolved_conversations:
+            conversation.messages = (
+                session.query(Messages).filter_by(conversation_id=conversation.id).all()
+            )
+
+        # Get course names for display
+        course_names = {}
+        for course in session.query(Courses).filter(Courses.id.in_(course_ids)).all():
+            course_names[course.id] = course.name
+
+    return render_template(
+        "assistant_dashboard.html",
+        ongoing_conversations=ongoing_conversations,
+        resolved_conversations=resolved_conversations,
+        course_names=course_names,
+    )
+
+
+@bp.route("/assistant/conversation/<int:conversation_id>")
+@login_required
+def assistant_conversation(conversation_id: int):
+    """Assistant interface for handling a specific conversation."""
+    user_email = current_user.email
+
+    # Check if user is an assistant for this conversation's course
+    with Session(engine) as session:
+        conversation = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+        if not conversation:
+            abort(404, description="Conversation not found")
+
+        participation = (
+            session.query(ParticipatesIn)
+            .filter_by(
+                email=user_email, course_id=conversation.course_id, role="assistant"
+            )
+            .first()
+        )
+        if not participation:
+            flash(
+                "You do not have assistant permissions for this conversation.", "danger"
+            )
+            return redirect(url_for("web_routes.course_selection"))
+
+        # Get course name
+        course = session.query(Courses).filter_by(id=conversation.course_id).first()
+        course_name = course.name if course else "Unknown Course"
+
+    return render_template(
+        "assistant_conversation.html",
+        conversation_id=conversation_id,
+        course_id=conversation.course_id,
+        course_name=course_name,
+        student_email=conversation.initiated_by,
+    )
+
+
+@bp.route("/assistant/conversation/<int:conversation_id>/send", methods=["POST"])
+@login_required
+def assistant_send_message(conversation_id: int):
+    """Allows assistants to send messages in a conversation.
+    :param conversation_id: The ID of the conversation.
+    """
+    content = request.get_json()
+    user_email = current_user.email
+    message = content.get("message", "")
+
+    # Check if user is an assistant for this conversation's course
+    with Session(engine) as session:
+        conversation = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+        if not conversation:
+            return jsonify({"error": "Conversation not found"}), 404
+
+        participation = (
+            session.query(ParticipatesIn)
+            .filter_by(
+                email=user_email, course_id=conversation.course_id, role="assistant"
+            )
+            .first()
+        )
+        if not participation:
+            return jsonify(
+                {"error": "You do not have assistant permissions for this conversation"}
+            ), 403
+
+    if not message.strip():
+        return jsonify({"error": "Message cannot be empty"}), 400
+
+    # Add assistant message to the conversation
+    assistant_message = Messages(
+        body=message,
+        conversation_id=conversation_id,
+        type=MessageType.ASSISTANT_MESSAGES,
+        written_by=user_email,
+    )
+    session.add(assistant_message)
+    session.commit()
+
+    return jsonify({"status": "sent", "message": "Assistant message sent successfully"})
 
 
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
