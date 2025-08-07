@@ -50,15 +50,17 @@ def generate():
     max_tokens = params.get("max_tokens", 3000)
     stop_sequences = params.get("stop_sequences", [])
 
-    with Session(engine) as session:
-        course_id_row = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
+    if (
+        LLMMode.TESTING
+    ):  # Single test with the generate route. No courses uploaded, so manually set it
+        course_id = 0
+    else:
+        with Session(engine) as session:
+            course_id_row = (
+                session.query(Conversations).filter_by(id=conversation_id).first()
+            )
 
-    if course_id_row is None:
-        if LLMMode.TESTING:  # Single test with the generate route. No courses uploaded, so manually set it
-            course_id = 0
-        else:
+        if course_id_row is None:
             return jsonify(
                 {
                     "text": "An error has occured.",
@@ -66,8 +68,8 @@ def generate():
                     "conversation_id": conversation_id,
                 }
             )
-    else:
-        course_id = course_id_row.course_id
+        else:
+            course_id = course_id_row.course_id
 
     # 2. Retrieve context from your context_retrieval module
     segments = retriever.get_segments_for(prompt, course_id, num_segments=3)  # type: ignore
