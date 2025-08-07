@@ -55,7 +55,9 @@ def generate():
         map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
     )
 
-    prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt)
+    prompt_with_context = SYSTEM_PROMPT.format(
+        context=context, question=prompt, history="history"
+    )
 
     generation_params = {
         "prompt": prompt_with_context,

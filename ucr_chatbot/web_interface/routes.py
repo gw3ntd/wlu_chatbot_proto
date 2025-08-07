@@ -384,7 +384,13 @@ def generate_response(
         map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
     )
 
-    prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt, history=get_conv_messages(conversation_id).get_json()["messages"][-(history*2):])
+    prompt_with_context = SYSTEM_PROMPT.format(
+        context=context,
+        question=prompt,
+        history=get_conv_messages(conversation_id).get_json()["messages"][
+            -(history * 2) :
+        ],
+    )
 
     generation_params = {  # type: ignore
         "prompt": prompt_with_context,
