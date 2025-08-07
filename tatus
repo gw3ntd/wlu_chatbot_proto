@@ -1,0 +1,10 @@
+[33mb6ffeb3[m[33m ([m[1;36mHEAD -> [m[1;32mfeature/add-assistants[m[33m, [m[1;31morigin/feature/add-assistants[m[33m)[m Added assistants form and fixed CSS paths
+[33m53784ef[m[33m ([m[1;31morigin/feature/new-button[m[33m, [m[1;32mfeature/new-button[m[33m)[m Reorganized js + css, new header element
+[33mf99c1e5[m Assistant page frontend
+[33m79d99a8[m Bot message frontend edit
+[33m06c3a19[m Minor header edit
+[33m52f1fed[m Redirect button frontend
+[33m8be801c[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Added @roles_required to routing functions
+[33ma10400c[m Removed .DS_Store files
+[33m4c37830[m Undid change to embedding.py
+[33mdc05530[m cleaned up comments and tried to get rid of cached flash messages
