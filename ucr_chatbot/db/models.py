@@ -13,7 +13,6 @@ from sqlalchemy.orm import declarative_base, mapped_column, relationship, Sessio
 import enum
 from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
-from pathlib import Path
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from typing import cast
@@ -270,7 +269,6 @@ def add_new_course(name: str):
             session.add(new_course)
             session.commit()
 
-            create_upload_folder(getattr(new_course, "id"))
         except SQLAlchemyError:
             session.rollback()
 
@@ -355,15 +353,3 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
             session.commit()
         except SQLAlchemyError:
             session.rollback()
-
-
-def create_upload_folder(course_id: int):
-    """Creates a folder named after the course id within the uploads folder.
-    :param course_id: name of the folder to be created
-    """
-    upload_path = Path(Config.FILE_STORAGE_PATH)
-    if not upload_path.is_dir():
-        upload_path.mkdir(parents=True, exist_ok=True)
-
-    course_path = upload_path / str(course_id)
-    course_path.mkdir(parents=True, exist_ok=True)

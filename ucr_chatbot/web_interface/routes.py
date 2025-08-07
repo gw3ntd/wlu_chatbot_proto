@@ -559,6 +559,19 @@ def conversation(conversation_id: int):
         )
 
 
+def create_upload_folder(course_id: int):
+    """Creates a folder named after the course id within the uploads folder.
+    :param course_id: name of the folder to be created
+    """
+    upload_path = Path(Config.FILE_STORAGE_PATH)
+    if not upload_path.is_dir():
+        upload_path.mkdir(parents=True, exist_ok=True)
+
+    course_path = upload_path / str(course_id)
+    if not course_path.is_dir():
+        course_path.mkdir(parents=True, exist_ok=True)
+
+
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 @login_required
 @roles_required(["instructor"])
@@ -606,6 +619,7 @@ def course_documents(course_id: int):
             relative_path = Path(str(course_id)) / filename
             full_local_path = curr_path / relative_path
 
+            create_upload_folder(course_id=course_id)
             file.save(str(full_local_path))
 
             segments = parse_file(str(full_local_path))
