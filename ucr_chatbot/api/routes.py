@@ -4,9 +4,11 @@ from flask import (
     jsonify,
     Response,
 )
+from ucr_chatbot.db.models import Session, engine, Conversations
 from .context_retrieval import retriever
 from .language_model.response import client as client
 import json
+from ucr_chatbot.config import LLMMode
 
 bp = Blueprint("routes", __name__)
 
@@ -15,7 +17,7 @@ SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
 You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer. The conversation history is also provided.
 
-If the context is not relevant, thn you should tell the student, "I cannot find any relevant course materials to help answer your question."
+If the context is not relevant, then you should tell the student, "I cannot find any relevant course materials to help answer your question."
 
 ## Context
 {context}
@@ -48,8 +50,27 @@ def generate():
     max_tokens = params.get("max_tokens", 3000)
     stop_sequences = params.get("stop_sequences", [])
 
+    with Session(engine) as session:
+        course_id_row = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+
+    if course_id_row is None:
+        if LLMMode.TESTING:  # Single test with the generate route. No courses uploaded, so manually set it
+            course_id = 0
+        else:
+            return jsonify(
+                {
+                    "text": "An error has occured.",
+                    "sources": [{"source_id": 0}],
+                    "conversation_id": conversation_id,
+                }
+            )
+    else:
+        course_id = course_id_row.course_id
+
     # 2. Retrieve context from your context_retrieval module
-    segments = retriever.get_segments_for(prompt, 0, num_segments=3)
+    segments = retriever.get_segments_for(prompt, course_id, num_segments=3)  # type: ignore
     context = "\n".join(
         # Assuming each 's' object has 'segment_id' and 'text' attributes
         map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore

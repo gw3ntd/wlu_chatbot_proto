@@ -9,7 +9,7 @@ from ucr_chatbot.db.models import (
 )
 from typing import Callable, ParamSpec, Optional, cast
 from flask.typing import ResponseReturnValue  # type: ignore
-import os
+# import os
 
 P = ParamSpec("P")  # preserves decorated function's param types
 
@@ -40,7 +40,6 @@ def roles_required(
                     Optional[str], kwargs.get("file_path")
                 ) or request.args.get("file_path")
                 if file_path:
-                    file_path = file_path.replace(os.sep, "/")
                     with DBSession(engine) as db:
                         doc = db.query(Documents).filter_by(file_path=file_path).first()
                         if doc:

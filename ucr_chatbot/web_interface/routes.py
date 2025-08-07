@@ -19,7 +19,6 @@ from sqlalchemy import select, insert, func
 from pathlib import Path
 import pandas as pd
 import io
-import os
 import json
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
@@ -612,15 +611,13 @@ def course_documents(course_id: int):
 
             segments = parse_file(str(full_local_path))
             add_new_document(
-                str(relative_path).replace(str(Path().anchor), "").replace(os.sep, "/"),
+                str(relative_path).replace(str(Path().anchor), ""),
                 course_id,
             )
             for seg in segments:
                 seg_id = store_segment(
                     seg,
-                    str(relative_path)
-                    .replace(str(Path().anchor), "")
-                    .replace(os.sep, "/"),
+                    str(relative_path).replace(str(Path().anchor), ""),
                 )
 
                 embedding = embed_text(seg)
@@ -640,7 +637,9 @@ def course_documents(course_id: int):
         for idx, doc in enumerate(docs_dir.iterdir(), 1):
             if not doc.is_file():
                 continue
-            file_path = f"{course_id}/{secure_filename(doc.name)}"
+
+            file_path = str(Path(str(course_id)) / secure_filename(doc.name))
+            # file_path = f"{course_id}/{secure_filename(doc.name)}"
 
             if file_path not in active_docs:
                 continue
@@ -687,7 +686,6 @@ def delete_document(file_path: str):
     if current_user.is_anonymous:
         abort(403)
 
-    file_path = file_path.replace(os.sep, "/")
     full_path = str(Path(Config.FILE_STORAGE_PATH) / file_path)
 
     with Session(engine) as session:
@@ -733,7 +731,6 @@ def download_file(file_path: str):
     :rtype: flask.wrappers.Response
     """
     email = current_user.email
-    file_path = file_path.replace(os.sep, "/")
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:

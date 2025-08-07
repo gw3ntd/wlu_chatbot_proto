@@ -104,7 +104,7 @@ def test_file_download(client: FlaskClient, monkeypatch, app):
     )
     assert response.status_code == 200
 
-    file_path_rel = "1/test_file_download.txt"
+    file_path_rel = str(Path("1") / Path("test_file_download.txt"))
     response = client.get(f"/document/{file_path_rel}/download")
 
     #assert response.status_code == 200
@@ -145,7 +145,7 @@ def test_file_delete(client: FlaskClient, monkeypatch, app):
     assert response.status_code == 200
     assert b"test_file_delete.txt" in response.data
 
-    file_path_rel = "1/test_file_delete.txt"
+    file_path_rel = str(Path("1") / Path("test_file_delete.txt"))
     response = client.post(f"/document/{file_path_rel}/delete")
 
     assert response.status_code == 302
