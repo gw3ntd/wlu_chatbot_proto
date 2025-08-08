@@ -19,6 +19,7 @@ from typing import cast
 import secrets
 import string
 import shutil
+from pathlib import Path
 
 
 from flask_login import UserMixin  # type: ignore

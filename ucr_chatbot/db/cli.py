@@ -28,11 +28,31 @@ This file contains the following functions:
 
 import argparse
 from sqlalchemy import inspect
-from ucr_chatbot.db.models import *
-# try:
-#     from ucr_chatbot.db.models import *
-# except ModuleNotFoundError:
-#     from models import *
+
+try:
+    from ucr_chatbot.db.models import (
+        engine,
+        base,
+        Courses,
+        Users,
+        add_new_course,
+        add_new_user,
+        add_user_to_course,
+        Session,
+        delete_uploads_folder,
+    )
+except ModuleNotFoundError:
+    from models import (
+        engine,
+        base,
+        Courses,
+        Users,
+        add_new_course,
+        add_new_user,
+        add_user_to_course,
+        Session,
+        delete_uploads_folder,
+    )
 
 inspector = inspect(engine)
 

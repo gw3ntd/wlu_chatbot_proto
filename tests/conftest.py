@@ -14,6 +14,7 @@ def app():
     app = create_app({
         'TESTING': True,
     })
+    app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
     yield app
 
 

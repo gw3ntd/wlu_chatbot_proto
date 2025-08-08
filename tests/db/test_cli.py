@@ -13,18 +13,21 @@ from helper_functions import clear_db
 
 
 def test_main(capsys):
+  """Tests that arguments are parsed corrrectly in main"""
   base.metadata.drop_all(engine)
   main(shlex.split('initialize'))
   output = capsys.readouterr().out.rstrip()
   assert output == "Database initialized."
 
 def test_initialize():
+  """Tests that dataabase is initialized correctly"""
   base.metadata.drop_all(engine)
   initialize(False)
   inspector = inspect(engine)
   assert inspector.has_table("Users") == True
 
 def test_initialize_force():
+  """Tests that database is initialized correctly with --force"""
   base.metadata.drop_all(engine)
   initialize(False)
   initialize(True)
@@ -32,6 +35,7 @@ def test_initialize_force():
   assert inspector.has_table("Users") == True
 
 def test_mock(db: Connection):
+  """Tests that mock data is added correctly to database"""
   initialize(True)
   mock()
   s = select(Courses).where(Courses.id==1)
