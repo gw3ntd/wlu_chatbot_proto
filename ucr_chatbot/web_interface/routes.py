@@ -272,6 +272,7 @@ def get_conv_messages(conversation_id: int):
         type_map = {
             MessageType.STUDENT_MESSAGES: "StudentMessage",
             MessageType.BOT_MESSAGES: "BotMessage",
+            MessageType.ASSISTANT_MESSAGES: "AssistantMessage"
         }
         messages_list = []
         for message in messages:
@@ -780,7 +781,7 @@ def add_student(course_id: int):
 
 
 from datetime import datetime
-def generate_usage_summary(course_id: int, time_start: datetime, time_end: datetime) -> str:
+def generate_usage_summary(course_id: int, time_start: datetime, time_end: datetime, course_name:str) -> str:
     """Generates a summary of all student-chatbot interactions that occurred between a start and end time."""
     
     with Session(engine) as session:
@@ -795,6 +796,7 @@ def generate_usage_summary(course_id: int, time_start: datetime, time_end: datet
         if time_end:
             stmt = stmt.where(Messages.timestamp < time_end)
         
+
         student_count = session.execute(stmt).scalar_one()
         print(student_count)
 
@@ -812,8 +814,66 @@ def generate_usage_summary(course_id: int, time_start: datetime, time_end: datet
 
         conv_count = session.execute(stmt).scalar_one()
         print(student_count)
+
+        stmt = (
+            select(func.distinct(Messages.conversation_id))
+            .join(Conversations, Messages.conversation_id == Conversations.id)
+            .where(Conversations.course_id == course_id)
+        )
+        if time_start:
+            stmt = stmt.where(Messages.timestamp > time_start)
+        if time_end:
+            stmt = stmt.where(Messages.timestamp < time_end)
+        
+
+        conversation_ids = session.execute(stmt).scalars().all()
+
+        total_messages=[]
+        for conv_id in conversation_ids:
+            stmt = (
+                select(Messages.type, Messages.body)
+                .join(Conversations, Messages.conversation_id == Conversations.id)
+                .where(Conversations.id == conv_id)
+            )
+            if time_start:
+                stmt = stmt.where(Messages.timestamp > time_start)
+            if time_end:
+                stmt = stmt.where(Messages.timestamp < time_end)
+
+            messages = session.execute(stmt).all()
+
+            type_map = {
+                MessageType.STUDENT_MESSAGES: "StudentMessage",
+                MessageType.BOT_MESSAGES: "BotMessage",
+                MessageType.ASSISTANT_MESSAGES: "AssistantMessage"
+            }
+
+            for message in messages:
+                total_messages.append(f'{type_map.get(message.type)}: {message.body}')
+
+        total_messages_txt = "\n".join(total_messages)
+
+    prompt = f"""These are all of the messages that students have been having with a AI chatbot for help with a computer science course. 
+                Generate a report for this course's instructor summarising students\' interactions with the chatbot, highlighting common questions and students\' strengths and weaknesses
+                Here are the all student chatbot messages {total_messages_txt}
+                Do not include any information of chatbot performance, or include recommendations for the professor
+                Do not focus too much on specific/invidual interactions between a student and the chatbot. 
+                Focus more higher level, what topics are being discussed and with what frequency, which topics are students struggling at, how are they struggling.
+                Do not include a title for the report.
+                """
     
-    return "Active Students: " + str(student_count) + " Total Conversations: " + str(conv_count)
+    response = response_client.get_response(prompt)
+
+    if time_start and time_end:
+        title = f"## {course_name} Chatbot Interaction Report ({time_start} - {time_end})\n\n"
+    elif time_start:
+        title = f"## {course_name} Chatbot Interaction Report ({time_start} - Present)\n\n"
+    else:
+        title = f"## {course_name} Chatbot Interaction Report\n\n"
+    
+    summary = title +"Active Students: " + str(student_count) + "\nTotal Conversations: " + str(conv_count) + "\n\n" + response
+    
+    return summary
 
         
 
@@ -828,15 +888,27 @@ def generate_summary(course_id: int):
     """
     start_date = request.form["start_date"]
     end_date = request.form["end_date"]
-    print("Start date: "  + start_date)
-    print("End date: "  + end_date)
 
-    summary = generate_usage_summary(course_id, start_date, end_date)
+    if end_date and start_date is None:
+        end_date = None
+
+
+    with Session(engine) as session:
+        stmt = (
+                select(Courses.name)
+                .where(Courses.id == course_id)
+            )
+
+        course_name = session.execute(stmt).scalar_one()
+
+    summary = generate_usage_summary(course_id, start_date, end_date, course_name)
+
+    
   
     return FlaskResponse(
         summary,
         mimetype='text/plain',
-        headers={'Content-disposition': 'attachment; filename=Course_Report.txt'})
+        headers={'Content-disposition': f'attachment; filename={course_name}_Report.txt'})
 
 
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
