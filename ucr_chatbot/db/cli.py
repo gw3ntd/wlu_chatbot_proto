@@ -83,7 +83,7 @@ def mock():
             print("Mock data not added, database already has data.")
 
 
-def main():
+def main(arg_list: list[str] | None = None):
     """Initializes the argument parser and gets the arguments passed in through the CLI
     
     Usage:
@@ -94,7 +94,7 @@ def main():
     parser.add_argument("action", type=str, choices=["initialize", "mock"], help="use 'initialize' to set up database tables or 'mock' to add mock data")
     parser.add_argument("--force", action="store_true", default=False, help="use with 'initialize' to forcefully clear and recreate all tables")
 
-    args = parser.parse_args()
+    args = parser.parse_args(arg_list)
 
     if args.action == "initialize":
         initialize(args.force)
