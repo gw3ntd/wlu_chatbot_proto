@@ -778,6 +778,47 @@ def add_student(course_id: int):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
+
+from datetime import datetime
+def generate_usage_summary(course_id: int, time_start: datetime, time_end: datetime) -> str:
+    """Generates a summary of all student-chatbot interactions that occurred between a start and end time."""
+    
+    with Session(engine) as session:
+        stmt = (
+            select(func.count(func.distinct(Messages.written_by)))
+            .join(Conversations, Messages.conversation_id == Conversations.id)
+            .where(Conversations.course_id == course_id)
+        )
+        
+        if time_start:
+            stmt = stmt.where(Messages.timestamp > time_start)
+        if time_end:
+            stmt = stmt.where(Messages.timestamp < time_end)
+        
+        student_count = session.execute(stmt).scalar_one()
+        print(student_count)
+
+        stmt = (
+            select(func.count(func.distinct(Messages.conversation_id)))
+            .join(Conversations, Messages.conversation_id == Conversations.id)
+            .where(Conversations.course_id == course_id)
+        )
+        
+        if time_start:
+            stmt = stmt.where(Messages.timestamp > time_start)
+        if time_end:
+            stmt = stmt.where(Messages.timestamp < time_end)
+        
+
+        conv_count = session.execute(stmt).scalar_one()
+        print(student_count)
+    
+    return "Active Students: " + str(student_count) + " Total Conversations: " + str(conv_count)
+
+        
+
+    
+
 @bp.route("/course/<int:course_id>/generate_summary", methods=["POST"])
 @login_required
 @roles_required(["instructor"])
@@ -790,8 +831,12 @@ def generate_summary(course_id: int):
     print("Start date: "  + start_date)
     print("End date: "  + end_date)
 
+    summary = generate_usage_summary(course_id, start_date, end_date)
   
-    return redirect(url_for(".course_documents", course_id=course_id))
+    return FlaskResponse(
+        summary,
+        mimetype='text/plain',
+        headers={'Content-disposition': 'attachment; filename=Course_Report.txt'})
 
 
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
