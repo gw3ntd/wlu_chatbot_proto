@@ -778,6 +778,22 @@ def add_student(course_id: int):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
+@bp.route("/course/<int:course_id>/generate_summary", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
+def generate_summary(course_id: int):
+    """Generates a summary of student conversations for a course
+    :param course_id: The course that is to be summarised.
+    """
+    start_date = request.form["start_date"]
+    end_date = request.form["end_date"]
+    print("Start date: "  + start_date)
+    print("End date: "  + end_date)
+
+  
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
 @login_required
 @roles_required(["instructor"])

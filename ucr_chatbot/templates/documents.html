@@ -72,5 +72,18 @@
             <input type=file name="file">
             <input type=submit value="Add">
         </form>
+
+        <h1>Generate Summary</h1>
+        <form action="{{ url_for('web_routes.generate_summary', course_id=course_id) }}" method="post">
+
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date"  />
+            
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" />
+            
+  <button type="submit">Submit</button>
+  
+            </form>
     </section>
 </html>
