@@ -18,6 +18,8 @@ import pandas as pd
 from typing import cast
 import secrets
 import string
+import shutil
+
 
 from flask_login import UserMixin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -65,7 +67,7 @@ class Users(base, UserMixin):
         :type password: str
 
         """
-        print("User " + self.email + " password:" + password)
+        print("User added -> email: " + self.email + " password: " + password)
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
@@ -353,3 +355,10 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
             session.commit()
         except SQLAlchemyError:
             session.rollback()
+
+
+def delete_uploads_folder():
+    """Deletes uploads folder and all files within it."""
+    uploads_folder_path = Path(Config.FILE_STORAGE_PATH)
+    if uploads_folder_path.exists():
+        shutil.rmtree(uploads_folder_path)
