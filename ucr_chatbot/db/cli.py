@@ -11,24 +11,28 @@ Usage (assuming running from project root):
 
 This file contains the following functions:
 
-    * initialize(force: bool) - Creates all database tables if they have not already been created. 
+    * initialize(force: bool) - Creates all database tables if they have not already been created.
       If --force is passed, deletes all tables and then creates them.
 
-    * mock() - Adds mock courses and users with different roles to the database. 
+    * mock() - Adds mock courses and users with different roles to the database.
       Copy email and password info output when users are created for later use.
-      Mock users: 
+      Mock users:
       - test001@ucr.edu (instructor access)
       - test002@ucr.edu (student access)
       - test003@ucr.edu (assistant access)
-      
-    * main() - Initializes the argument parser, parses the CLI arguments, 
+
+    * main() - Initializes the argument parser, parses the CLI arguments,
       and calls the corresponding functions.
 
 """
 
 import argparse
-from models import *
 from sqlalchemy import inspect
+from ucr_chatbot.db.models import *
+# try:
+#     from ucr_chatbot.db.models import *
+# except ModuleNotFoundError:
+#     from models import *
 
 inspector = inspect(engine)
 
@@ -52,7 +56,7 @@ def initialize(force: bool):
 
 
 def mock():
-    """Adds mock courses and users with varying roles to the database. 
+    """Adds mock courses and users with varying roles to the database.
     Only adds mock data if the Users and Courses tables are empty.
     """
     if not inspector.has_table("Users"):
@@ -85,14 +89,28 @@ def mock():
 
 def main(arg_list: list[str] | None = None):
     """Initializes the argument parser and gets the arguments passed in through the CLI
-    
+
     Usage:
       uv run ucr_chatbot/db/cli.py initialize [--force]
       uv run ucr_chatbot/db/cli.py mock
     """
-    parser = argparse.ArgumentParser(description=__doc__, prog="uv run ucr_chatbot/db/cli.py", formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("action", type=str, choices=["initialize", "mock"], help="use 'initialize' to set up database tables or 'mock' to add mock data")
-    parser.add_argument("--force", action="store_true", default=False, help="use with 'initialize' to forcefully clear and recreate all tables")
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        prog="uv run ucr_chatbot/db/cli.py",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "action",
+        type=str,
+        choices=["initialize", "mock"],
+        help="use 'initialize' to set up database tables or 'mock' to add mock data",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="use with 'initialize' to forcefully clear and recreate all tables",
+    )
 
     args = parser.parse_args(arg_list)
 
