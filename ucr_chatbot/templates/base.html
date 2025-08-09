@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<<<<<<< HEAD
-    <title>{{title or "UCR"}}</title>
+
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <u1 class="flashes">
@@ -14,10 +13,6 @@
         </u1>
       {% endif %}
     {% endwith %}
-    {% block body %}{% endblock %}
-  </head>
-{% endautoescape %}
-=======
     
     <title>{% block title %}ScottGPT{% endblock %}</title>
 
@@ -56,5 +51,5 @@
     {% block body %}{% endblock %}
     {% block scripts %}{% endblock %}
   </body>
->>>>>>> 77da22c (base.html extended & message PFPs added)
+{% endautoescape %}
 </html>
