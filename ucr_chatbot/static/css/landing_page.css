@@ -1,15 +1,34 @@
-/* LOGOUT BUTTON */
-.logout-button {
-  padding: 0.5em 1em;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-family: "Fira Sans", sans-serif;
-  cursor: pointer;
-  text-decoration: none;
+body {
+  margin: 0px;
+  padding: 0px;
 }
 
-.logout-button:hover {
-  background-color: #0056b3;
+/* FONTS */
+.oswald {
+  font-family: "oswald", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.fira-sans {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #003da5;
+  color: white;
+  padding: 1.5rem 2rem;
+}
+header h1 {
+  margin: 0;
+  font-family: "Oswald", sans-serif;
+}
+header img {
+  height: 50px;
 }
