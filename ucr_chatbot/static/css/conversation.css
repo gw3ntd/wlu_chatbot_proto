@@ -137,7 +137,7 @@
 }
 
 #input-form textarea:focus {
-  outline: 2px solid #FFB81C;
+  outline: 1px solid #FFB81C;
   border: 1px solid #FFB81C;
 }
 

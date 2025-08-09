@@ -30,6 +30,16 @@
       href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
       rel="stylesheet"
     />
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <u1 class="flashes">
+        {% for message in messages %}
+          <li>{{ message }}</li> 
+        {% endfor %}
+        </u1>
+      {% endif %}
+    {% endwith %}
 
     {% block head %}{% endblock %}
   </head>
@@ -43,7 +53,7 @@
       <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
     </header>
 
-    {% block content %}{% endblock %}
+    {% block body %}{% endblock %}
     {% block scripts %}{% endblock %}
   </body>
 >>>>>>> 77da22c (base.html extended & message PFPs added)
