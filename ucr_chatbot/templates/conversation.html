@@ -1,129 +1,36 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
+{% extends "base.html" %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body
-    {%
-    if
-    conversation_id
-    %}data-conversation-id="{{ conversation_id }}"
-    {%
-    endif
-    %}
-    {%
-    if
-    course_id
-    %}data-course-id="{{ course_id }}"
-    {%
-    endif
-    %}
-  >
-    <header>
-      <h1>SCOTTGPT</h1>
-      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}">
-    </header>
+{% block title %}Chat | ScottGPT{% endblock %}
 
-    <div id="main-layout">
-      <div id="sidebar" class="oswald">
-        <h2>CONVERSATIONS</h2>
-        <div id="sidebar-messages"></div>
-      </div>
+{% block css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
+{% endblock %}
 
-      <div id="main">
-        <div id="chat-container"></div>
-        <div id="message-input">
-          <form id="input-form" onsubmit="handleSend(event)">
-            <textarea
-              id="userMessage"
-              rows="2"
-              class="fira-sans"
-              placeholder="Type your message..."
-            ></textarea>
-            <button type="submit" id="sendButton" class="fira-sans">Send</button>
-            <button type="button" id="redirectButton" class="fira-sans" onclick="assistantButtonClicked()">Redirect to ULA</button>
-          </form>
-        </div>
-      </div>
+{% block content %}
+  <div id="main-layout">
+    <div id="sidebar" class="oswald">
+      <h2>CONVERSATIONS</h2>
+      <div id="sidebar-messages"></div>
     </div>
 
-  </script>
-  <script src="{{ url_for('static', filename='conversation.js') }}"></script>
-  </body>
-</html> -->
-
-<!-- This version has links straight to other files, not like {{dfkdhskjfhdsjkhf}} -->
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
-      rel="stylesheet"
-    />
-
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
-  </head>
-  <body
-    {%
-    if
-    conversation_id
-    %}data-conversation-id="{{ conversation_id }}"
-    {%
-    endif
-    %}
-    {%
-    if
-    course_id
-    %}data-course-id="{{ course_id }}"
-    {%
-    endif
-    %}
-  >
-    <header>
-      <h1>SCOTTGPT</h1>
-      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
-    </header>
-    
-    <div id="main-layout">
-      <div id="sidebar" class="oswald">
-        <h2>CONVERSATIONS</h2>
-        <div id="sidebar-messages"></div>
-      </div>
-
-      <div id="main">
-        <div id="chat-container"></div>
-        <div id="message-input">
-          <form id="input-form" onsubmit="handleSend(event)">
-            <textarea
-              id="userMessage"
-              rows="2"
-              class="fira-sans"
-              placeholder="Type your message..."
-            ></textarea>
-            <button type="submit" id="sendButton" class="fira-sans">Send</button>
-            <button type="button" id="redirectButton" class="fira-sans" onclick="assistantButtonClicked()">Redirect to ULA</button>
-          </form>
-        </div>
+    <div id="main">
+      <div id="chat-container"></div>
+      <div id="message-input">
+        <form id="input-form" onsubmit="handleSend(event)">
+          <textarea
+            id="userMessage"
+            rows="2"
+            class="fira-sans"
+            placeholder="Type your message..."
+          ></textarea>
+          <button type="submit" id="sendButton" class="fira-sans">Send</button>
+          <button type="button" id="redirectButton" class="fira-sans" onclick="assistantButtonClicked()">Redirect to ULA</button>
+        </form>
       </div>
     </div>
-  
-    <script src="{{ url_for('static', filename='js/conversation.js') }}"></script>
-  </body>
-</html>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/conversation.js') }}"></script>
+{% endblock %}

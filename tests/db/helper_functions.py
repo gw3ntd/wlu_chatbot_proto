@@ -2,14 +2,16 @@ import shutil
 from tabulate import tabulate
 import typing
 import sys
+<<<<<<< HEAD
 from pathlib import Path
+=======
+>>>>>>> 77da22c (base.html extended & message PFPs added)
 from ucr_chatbot.db.models import *
 from ucr_chatbot.config import Config
 
 def initialize_db():
     """Creates database using specified engine."""
     base.metadata.create_all(engine)
-
 
 def clear_db():
     """Deletes all tables in database."""

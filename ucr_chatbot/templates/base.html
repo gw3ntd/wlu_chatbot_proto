@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-{% autoescape true %}
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<<<<<<< HEAD
     <title>{{title or "UCR"}}</title>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -17,4 +17,34 @@
     {% block body %}{% endblock %}
   </head>
 {% endautoescape %}
+=======
+    
+    <title>{% block title %}ScottGPT{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block css %}{% endblock %}
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
+      rel="stylesheet"
+    />
+
+    {% block head %}{% endblock %}
+  </head>
+
+  <body
+    {% if conversation_id %}data-conversation-id="{{ conversation_id }}"{% endif %}
+    {% if course_id %}data-course-id="{{ course_id }}"{% endif %}
+  >
+    <header>
+      <h1>Scott<span><b>GPT</b></span></h1>
+      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
+    </header>
+
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+  </body>
+>>>>>>> 77da22c (base.html extended & message PFPs added)
 </html>

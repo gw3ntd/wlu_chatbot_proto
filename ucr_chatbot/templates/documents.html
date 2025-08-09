@@ -1,27 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UCR</title>
+{% extends "base.html" %}
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}" />
+{% block title %}Upload Documents | ScottGPT{% endblock %}
 
-    <!-- FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
-        rel="stylesheet"
-    />
-    </head>
-    <body>
-    <!-- HEADER -->
-    <header>
-      <h1>ScottGPT</h1>
-      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
-    </header>
-    </body>
+{% block css %}
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}"> -->
+{% endblock %}
+
+{% block content %}
     <section style="margin-left: 20px;">
         <title>Upload New File</title>
         <h1>Upload new File</h1>
@@ -36,6 +21,7 @@
                 button.value = "Uploading...";
             }
         </script>
+<<<<<<< HEAD
         <body>
             <p>{{body | safe}}</p>
         </body>
@@ -52,6 +38,8 @@
 
             {% block content %}{% endblock %}
         </body>
+=======
+>>>>>>> 77da22c (base.html extended & message PFPs added)
 
         <h1>Add Students to Course</h1>
         <h3>Add student manually:</h3>
@@ -104,4 +92,14 @@
         </form>
 >>>>>>> 592d8ec (Added assistants form and fixed CSS paths)
     </section>
-</html>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    function disableUploadButton(){
+        const button = document.getElementById('uploadButton');
+        button.disabled = true;
+        button.value = "Uploading...";
+    }
+    </script>
+{% endblock %}

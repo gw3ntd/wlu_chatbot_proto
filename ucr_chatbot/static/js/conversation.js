@@ -145,16 +145,32 @@ async function handleSend(e) {
   }
 }
 
-// Add user or bot message to interface
 function appendMessage(sender, text) {
-  const div = document.createElement("div");
-  div.classList.add("message", sender);
-  div.textContent = text;
-  chatContainer.appendChild(div);
+  const messageWrapper = document.createElement("div");
+  messageWrapper.classList.add("message-wrapper", sender);
+
+  const pfp = document.createElement("img");
+  pfp.classList.add("pfp");
+
+  if (sender === "user") {
+    pfp.src = "/static/images/User_PFP.png";
+    pfp.alt = "User";
+  } else {
+    pfp.src = "/static/images/Bot_PFP.png";
+    pfp.alt = "Bot";
+  }
+
+  const messageDiv = document.createElement("div");
+  messageDiv.classList.add("message", sender);
+  messageDiv.textContent = text;
+
+  messageWrapper.appendChild(pfp);
+  messageWrapper.appendChild(messageDiv);
+
+  chatContainer.appendChild(messageWrapper);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Add convo to sidebar
 function addSidebarMessage(label, convoId) {
   if (document.querySelector(`[data-convo-id="${convoId}"]`)) return;
 
@@ -186,22 +202,12 @@ async function sendMessage(message) {
       "Accept": "application/json"
     },
     body: JSON.stringify({ type: "send", message }),
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "send", message }),
   });
 }
 
 async function fetchBotReply(userMessage) {
   const res = await fetch(`/conversation/${conversationId}`, {
     method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "reply", message: userMessage }),
     headers: { 
       "Content-Type": "application/json",
       "Accept": "application/json"

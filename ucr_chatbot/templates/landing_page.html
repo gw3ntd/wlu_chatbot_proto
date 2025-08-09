@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,44 +7,14 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}" />
 
-    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
       rel="stylesheet"
     />
-
-    <style>
-      .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .header-left {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .logout-button {
-        padding: 0.5em 1em;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-family: "Fira Sans", sans-serif;
-        cursor: pointer;
-        text-decoration: none;
-      }
-
-      .logout-button:hover {
-        background-color: #0056b3;
-      }
-    </style>
   </head>
   <body>
-    <!-- HEADER -->
     <header class="header-container">
       <div class="header-left">
         <h1>ScottGPT</h1>
@@ -79,4 +49,40 @@
       </ul>
     </section>
   </body>
-</html>
+</html> -->
+
+{% extends "base.html" %}
+
+{% block title %}Landing Page | ScottGPT{% endblock %}
+
+{% block css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}">
+{% endblock %}
+
+{% block content %}
+  <div>
+    <a href="{{ url_for('web_routes.logout') }}" class="logout-button">Logout</a>
+  </div>
+  </header>
+  <section style="margin-left: 20px;">
+    <h1>Select a Course:</h1>
+    <ul>
+      {% for course, role in courses %}
+      {% if role == 'student' %}
+      <li>
+        <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
+          {{ course.name }}
+        </a>
+      </li>
+      {% endif %}
+      {% if role == 'instructor' %}
+      <li>
+        <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
+          {{ course.name }} (Instructor View)
+        </a>
+      </li>    
+      {% endif %}  
+      {% endfor %}
+    </ul>
+</section>
+{% endblock %}

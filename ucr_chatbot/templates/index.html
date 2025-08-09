@@ -1,8 +1,22 @@
 {% extends "base.html" %}
 
-{% block body %}
-<div class="login-container">
+{% block title %}Login | ScottGPT{% endblock %}
 
+<<<<<<< HEAD
+=======
+{% block content %}
+  <div class="login-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for category, message in messages %}
+            <li class="flash {{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+>>>>>>> 77da22c (base.html extended & message PFPs added)
     <h1>Welcome to ScottGPT</h1>
     <form id="auth-form" action="{{url_for('web_routes.login')}}" method="post">
         <input 
@@ -35,18 +49,18 @@
         />
     </form>
   </div>
-
-
-<script>
-    function setActionForm(action){
-        let form = document.getElementById("auth-form");
-        if (action === 'web_routes.login'){
-            form.action = "{{url_for('web_routes.login')}}";
-            form.method = "post";
-            form.submit();
-    }}
-
-</script>
-
-
 {% endblock %}
+
+{% block scripts %}
+  <script>
+    function setActionForm(action){
+      let form = document.getElementById("auth-form");
+      if (action === 'web_routes.login'){
+          form.action = "{{url_for('web_routes.login')}}";
+          form.method = "post";
+          form.submit();
+  }}
+  </script>
+{% endblock %}
+
+<!-- hdvBi3WHzr -->

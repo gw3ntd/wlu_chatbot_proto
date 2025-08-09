@@ -1,25 +1,13 @@
-<!-- Assistant view of all redirected conversations -->
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat</title>
-    <link rel="stylesheet" href="../static/css/assistant.css">
+{% extends "base.html" %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
-      rel="stylesheet"
-    />
+{% block title %}Redirected Chats | ScottGPT{% endblock %}
 
-    <script type="module" src="../static/js/main.js"></script> 
-  </head>
-  <body>
-    <scotty-header></scotty-header>
+{% block css %}
+  <link rel="stylesheet" href="../static/css/assistant.css">
+{% endblock %}
 
-    <div id="main-layout" class="oswald">
+{% block content %}
+<div id="main-layout" class="oswald">
       <h1>REDIRECTED CONVERSATIONS</h1>
     </div>
     
@@ -32,6 +20,8 @@
       <h2>🟡 IN PROGRESS</h2>
       <div id="in-progress-list"></div>
     </section>
+{% endblock %}
+
+{% block scripts %}
   <script src="../static/js/assistant.js"></script>
-  </body>
-</html>
+{% endblock %}

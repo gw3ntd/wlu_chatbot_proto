@@ -1,0 +1,61 @@
+/* UCR Brand Colors: https://brand.ucr.edu/ucr-colors-old */
+/* UCR Brand Font: https://brand.ucr.edu/ucr-typefaces */
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Fira Sans", sans-serif;
+  height: 100vh;
+  background-color: #f7f7f8;
+  color: #333;
+  display: flex;
+  flex-direction: column; 
+}
+
+#main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* FONTS */
+.oswald {
+  font-family: "Oswald", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.fira-sans {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #003da5;
+  color: white;
+  padding: 1.5rem 1.5rem;
+
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem; 
+}
+header h1 {
+  margin: 0;
+  font-family: "Oswald", sans-serif;
+  font-weight: 500;
+}
+header img {
+  height: 50px;
+}
+h1 span {
+  color: #FFB81C; 
+}

@@ -1,34 +1,26 @@
-body {
-  margin: 0px;
-  padding: 0px;
-}
-
-/* FONTS */
-.oswald {
-  font-family: "oswald", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
-}
-.fira-sans {
-  font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-}
-
-/* HEADER */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #003da5;
+/* LOGOUT BUTTON */
+.logout-button {
+  padding: 0.5em 1em;
+  background-color: #007bff;
   color: white;
-  padding: 1.5rem 2rem;
+  border: none;
+  border-radius: 4px;
+  font-family: "Fira Sans", sans-serif;
+  cursor: pointer;
+  text-decoration: none;
 }
-header h1 {
-  margin: 0;
-  font-family: "Oswald", sans-serif;
+
+.logout-button:hover {
+  background-color: #0056b3;
 }
-header img {
-  height: 50px;
+
+/* .header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+} */

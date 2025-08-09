@@ -557,7 +557,10 @@ def conversation(conversation_id: int):
             course_id = conv.course_id
 
         return render_template(
-            "conversation.html", conversation_id=conversation_id, course_id=course_id
+            "conversation.html",
+            conversation_id=conversation_id,
+            course_id=course_id,
+            is_assistant=(current_user.role == "assistant"),
         )
 
 
