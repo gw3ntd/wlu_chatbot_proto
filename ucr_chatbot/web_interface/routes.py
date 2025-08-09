@@ -508,6 +508,28 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
     return jsonify({"status": "200"})
 
 
+def conversation_redirect_status(conversation_id: int):
+    """ Returns redirected status of a conversation based on the id.
+    
+    :param conversation_id: The ID of the current conversation.
+    """
+    with Session(engine) as session:
+        course_id_row = (
+            session.query(Conversations).filter_by(id=conversation_id).first()
+        )
+    
+    if course_id_row is None:
+        return jsonify({"redirect": False})
+    
+
+    if course_id_row.redirected == False and course_id_row.resolved == False:
+        return jsonify({"redirect": "bot"})
+    if course_id_row.redirected == True and course_id_row.resolved == False:
+        return jsonify({"redirect": "open"})
+    else:
+        return jsonify({"redirect": "closed"})
+
+
 @bp.route("/course_selection")
 @login_required
 def course_selection():
@@ -572,6 +594,8 @@ def conversation(conversation_id: int):
             return reply_conversation(conversation_id, user_email, content["message"])
         elif request_type == "conversation":
             return get_conv_messages(conversation_id)
+        elif request_type == "redirect":
+            return conversation_redirect_status(conversation_id)
         else:
             return jsonify({"error": "Unknown request type"})
 

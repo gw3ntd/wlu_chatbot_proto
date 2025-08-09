@@ -67,6 +67,32 @@ async function loadAllConversationsForUser() {
   data.messages.forEach((msg) => {
     appendMessage(msg.sender === "AssistantMessage" ? "assistant" : (msg.sender === "StudentMessage" ? "user" : "bot"), msg.body);
   });
+
+  const res_2 = await fetch(`/conversation/${conversationId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "redirect" }),
+  });
+
+  const redirect_data = await res_2.json();
+
+  if (redirect_data.redirect === "bot") {
+    isResolved = false;
+    redirectButton.textContent = "Redirect to ULA";
+    redirectButton.disabled = false;
+  }
+  else if (redirect_data.redirect === "open") {
+    isResolved = true;
+    redirectButton.textContent = "Mark as Resolved";
+    redirectButton.disabled = false;
+  }
+  else {
+    redirectButton.textContent = "Resolved";
+    redirectButton.disabled = true;
+  }
 }
 
 loadAllConversationIds();
