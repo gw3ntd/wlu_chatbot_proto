@@ -108,10 +108,6 @@
 }
 .message code {
   background: #282c34;
-  color: white;
-  padding: 2px 4px;
-  border-radius: 4px;
-}
 
 .system {
   align-self: center;
