@@ -22,7 +22,6 @@
         </a>
       </li>
       {% endif %}
-
       {% if role == 'instructor' %}
       <li>
         <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
