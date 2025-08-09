@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 from ucr_chatbot.decorators import roles_required
 from ucr_chatbot.api.language_model.response import client as response_client
 from ucr_chatbot.api.context_retrieval.retriever import retriever
-from typing import cast, Union, Any, Dict, Mapping
+from typing import cast, Union, Any, Dict, Mapping, List, Optional
 
 
 from ucr_chatbot.db.models import (
@@ -272,7 +272,7 @@ def get_conv_messages(conversation_id: int):
         type_map = {
             MessageType.STUDENT_MESSAGES: "StudentMessage",
             MessageType.BOT_MESSAGES: "BotMessage",
-            MessageType.ASSISTANT_MESSAGES: "AssistantMessage"
+            MessageType.ASSISTANT_MESSAGES: "AssistantMessage",
         }
         messages_list = []
         for message in messages:
@@ -779,41 +779,81 @@ def add_student(course_id: int):
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
+def generate_conversation_summary(
+    conversation_id: int,
+    time_start: Optional[datetime],
+    time_end: Optional[datetime],
+) -> str:
+    """Generates a  summary of all student-chatbot interactions that occurred in a single conversation between a start and end time."""
+    with Session(engine) as session:
+        total_messages: List[str] = []
 
-from datetime import datetime
-def generate_usage_summary(course_id: int, time_start: datetime, time_end: datetime, course_name:str) -> str:
+        stmt = (
+            select(Messages.type, Messages.body)
+            .join(Conversations, Messages.conversation_id == Conversations.id)
+            .where(Conversations.id == conversation_id)
+        )
+        if time_start:
+            stmt = stmt.where(Messages.timestamp > time_start)
+        if time_end:
+            stmt = stmt.where(Messages.timestamp < time_end)
+
+        stmt = stmt.order_by(Messages.timestamp)
+
+        messages = session.execute(stmt).all()
+
+        type_map = {
+            MessageType.STUDENT_MESSAGES: "StudentMessage",
+            MessageType.BOT_MESSAGES: "BotMessage",
+            MessageType.ASSISTANT_MESSAGES: "AssistantMessage",
+        }
+
+        for message in messages:
+            total_messages.append(f"{type_map.get(message.type)}: {message.body}")
+
+        total_messages_txt = "\n".join(total_messages)
+
+        prompt = f"""These are all of the messages within one conversation between a student and a AI chatbot tutor. Create a summary of this conversation, including topics discussed and student performance.
+        Also summarise topics being discussed where students talked to a human assistant. Messages labeled 'AssistantMessage' represent human assistants {total_messages_txt}"""
+        response = response_client.get_response(prompt)
+
+        return response
+
+
+def generate_usage_summary(
+    course_id: int,
+    time_start: Optional[datetime],
+    time_end: Optional[datetime],
+    course_name: str,
+) -> str:
     """Generates a summary of all student-chatbot interactions that occurred between a start and end time."""
-    
+
     with Session(engine) as session:
         stmt = (
             select(func.count(func.distinct(Messages.written_by)))
             .join(Conversations, Messages.conversation_id == Conversations.id)
             .where(Conversations.course_id == course_id)
         )
-        
+
         if time_start:
             stmt = stmt.where(Messages.timestamp > time_start)
         if time_end:
             stmt = stmt.where(Messages.timestamp < time_end)
-        
 
         student_count = session.execute(stmt).scalar_one()
-        print(student_count)
 
         stmt = (
             select(func.count(func.distinct(Messages.conversation_id)))
             .join(Conversations, Messages.conversation_id == Conversations.id)
             .where(Conversations.course_id == course_id)
         )
-        
+
         if time_start:
             stmt = stmt.where(Messages.timestamp > time_start)
         if time_end:
             stmt = stmt.where(Messages.timestamp < time_end)
-        
 
         conv_count = session.execute(stmt).scalar_one()
-        print(student_count)
 
         stmt = (
             select(func.distinct(Messages.conversation_id))
@@ -824,32 +864,14 @@ def generate_usage_summary(course_id: int, time_start: datetime, time_end: datet
             stmt = stmt.where(Messages.timestamp > time_start)
         if time_end:
             stmt = stmt.where(Messages.timestamp < time_end)
-        
 
         conversation_ids = session.execute(stmt).scalars().all()
 
-        total_messages=[]
+        total_messages: List[str] = []
         for conv_id in conversation_ids:
-            stmt = (
-                select(Messages.type, Messages.body)
-                .join(Conversations, Messages.conversation_id == Conversations.id)
-                .where(Conversations.id == conv_id)
+            total_messages.append(
+                generate_conversation_summary(conv_id, time_start, time_end)
             )
-            if time_start:
-                stmt = stmt.where(Messages.timestamp > time_start)
-            if time_end:
-                stmt = stmt.where(Messages.timestamp < time_end)
-
-            messages = session.execute(stmt).all()
-
-            type_map = {
-                MessageType.STUDENT_MESSAGES: "StudentMessage",
-                MessageType.BOT_MESSAGES: "BotMessage",
-                MessageType.ASSISTANT_MESSAGES: "AssistantMessage"
-            }
-
-            for message in messages:
-                total_messages.append(f'{type_map.get(message.type)}: {message.body}')
 
         total_messages_txt = "\n".join(total_messages)
 
@@ -860,24 +882,39 @@ def generate_usage_summary(course_id: int, time_start: datetime, time_end: datet
                 Do not focus too much on specific/invidual interactions between a student and the chatbot. 
                 Focus more higher level, what topics are being discussed and with what frequency, which topics are students struggling at, how are they struggling.
                 Do not include a title for the report.
+                Also include instances where conversations involved the student talking to a human assistant.
                 """
-    
+
     response = response_client.get_response(prompt)
 
     if time_start and time_end:
         title = f"## {course_name} Chatbot Interaction Report ({time_start} - {time_end})\n\n"
     elif time_start:
-        title = f"## {course_name} Chatbot Interaction Report ({time_start} - Present)\n\n"
+        title = (
+            f"## {course_name} Chatbot Interaction Report ({time_start} - Present)\n\n"
+        )
     else:
         title = f"## {course_name} Chatbot Interaction Report\n\n"
-    
-    summary = title +"Active Students: " + str(student_count) + "\nTotal Conversations: " + str(conv_count) + "\n\n" + response
-    
+
+    summary = (
+        title
+        + "Active Students: "
+        + str(student_count)
+        + "\nTotal Conversations: "
+        + str(conv_count)
+        + "\n\n"
+        + response
+    )
+
     return summary
 
-        
 
-    
+def conv_date(date: Optional[str]) -> Optional[datetime]:
+    """Converts datetime input into proper formatting"""
+    if not date or date == "":
+        return None
+    return datetime.fromisoformat(date)
+
 
 @bp.route("/course/<int:course_id>/generate_summary", methods=["POST"])
 @login_required
@@ -886,29 +923,29 @@ def generate_summary(course_id: int):
     """Generates a summary of student conversations for a course
     :param course_id: The course that is to be summarised.
     """
-    start_date = request.form["start_date"]
-    end_date = request.form["end_date"]
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
 
-    if end_date and start_date is None:
+    if end_date and not start_date:
         end_date = None
 
+    start_date = conv_date(start_date)
+    end_date = conv_date(end_date)
 
     with Session(engine) as session:
-        stmt = (
-                select(Courses.name)
-                .where(Courses.id == course_id)
-            )
+        stmt = select(Courses.name).where(Courses.id == course_id)
 
         course_name = session.execute(stmt).scalar_one()
 
     summary = generate_usage_summary(course_id, start_date, end_date, course_name)
 
-    
-  
     return FlaskResponse(
         summary,
-        mimetype='text/plain',
-        headers={'Content-disposition': f'attachment; filename={course_name}_Report.txt'})
+        mimetype="text/plain",
+        headers={
+            "Content-disposition": f"attachment; filename={course_name}_Report.txt"
+        },
+    )
 
 
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
