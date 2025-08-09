@@ -213,6 +213,7 @@ function addSidebarMessage(label, convoId) {
     window.history.replaceState({}, "", `/conversation/${convoId}`);
     conversationId = convoId;
     chatContainer.innerHTML = "";
+    isNewConversation = false
     loadAllConversationsForUser();
   });
 

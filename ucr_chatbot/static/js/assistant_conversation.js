@@ -39,7 +39,7 @@ async function loadConversationHistory() {
         chatContainer.innerHTML = "";
 
         data.messages.forEach((msg) => {
-            const senderType = msg.sender === "StudentMessage" ? "user" : "bot";
+            const senderType = msg.sender === "AssistantMessage" ? "assistant" : (msg.sender === "StudentMessage" ? "user" : "bot");
             appendMessage(senderType, msg.body);
         });
 
@@ -99,7 +99,7 @@ function appendMessage(sender, text) {
     // Format the message based on sender type
     let displayText = text;
     if (sender === "assistant") {
-        displayText = `🤖 Assistant: ${text}`;
+        displayText = `🐝 Assistant: ${text}`;
     } else if (sender === "user") {
         displayText = `👤 Student: ${text}`;
     } else if (sender === "bot") {
@@ -172,3 +172,41 @@ userMessageTextarea.addEventListener('keydown', function(e) {
         document.getElementById('input-form').dispatchEvent(new Event('submit'));
     }
 }); 
+
+// Function to check for new messages from assistants
+async function checkForNewMessages() {
+  if (!conversationId) return;
+  
+  try {
+    const res = await fetch(`/conversation/${conversationId}`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ type: "conversation" }),
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const currentMessageCount = chatContainer.children.length;
+    
+    // If there are new messages, reload the conversation
+    if (data.messages.length > currentMessageCount) {
+      loadConversationHistory();
+    }
+  } catch (error) {
+    console.error("Error checking for new messages:", error);
+  }
+}
+
+let messageCheckInterval;
+messageCheckInterval = setInterval(checkForNewMessages, 5000); // Check every 5 seconds
+
+// Clean up interval when page is unloaded
+window.addEventListener('beforeunload', function() {
+  if (messageCheckInterval) {
+    clearInterval(messageCheckInterval);
+  }
+});
