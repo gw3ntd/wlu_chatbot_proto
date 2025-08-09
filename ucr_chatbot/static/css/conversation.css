@@ -87,19 +87,7 @@
   background-color: #003DA5;
   color: white;
 }
-
-/* 
-.user {
-  background-color: #FFB81C;
-  align-self: flex-end;
-}
-
-.bot {
-  background-color: #003DA5;
-  color: white;
-} */
-
-.assistant {
+.message.assistant {
   background-color: #f0f0f0;
   color: black;
 }

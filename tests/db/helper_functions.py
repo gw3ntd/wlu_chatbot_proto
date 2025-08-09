@@ -2,16 +2,14 @@ import shutil
 from tabulate import tabulate
 import typing
 import sys
-<<<<<<< HEAD
 from pathlib import Path
-=======
->>>>>>> 77da22c (base.html extended & message PFPs added)
 from ucr_chatbot.db.models import *
 from ucr_chatbot.config import Config
 
 def initialize_db():
     """Creates database using specified engine."""
     base.metadata.create_all(engine)
+
 
 def clear_db():
     """Deletes all tables in database."""
@@ -116,20 +114,9 @@ if __name__ == "__main__":
         clear_db()
         initialize_db()
         add_courses()
-<<<<<<< HEAD
         add_new_user("gnico007@ucr.edu", "test", "user")
         add_user_to_course("gnico007@ucr.edu", "test", "user", 1, "instructor")
-        add_user_to_course("gnico007@ucr.edu", "test", "user", 9, "student")\
-=======
-        add_new_user("snall008@ucr.edu", "test", "user")
-        add_user_to_course("snallapa1@gmail.com", "test", "user", 1, "instructor")
-        add_user_to_course("snall008@gmail.com", "test", "user", 9, "instructor")
-        add_user_to_course("snall008@ucr.edu", "test", "user", 9, "student")
-<<<<<<< HEAD
->>>>>>> 592d8ec (Added assistants form and fixed CSS paths)
-=======
-
->>>>>>> 44acbae (Added migration scripts, added page for assitants to talk to students)
+        add_user_to_course("gnico007@ucr.edu", "test", "user", 9, "student")
         print("Database reset.")
     # elif "print" in sys.argv:
     #     print_users()

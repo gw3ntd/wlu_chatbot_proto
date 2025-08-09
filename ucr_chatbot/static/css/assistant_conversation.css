@@ -1,0 +1,80 @@
+.assistant-header {
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.assistant-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.student-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #003da5;
+}
+
+.student-info h4 {
+    margin: 0 0 10px 0;
+    color: #003da5;
+}
+
+.student-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.message.assistant {
+    background-color: #28a745;
+    color: white;
+    margin-left: 20%;
+}
+
+.message.assistant::before {
+    content: "Assistant";
+    font-size: 0.8em;
+    opacity: 0.8;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.resolve-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.resolve-button:hover {
+    background-color: #c82333;
+}
+
+.resolve-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.back-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+}
