@@ -531,7 +531,6 @@ def conversation(conversation_id: int):
     """Renders the conversation page for an existing conversation.
     :param conversation_id: The id of the conversation to be displayed.
     """
-
     if (
         request.accept_mimetypes.accept_json
         and not request.accept_mimetypes.accept_html
@@ -562,6 +561,49 @@ def conversation(conversation_id: int):
             course_id=course_id,
             is_assistant=(current_user.role == "assistant"),
         )
+    
+@bp.route("/ula_conversation/<int:conversation_id>", methods=["GET", "POST"])
+@login_required
+@roles_required(["assistant"]) # type: ignore
+def ula_conversation(conversation_id: int):
+    """ULA page"""
+    # conversation_id = request.args.get('conversation_id', type=int) # type: ignore
+    # if not convo:
+    #     return jsonify({'error': 'Conversation not found'}), 404
+
+    user_email = current_user.email
+
+    if request.method == 'GET':
+        # Return full history so tutor sees student + bot messages
+        return 'chat summary'
+
+    # POST: tutor sends a message
+    data = request.get_json()
+    message_text = data.get('message', '').strip()
+    if not message_text:
+        return jsonify({'error': 'Message cannot be empty'}), 400
+
+    with Session(engine) as session:
+        # Insert tutor's message
+        insert_msg = insert(Messages).values(
+            body=message_text,
+            conversation_id=conversation_id,
+            type=MessageType.ASSISTANT_MESSAGES,  # or MessageType.HUMAN_TUTOR if you have one
+            written_by=user_email,
+        )
+        session.execute(insert_msg)
+        session.commit()
+
+        # Also fetch course_id for rendering template
+        conv = session.execute(
+            select(Conversations).where(Conversations.id == conversation_id)
+        ).scalar_one()
+        course_id = conv.course_id
+
+    return render_template(
+        "conversation.html", conversation_id=conversation_id, course_id=course_id
+    )
+
 
 
 def create_upload_folder(course_id: int):
