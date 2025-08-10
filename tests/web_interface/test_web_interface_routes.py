@@ -243,3 +243,27 @@ def test_add_students_from_list(client: FlaskClient, app):
     assert "302 FOUND" == response.status
 
 
+def test_generate_summary(client: FlaskClient, monkeypatch, app):
+    with app.app_context():
+        add_new_user("testsum@ucr.edu", "John", "Doe")
+        add_user_to_course("testsum@ucr.edu", "John", "Doe", 1, "instructor")
+
+    with client.session_transaction() as sess:
+        sess["_user_id"] = "testsum@ucr.edu"
+    
+    monkeypatch.setattr(
+        "ucr_chatbot.web_interface.routes.response_client.get_response",
+        MagicMock(return_value="summary of course conversations")
+    )
+
+    response = client.post(
+    "/course/1/generate_summary",
+    data={"start_date": "2025-06-01", "end_date": "2025-07-31"},
+    follow_redirects=True
+    )
+    llm_summary = response.data.decode()
+    assert response.status_code == 200
+    assert "summary of course conversations" in llm_summary
+
+    
+    

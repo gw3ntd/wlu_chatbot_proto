@@ -814,7 +814,7 @@ def generate_conversation_summary(
         total_messages_txt = "\n".join(total_messages)
 
         prompt = f"""These are all of the messages within one conversation between a student and a AI chatbot tutor. Create a summary of this conversation, including topics discussed and student performance.
-        Also summarise topics being discussed where students talked to a human assistant. Messages labeled 'AssistantMessage' represent human assistants {total_messages_txt}"""
+        Also include a section summarising topics being discussed where students talked to a human assistant. Messages labeled 'AssistantMessage' represent human assistants {total_messages_txt}"""
         response = response_client.get_response(prompt)
 
         return response
@@ -882,17 +882,15 @@ def generate_usage_summary(
                 Do not focus too much on specific/invidual interactions between a student and the chatbot. 
                 Focus more higher level, what topics are being discussed and with what frequency, which topics are students struggling at, how are they struggling.
                 Do not include a title for the report.
-                Also include instances where conversations involved the student talking to a human assistant.
+                Also include a section discussing instances where conversations involved the student talking to a human assistant.
                 """
 
     response = response_client.get_response(prompt)
 
     if time_start and time_end:
-        title = f"## {course_name} Chatbot Interaction Report ({time_start} - {time_end})\n\n"
+        title = f"## {course_name} Chatbot Interaction Report ({time_start.date()} - {time_end.date()})\n\n"
     elif time_start:
-        title = (
-            f"## {course_name} Chatbot Interaction Report ({time_start} - Present)\n\n"
-        )
+        title = f"## {course_name} Chatbot Interaction Report ({time_start.date()} - Present)\n\n"
     else:
         title = f"## {course_name} Chatbot Interaction Report\n\n"
 
