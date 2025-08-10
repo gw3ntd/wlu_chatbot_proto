@@ -2,6 +2,7 @@ const chatContainer = document.getElementById("chat-container");
 const sidebarMessages = document.getElementById("sidebar-messages");
 const userMessageTextarea = document.getElementById("userMessage");
 const redirectButton = document.getElementById("redirectButton");
+const converter = new showdown.Converter({ simpleLineBreaks: true });
 
 let conversationId = document.body.dataset.conversationId
   ? Number(document.body.dataset.conversationId)
@@ -183,7 +184,13 @@ function appendMessage(sender, text) {
 
   const messageDiv = document.createElement("div");
   messageDiv.classList.add("message", sender);
-  messageDiv.textContent = text;
+
+  const html = converter.makeHtml(text);
+  messageDiv.innerHTML = html;
+
+  messageDiv.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block);
+  });
 
   messageWrapper.appendChild(pfp);
   messageWrapper.appendChild(messageDiv);

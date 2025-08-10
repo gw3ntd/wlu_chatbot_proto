@@ -91,6 +91,27 @@
   background-color: #f0f0f0;
   color: black;
 }
+.message p {
+  margin: 0; 
+}
+.message ul,
+.message ol {
+  margin: 0; 
+  padding-left: 1.25em; 
+}
+.message pre {
+  background: #282c34;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+.message code {
+  background: #282c34;
+  color: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
 
 .system {
   align-self: center;
