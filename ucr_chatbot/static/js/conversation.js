@@ -95,6 +95,10 @@ function createNewConversation() {
   chatContainer.innerHTML = "";
   conversationId = null;
   isNewConversation = true;
+
+  document.querySelectorAll(".conversation-item").forEach(el => {
+    el.classList.remove("active");
+  });
   
   if (courseId) {
     window.history.replaceState({}, "", `/conversation/new/${courseId}`);
