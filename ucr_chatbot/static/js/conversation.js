@@ -12,23 +12,17 @@ let courseId = document.body.dataset.courseId
   ? Number(document.body.dataset.courseId)
   : null;
 
-let isNewConversation = courseId !== null;
+let isNewConversation = window.location.pathname.includes("/conversation/new");
 
 let isResolved = false;
 
 async function loadAllConversationIds() {
   if (!courseId && !conversationId) return;
 
-  let fetchUrl;
-  let fetchBody;
+  let fetchUrl = courseId
+    ? `/conversation/new/${courseId}/chat`
+    : `/conversation/new/0/chat`;
 
-  if (courseId) {
-    fetchUrl = `/conversation/new/${courseId}/chat`;
-    fetchBody = { type: "ids" };
-  } else if (conversationId) {
-    fetchUrl = `/conversation/new/0/chat`;
-    fetchBody = { type: "ids" };
-  }
 
   const res = await fetch(fetchUrl, {
     method: "POST",
@@ -36,15 +30,15 @@ async function loadAllConversationIds() {
       "Content-Type": "application/json",
       "Accept": "application/json"
     },
-    body: JSON.stringify(fetchBody),
+    body: JSON.stringify({ type: "ids" }),
   });
 
-  const conversationIds = await res.json();
+  const conversations = await res.json();
 
   sidebarMessages.innerHTML = "";
 
-  conversationIds.reverse().forEach((id) => {
-    addSidebarMessage(`Conversation ${id}`, id);
+  conversations.reverse().forEach(c => {
+    addSidebarMessage(c.title, c.id);
   });
 }
 
@@ -131,11 +125,11 @@ userMessageTextarea.addEventListener("keydown", (event) => {
 async function handleSend(e) {
   e.preventDefault();
   const textarea = document.getElementById("userMessage");
-  const message = textarea.value.trim();
-  if (!message) return;
+  const message = userMessageTextarea.value.trim();
+ if (!message) return;
 
   appendMessage("user", message);
-  textarea.value = "";
+  userMessageTextarea.value = "";
 
 
   if (isNewConversation) {
@@ -153,7 +147,7 @@ async function handleSend(e) {
     isNewConversation = false;
 
     window.history.replaceState({}, "", `/conversation/${conversationId}`);
-    addSidebarMessage(`Conversation ${conversationId}`, conversationId);
+    addSidebarMessage(data.title, data.conversationId);
 
     try {
       const botResponse = await fetchBotReply(message);
@@ -227,6 +221,15 @@ function addSidebarMessage(label, convoId) {
   item.dataset.convoId = convoId;
 
   item.addEventListener("click", () => {
+    document.querySelectorAll(".conversation-item").forEach(el => {
+
+      el.classList.remove("active");
+
+    });
+
+
+
+    item.classList.add("active");
     window.history.replaceState({}, "", `/conversation/${convoId}`);
     conversationId = convoId;
     chatContainer.innerHTML = "";
@@ -234,7 +237,7 @@ function addSidebarMessage(label, convoId) {
     loadAllConversationsForUser();
   });
 
-  if (window.location.pathname.endsWith(convoId)) {
+  if (window.location.pathname.endsWith(convoId.toString())) {
     item.classList.add("active");
   }
 

@@ -298,16 +298,28 @@ def get_conversation_ids(user_email: str, course_id: int):
 
     with Session(engine) as session:
         stmt = (
-            select(Conversations.id)
+            select(Conversations.id, Conversations.title)
             .where(
                 Conversations.initiated_by == user_email,
                 Conversations.course_id == course_id,
             )
             .order_by(Conversations.id.desc())
         )
-        result = session.execute(stmt).scalars().all()
+        result = session.execute(stmt).all()
 
-    return jsonify(result)
+    conversations = [{"id": row.id, "title": row.title} for row in result]
+    return jsonify(conversations)
+
+
+def generate_title(message: str):
+    """Generates a title for a conversation on the sidebar
+
+    :param message: the first message in a new conversation to be used to generate the title
+    """
+    prompt = f"With a user's first message in a AI chatbot conversation, {message}, generate a 30 character max title for this conversation. Do not actually answer the queestion, just sumarize it in 30 characters max. Do not generate anything else, only the 30 character max title"
+    response = response_client.get_response(prompt)[0:30]
+
+    return response
 
 
 def create_conversation(course_id: int, user_email: str, message: str):
@@ -320,7 +332,11 @@ def create_conversation(course_id: int, user_email: str, message: str):
     """
 
     with Session(engine) as session:
-        new_conv = Conversations(course_id=course_id, initiated_by=user_email)
+        title = generate_title(message)
+
+        new_conv = Conversations(
+            course_id=course_id, initiated_by=user_email, title=title
+        )
         session.add(new_conv)
         session.commit()
 
@@ -334,7 +350,8 @@ def create_conversation(course_id: int, user_email: str, message: str):
         )
         session.execute(insert_msg)
         session.commit()
-    return jsonify({"conversationId": conv_id})
+
+    return jsonify({"conversationId": conv_id, "title": title})
 
 
 def generate_response(

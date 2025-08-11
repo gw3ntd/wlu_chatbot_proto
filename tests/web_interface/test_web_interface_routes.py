@@ -176,6 +176,7 @@ def test_chatroom_conversation_flow(client: FlaskClient, app):
     assert response.status_code == 200
     data = response.get_json()
     assert "conversationId" in data
+    assert "title" in data
     conversation_id = data["conversationId"]
 
     response = client.post(

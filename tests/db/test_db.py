@@ -112,19 +112,23 @@ def test_insert_conversations(db: Connection):
     """tests if a conversation can be inserted and selected out of db"""
 
 
-    stmt = insert(Conversations).values(id=100, initiated_by='test@ucr.edu', course_id=1, resolved=False, redirected=False)
+
+    stmt = insert(Conversations).values(id =100, initiated_by = 'test@ucr.edu', course_id = 1, resolved = False, redirected = False, title="Linked List Intro")
+
     db.execute(stmt)
     db.commit()
 
 
-    s = select(Conversations).where(Conversations.id ==100, Conversations.initiated_by == 'test@ucr.edu', Conversations.course_id == 1)
+    s = select(Conversations).where(Conversations.id ==100, Conversations.initiated_by == 'test@ucr.edu', Conversations.course_id == 1, Conversations.title=="Linked List Intro")
     result = db.execute(s)
 
     answer = None
     for row in result:
         answer = row
     assert answer is not None
-    assert answer == (100, 'test@ucr.edu', 1, False, False)  # Added resolved and redirected columns
+
+    assert answer == (100, 'test@ucr.edu', 1, False, False, "Linked List Intro")  # Added resolved and redirected columns
+
 
 def test_insert_messages(db: Connection): 
     """tests if a message can be inserted and selected out of db"""

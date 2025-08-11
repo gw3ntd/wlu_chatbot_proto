@@ -111,6 +111,7 @@ class Conversations(base):
     course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
     resolved = Column(Boolean, default=False, nullable=False)
     redirected = Column(Boolean, default=False, nullable=False)
+    title = Column(String, nullable=True)
 
     course = relationship("Courses", back_populates="conversations")
     messages = relationship("Messages", back_populates="conversation", uselist=True)
