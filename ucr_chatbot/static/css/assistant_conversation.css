@@ -5,7 +5,6 @@
     border-radius: 8px;
     margin-bottom: 20px;
 }
-
 .assistant-header h3 {
     margin: 0;
     font-size: 1.1em;
@@ -18,7 +17,6 @@
     margin-bottom: 20px;
     border-left: 4px solid #003da5;
 }
-
 .student-info h4 {
     margin: 0 0 10px 0;
     color: #003da5;
@@ -34,7 +32,6 @@
     color: white;
     margin-left: 20%;
 }
-
 .message.assistant::before {
     content: "Assistant";
     font-size: 0.8em;
@@ -53,11 +50,9 @@
     font-size: 14px;
     margin-top: 10px;
 }
-
 .resolve-button:hover {
     background-color: #c82333;
 }
-
 .resolve-button:disabled {
     background-color: #6c757d;
     cursor: not-allowed;
@@ -74,7 +69,6 @@
     display: inline-block;
     margin-bottom: 20px;
 }
-
 .back-button:hover {
     background-color: #5a6268;
 }

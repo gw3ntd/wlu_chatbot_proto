@@ -28,12 +28,10 @@
   margin-bottom: 1rem;
   width: 100%;
 }
-
 .new-conversation-btn:hover {
   background-color: #FFB81C;
   color: black;
 }
-
 .new-conversation-btn.active {
   background-color: #FFB81C;
   font-weight: bold;
@@ -156,7 +154,6 @@
   margin: 0 auto;
   gap: 0.5rem;
 }
-
 #input-form textarea {
   flex-grow: 1;
   resize: none;
@@ -165,7 +162,6 @@
   border-radius: 6px;
   border: 1px solid #003DA5;
 }
-
 #input-form textarea:focus {
   outline: 1px solid #FFB81C;
   border: 1px solid #FFB81C;
@@ -180,7 +176,6 @@
   color: white;
   cursor: pointer;
 }
-
 #sendButton:hover {
   background-color: #FFB81C;
   color: black;
@@ -195,7 +190,6 @@
   color: white;
   cursor: pointer;
 }
-
 #redirectButton:hover {
   background-color: #FFC649;
   color: black;

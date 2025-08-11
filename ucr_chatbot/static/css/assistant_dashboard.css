@@ -11,24 +11,20 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: box-shadow 0.3s ease;
 }
-
 .conversation-card:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
-
 .conversation-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
 }
-
 .conversation-title {
     font-size: 1.2em;
     font-weight: bold;
     color: #003da5;
 }
-
 .conversation-meta {
     color: #666;
     font-size: 0.9em;
@@ -59,12 +55,10 @@
     font-size: 14px;
     transition: background-color 0.3s;
 }
-
 .btn-primary {
     background-color: #003da5;
     color: white;
 }
-
 .btn-primary:hover {
     background-color: #002d7a;
 }
@@ -74,7 +68,6 @@
     padding: 60px 20px;
     color: #666;
 }
-
 .empty-state h3 {
     color: #003da5;
     margin-bottom: 10px;
