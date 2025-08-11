@@ -15,6 +15,30 @@
   font-weight: 500;
 }
 
+.new-conversation-btn {
+  background-color: #003DA5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.new-conversation-btn:hover {
+  background-color: #FFB81C;
+  color: black;
+}
+
+.new-conversation-btn.active {
+  background-color: #FFB81C;
+  font-weight: bold;
+}
+
 .conversation-item {
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;

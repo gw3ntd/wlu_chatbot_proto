@@ -97,6 +97,23 @@ async function loadAllConversationsForUser() {
 
 loadAllConversationIds();
 
+function createNewConversation() {
+  chatContainer.innerHTML = "";
+  conversationId = null;
+  isNewConversation = true;
+  
+  if (courseId) {
+    window.history.replaceState({}, "", `/conversation/new/${courseId}`);
+  } else {
+    window.history.replaceState({}, "", `/conversation/new`);
+  }
+  
+  userMessageTextarea.value = "";
+  redirectButton.textContent = "Redirect to ULA";
+  isResolved = false;
+  appendMessage("system", "New conversation started. Type your message below.");
+}
+
 // Set up periodic message checking for real-time updates
 let messageCheckInterval;
 
