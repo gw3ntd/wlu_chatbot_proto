@@ -285,7 +285,7 @@ redirectButton.addEventListener("click", async () => {
       if (data.status === "redirected") {
         redirectButton.textContent = "Mark as Resolved";
         isResolved = true;
-        alert("Conversation has been redirected to an assistant. They will help you shortly!");
+        alert("Your conversation is now visible to assistants, the AI chat bot is now disabled for this conversation.");
       }
     } catch (error) {
       console.error("Redirect error:", error);

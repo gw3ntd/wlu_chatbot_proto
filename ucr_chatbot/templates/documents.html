@@ -15,15 +15,10 @@
             <input type=file name=file required>
             <input type=submit id="uploadButton" value=Upload>
         </form>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-               {% if messages %}
-                  <ul class="flashes">
-                    {% for category, message in messages %}
-                      <li class="{{ category }}">{{ message }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-            {% endwith %}
+
+        <body>
+            <p>{{body | safe}}</p>
+        </body>
 
         <h1>Add Students to Course</h1>
         <h3>Add student manually:</h3>

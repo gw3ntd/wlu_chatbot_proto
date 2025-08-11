@@ -63,7 +63,7 @@ bp = Blueprint("web_routes", __name__)
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
 You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer. The conversation history for the last 10 messages is also provided. 
-Ever explicitly say that you got information from the context or the references/numbers they come from, or tell students to reference document numbers. Only answer the students questions as if the information is coming from you.
+Never explicitly say that you got information from the context or the references/numbers they come from, or tell students to reference document numbers. Only answer the students questions as if the information is coming from you.
 Your main priority is being a tutor, and instead of giving direct answers most of the time, focus on teaching students and leading them to the answer themselves.
 
 If the context is not relevant, or if it is not a follow up question, then you should tell the student, "I cannot find any relevant course materials to help answer your question."
@@ -438,24 +438,27 @@ def reply_conversation(conversation_id: int, user_email: str, message: str):
         if not conversation:
             return jsonify({"error": "Conversation not found"}), 404
 
-        # If conversation is redirected, don't let the LLM respond
-        if hasattr(conversation, "redirected") and bool(conversation.redirected):  # type: ignore
-            return jsonify(
-                {
-                    "error": "conversation_redirected",
-                    "reply": "This conversation has been redirected to a ULA. Please wait for assistance.",
-                }
-            ), 403
+        # # If conversation is redirected, don't let the LLM respond
+        # if hasattr(conversation, "redirected") and bool(conversation.redirected):  # type: ignore
+        #     return jsonify(
+        #         {
+        #             "error": "conversation_redirected",
+        #             "reply": "This conversation has been redirected to a ULA. Please wait for assistance.",
+        #         }
+        #     ), 403
 
-        # If conversation is resolved, don't let the LLM respond
-        if bool(conversation.resolved):  # type: ignore
-            return jsonify(
-                {
-                    "error": "conversation_resolved",
-                    "reply": "This conversation has been resolved.",
-                }
-            ), 403
-            
+        # # If conversation is resolved, don't let the LLM respond
+        # if bool(conversation.resolved):  # type: ignore
+        #     return jsonify(
+        #         {
+        #             "error": "conversation_resolved",
+        #             "reply": "This conversation has been resolved.",
+        #         }
+        #     ), 403
+
+        if bool(conversation.redirected) == True:
+            return jsonify({"reply": ""})
+
     llm_response_data = generate_response(
         prompt=message, conversation_id=conversation_id, stream=False, history=5
     ).get_json()
@@ -509,22 +512,23 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
 
 
 def conversation_redirect_status(conversation_id: int):
-    """ Returns redirected status of a conversation based on the id.
-    
+    """Returns redirected status of a conversation based on the id.
+
     :param conversation_id: The ID of the current conversation.
     """
     with Session(engine) as session:
         course_id_row = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
-    
+
     if course_id_row is None:
         return jsonify({"redirect": False})
-    
 
-    if course_id_row.redirected == False and course_id_row.resolved == False:
+    if bool(course_id_row.redirected) == False and bool(
+        course_id_row.resolved == False
+    ):
         return jsonify({"redirect": "bot"})
-    if course_id_row.redirected == True and course_id_row.resolved == False:
+    if bool(course_id_row.redirected) == True and bool(course_id_row.resolved) == False:
         return jsonify({"redirect": "open"})
     else:
         return jsonify({"redirect": "closed"})
@@ -610,14 +614,17 @@ def conversation(conversation_id: int):
             "conversation.html",
             conversation_id=conversation_id,
             course_id=course_id,
-            is_assistant=(current_user.role == "assistant"),
         )
-    
+
+
 @bp.route("/ula_conversation/<int:course_id>")
 @login_required
-@roles_required(["assistant"]) # type: ignore
+@roles_required(["assistant"])  # type: ignore
 def ula_conversation(course_id: int):
-    return f'hello! {course_id}'
+    """ULA route template
+    :param course_id: The course id for the current conversation.
+    """
+    return f"hello! {course_id}"
 
 
 def create_upload_folder(course_id: int):
@@ -665,6 +672,7 @@ def redirect_conversation(conversation_id: int):
         try:
             conversation.redirected = True  # type: ignore
             session.commit()
+            # flash("Your conversation is now visible to assistants, the AI chat bot is now disabled for this conversation.")
         except Exception as e:
             # If redirected column doesn't exist, just return success
             print(f"Warning: redirected column not found, skipping redirect flag: {e}")
