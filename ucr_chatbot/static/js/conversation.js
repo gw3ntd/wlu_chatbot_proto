@@ -194,9 +194,13 @@ function appendMessage(sender, text) {
   if (sender === "user") {
     pfp.src = "/static/images/User_PFP.png";
     pfp.alt = "User";
-  } else {
+  } else if (sender === "bot"){
     pfp.src = "/static/images/Bot_PFP.png";
     pfp.alt = "Bot";
+  }
+  else {
+    pfp.src = "/static/images/Assistant_PFP.png";
+    pfp.alt = "Assistant";
   }
 
   const messageDiv = document.createElement("div");
