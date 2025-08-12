@@ -192,14 +192,14 @@ function appendMessage(sender, text) {
   pfp.classList.add("pfp");
 
   if (sender === "user") {
-    pfp.src = "/static/images/User_PFP.png";
+    pfp.src = "/static/images/PFPs/User_PFP.png";
     pfp.alt = "User";
   } else if (sender === "bot"){
-    pfp.src = "/static/images/Bot_PFP.png";
+    pfp.src = "/static/images/PFPs/Bot_PFP.png";
     pfp.alt = "Bot";
   }
   else {
-    pfp.src = "/static/images/Assistant_PFP.png";
+    pfp.src = "/static/images/PFPs/Assistant_PFP.png";
     pfp.alt = "Assistant";
   }
 
@@ -230,13 +230,8 @@ function addSidebarMessage(label, convoId) {
 
   item.addEventListener("click", () => {
     document.querySelectorAll(".conversation-item").forEach(el => {
-
       el.classList.remove("active");
-
     });
-
-
-
     item.classList.add("active");
     window.history.replaceState({}, "", `/conversation/${convoId}`);
     conversationId = convoId;

@@ -1,0 +1,132 @@
+body {
+  margin: 0;
+  background-image: 
+    linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 1)),
+    url("/static/images/login/background.jpg");                
+
+  background-size: cover;      
+  background-position: center; 
+  background-repeat: no-repeat;
+}
+
+header {
+  display: none !important;
+}
+h1 {
+  font-family: "Oswald", sans-serif;
+  font-weight: 450;
+  font-size: 4rem;
+  color: white;
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+h1 span {
+  color: #FFB81C;
+  font-weight: 550;
+}
+
+.divider-line {
+  border: none;    
+  height: 1px;       
+  background-color: white;
+  width: 400px;      
+  margin: 10px auto;    
+}
+
+.welcome-row {
+  display: flex;
+  align-items: center;      
+  justify-content: center; 
+  gap: 15px;               
+  margin-bottom: 20px; 
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  padding-top: 10vh;
+  text-align: center;
+}
+
+.input-field {
+  font-family: "Fira Sans";
+  display: block;
+  width: 250px;
+  padding: 10px;
+  margin: 10px 0 25px 0;
+  font-size: 1rem;
+  border: 4px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.2);
+}
+.input-field:focus,
+.input-field:hover {
+  border-color: #FFB81C;
+}
+
+form label {
+  display: block;
+  width: 250px;    
+  text-align: left;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: 1.25rem;
+  color: #FFB81C;     
+  font-family: "Oswald", sans-serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.bot-pfp {
+  height: 100px;
+  width: auto;     
+  margin-bottom: 15px;
+  filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
+}
+.ucr-logo {
+  height: 80px;
+  width: auto;     
+  filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
+  margin-bottom: 30px;
+}
+
+.btn {
+  font-family: "Oswald";
+  font-weight: 400;
+  font-size: 1.25rem;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.25);
+  margin: 10px 0;
+  width: 250px; 
+  display: block;
+  text-align: center;
+}
+.btn-login {
+  background-color: #FFC649;
+  color: #000;
+}
+.btn-login:hover,
+.btn-login:focus {
+  background-color: #FFD477;
+  outline: none;
+}
+
+.login-google {
+  background-color: #3364B7; 
+  color: white;
+}
+.login-google:hover,
+.login-google:focus {
+  background-color: #668BC9; 
+  outline: none;
+}

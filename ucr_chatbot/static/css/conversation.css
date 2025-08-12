@@ -21,8 +21,9 @@
   border: none;
   border-radius: 6px;
   padding: 0.75rem 1rem;
-  font-size: 0.9rem;
+  font-family: "Fira Sans";
   font-weight: 500;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
   margin-bottom: 1rem;
@@ -44,6 +45,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  font-family: "Fira Sans";
   font-size: 0.95rem;
 }
 .conversation-item:hover {
@@ -51,7 +53,7 @@
 }
 .conversation-item.active {
   background-color: #FFB81C;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* MAIN CHAT AREA */
@@ -110,7 +112,7 @@
   color: white;
 }
 .message.assistant {
-  background-color: #f0f0f0;
+  background-color: #e2e2e2;
   color: black;
 }
 .message p {
@@ -123,13 +125,15 @@
 }
 .message pre {
   background: #282c34;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 6px;
   overflow-x: auto;
   margin: 0.5rem 0;
 }
 .message code {
   background: #282c34;
+  padding: 0.25rem;
+  border-radius: 6px;
 }
 
 .system {

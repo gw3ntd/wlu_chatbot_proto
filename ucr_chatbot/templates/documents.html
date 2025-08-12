@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 
-
 {% block title %}Upload Documents | ScottGPT{% endblock %}
 
 {% block css %}
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}">
 {% endblock %}
 
 {% block body %}
@@ -15,10 +14,6 @@
             <input type=file name=file required>
             <input type=submit id="uploadButton" value=Upload>
         </form>
-
-        <body>
-            <p>{{body | safe}}</p>
-        </body>
 
         <h1>Add Students to Course</h1>
         <h3>Add student manually:</h3>
@@ -47,9 +42,8 @@
             <label for="end_date">End Date:</label>
             <input type="date" id="end_date" name="end_date" />
             
-  <button type="submit">Download Report</button>
-  
-            </form>
+            <button type="submit">Download Report</button>
+        </form>
 
         <h1>Add Assistants to Course</h1>
         <h3>Add assistant manually:</h3>

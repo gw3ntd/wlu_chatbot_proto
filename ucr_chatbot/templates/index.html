@@ -1,34 +1,49 @@
+<!-- Login Page -->
 {% extends "base.html" %}
 
 {% block title %}Login | ScottGPT{% endblock %}
 
+{% block css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
 {% block body %}
   <div class="login-container">
+    <img class="ucr-logo" src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
+    <hr class="divider-line" />
 
-    <h1>Welcome to ScottGPT</h1>
+    <h1>Welcome to <span>ScottGPT!</span></h1>
+
+    <img class="bot-pfp" src="{{ url_for('static', filename='images/PFPs/Bot_PFP.png') }}" alt="Scotty">
+
     <form id="auth-form" action="{{url_for('web_routes.login')}}" method="post">
+        
+      <label for="email">Email:</label>
         <input 
           type="hidden" 
           name="csrf_token" 
           value="{{ csrf_token }}">        
-        <input 
+        
+          <input 
           type="text" 
-          name="email" 
-          placeholder="email" 
+          name="email"
           class="input-field"
         />
+        
+      <label for="password">Password:</label>
         <input 
           type="password" 
-          name="password" 
-          placeholder="password" 
+          name="password"
           class="input-field"
         />
+        
         <input 
           type="submit" 
           value="Login" 
           class="btn btn-login" 
           onclick="setActionForm('login')"
         />
+        
         <input 
           type="button" 
           class="btn login-google" 
@@ -40,13 +55,5 @@
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    function setActionForm(action){
-      let form = document.getElementById("auth-form");
-      if (action === 'web_routes.login'){
-          form.action = "{{url_for('web_routes.login')}}";
-          form.method = "post";
-          form.submit();
-  }}
-  </script>
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}
