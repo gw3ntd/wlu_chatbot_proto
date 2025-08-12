@@ -7,61 +7,97 @@
 {% endblock %}
 
 {% block body %}
-    <section style="margin-left: 20px;">
-        <title>Upload New File</title>
-        <h1>Upload new File</h1>
-        <form method=post enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
-            <input type=file name=file required>
-            <input type=submit id="uploadButton" value=Upload>
-        </form>
+    <section style="margin-left: 20px; margin-right: 20px">
+        
+        <h1>UPLOAD NEW FILE</h1>
+        <div class="card">
+            <form method=post enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
+                <input type=file name=file required>
+                <input type=submit id="uploadButton" value=Upload>
+            </form>
+        </div>
 
-        <h1>Add Students to Course</h1>
-        <h3>Add student manually:</h3>
-        <form method=post action="{{ url_for('web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
-            <label for="email">Student email:</label><br>
-            <input type="text" id="email" name="email"><br>
-            <label for="fname">First name:</label><br>
-            <input type="text" id="fname" name="fname"><br>
-            <label for="lname">Last name:</label><br>
-            <input type="text" id="lname" name="lname"><br>
-            <input type="hidden" name="role" value="student"><br><br>
-            <input type=submit value=Add>
-        </form>
-        <h3>Add students from csv:</h3>
-        <form method=post action="{{ url_for('web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
-            <input type=file name="file">
-            <input type=submit value="Add">
-        </form>
+        <h1>ADD STUDENTS TO COURSE</h1>
+        <div class="card">
+            <h3>Add Student Manually</h3>
+            <form method=post action="{{ url_for('web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Student Email:</label>
+                        <input type="text" id="email" name="email">
+                    </div>
 
-        <h1>Generate Summary</h1>
-        <form action="{{ url_for('web_routes.generate_summary', course_id=course_id) }}" method="post">
+                    <div class="form-group">
+                        <label for="fname">First Name:</label>
+                        <input type="text" id="fname" name="fname">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lname">Last Name:</label>
+                        <input type="text" id="lname" name="lname">
+                    </div>
+                </div>
+                
+                <input type="hidden" name="role" value="student">
+                <input type=submit value=Add>
+            </form>
+        </div>
 
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date" name="start_date"  />
-            
-            <label for="end_date">End Date:</label>
-            <input type="date" id="end_date" name="end_date" />
-            
-            <button type="submit">Download Report</button>
-        </form>
+        <div class="card">
+            <h3>Add Students from CSV</h3>
+            <form method=post action="{{ url_for('web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+                <input type=file name="file">
+                <input type=submit value="Add">
+            </form>
+        </div>
 
-        <h1>Add Assistants to Course</h1>
-        <h3>Add assistant manually:</h3>
+        <h1>GENERATE SUMMARY</h1>
+        <div class="card">
+            <form action="{{ url_for('web_routes.generate_summary', course_id=course_id) }}" method="post">
+
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date"  />
+                
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" />
+                
+                <button type="submit">Download Report</button>
+            </form>
+        </div>
+
+        <h1>ADD ASSISTANTS TO COURSE</h1>
+        <div class="card">
+        <h3>Add Assistant Manually</h3>
         <form method=post action="{{ url_for('web_routes.add_assistant', course_id=course_id) }}" enctype=multipart/form-data>
-            <label for="email">ULA email:</label><br>
-            <input type="text" id="email" name="email"><br>
-            <label for="fname">First name:</label><br>
-            <input type="text" id="fname" name="fname"><br>
-            <label for="lname">Last name:</label><br>
-            <input type="text" id="lname" name="lname"><br>
-            <input type="hidden" name="role" value="assistant"><br><br>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">ULA Email:</label>
+                    <input type="text" id="email" name="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="fname">First Name:</label>
+                    <input type="text" id="fname" name="fname">
+                </div>
+
+                <div class="form-group">
+                    <label for="lname">Last Name:</label>
+                    <input type="text" id="lname" name="lname">
+                </div>
+            </div>
+
+            <input type="hidden" name="role" value="assistant">
             <input type=submit value=Add>
         </form>
-        <h3>Add assistants from csv:</h3>
-        <form method=post action="{{ url_for('web_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
-            <input type=file name="file">
-            <input type=submit value="Add">
-        </form>
+        </div>
+
+        <div class="card">
+        <h3>Add Assistants from CSV</h3>
+            <form method=post action="{{ url_for('web_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+                <input type=file name="file">
+                <input type=submit value="Add">
+            </form>
+        </div>
     </section>
 {% endblock %}
 

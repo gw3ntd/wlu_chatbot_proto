@@ -2,8 +2,7 @@ body {
   margin: 0;
   background-image: 
     linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 1)),
-    url("/static/images/login/background.jpg");                
-
+    url("/static/images/background.jpg");                
   background-size: cover;      
   background-position: center; 
   background-repeat: no-repeat;

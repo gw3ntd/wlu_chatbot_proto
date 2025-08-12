@@ -38,20 +38,16 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   background-image: 
     linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 0.7)),
     url("/static/images/header.avif");
-
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
   color: white;
   padding: 1.5rem 1.5rem;
   border-bottom: 6px #FFB81C solid;
 }
-
 .header-left {
   display: flex;
   align-items: center;
@@ -89,17 +85,20 @@ ul.flashes li {
   top: 0; 
   margin-bottom: 8px;
   font-size: 16px;
-  color: white;
 }
 ul.flashes li.success {
-  background-color: #78BE20
+  background-color: #78BE20;
+  color: black;
 }
 ul.flashes li.error {
-  background-color: #E4002B
+  background-color: #E4002B;
+  color: white;
 }
 ul.flashes li.info {
-  background-color: #009CDE  
+  background-color: #009CDE;
+  color: white;
 }
 ul.flashes li.warning {
-  background-color: #FBDB65
+  background-color: #FBDB65;
+  color: black;
 }

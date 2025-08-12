@@ -1,6 +1,123 @@
-h1 {
-    font-family: "Oswald";
-    font-weight: 500;
+/* ICONS: https://icons8.com/icons/set/files--style-dusk */
+/* To use Icons8 graphics for free, you must include a link to Icons8 wherever you use the icons in the website. */
+
+section h1 {
+    font-family: "Fira Sans";
+    font-weight: bold;
+    font-size: 1.25rem;
+    color: white;
+    padding: 12px 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    box-shadow: 6px 6px 0px #FFB81C; 
+    background-image: 
+        linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
+        url("/static/images/background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; 
 }
 
-/* https://icons8.com/icons/set/files--style-dusk */
+.card {
+  background: white;
+  border-radius: 8px;
+  padding-top: 12px; 
+  padding-bottom: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-bottom: 30px;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+.card:hover {
+  box-shadow: 8px 8px 16px rgba(0,0,0,0.15);
+}
+.card h3 {
+    font-family: "Fira Sans";
+    font-style: italic;
+    color: #003DA5
+}
+.card input[type="submit"],
+.card button {
+  background-color: #FFB81C;  
+  color: black;                 
+  font-family: "Fira Sans", sans-serif;
+  font-size: 14px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  display: inline-block;
+  margin-top: 12px;
+}
+.card form label,
+.card form input[type="date"] {
+  margin-right: 20px;
+}
+.card input[type="submit"]:hover,
+.card button:hover {
+  background-color: #003DA5; 
+  color: white;
+}
+.card input[type="text"] {
+  width: 100%;             
+  max-width: 400px;        
+  padding: 8px 12px;       
+  font-family: "Fira Sans", sans-serif;
+  font-size: 16px;
+  border: 2px solid #003DA5; 
+  border-radius: 6px;
+  box-sizing: border-box;   
+  margin-bottom: 12px;      
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.card input[type="text"]:focus {
+  border-color: #FFB81C;     
+  outline: none;           
+  box-shadow: 0 0 5px #FFB81C;
+}
+.card::after {
+  content: "";
+  position: absolute;    
+  bottom: 10px;
+  right: 10px;  
+  width: 40px;   
+  height: 40px;  
+  background-image: url('/static/images/scottypaws.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.15; 
+  z-index: 0;
+}
+
+.form-row {
+  display: flex;       
+  flex-wrap: wrap;      
+}
+.form-group {
+  flex: 1;            
+}
+.form-group label {
+  display: block;
+  font-weight: 550;
+  color: #003DA5
+}
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 16px;
+  border: 4px solid transparent;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.form-group input:focus,
+.form-group input:hover{
+  border-color: #FFB81C;
+  outline: none;
+}
