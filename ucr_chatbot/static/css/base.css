@@ -68,3 +68,38 @@ header img {
 h1 span {
   color: #FFB81C; 
 }
+
+/* FLASH MESSAGES */
+ul.flashes {
+  position: fixed;   
+  top: 0;    
+  left: 0;  
+  right: 0;  
+  margin: 0;                            
+  padding: 10px 20px;
+  list-style: none;
+  z-index: 9999;  
+  display: flex; 
+  justify-content: center;
+  gap: 10px;
+}
+ul.flashes li {
+  padding: 10px 15px;
+  border-radius: 4px;
+  top: 0; 
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: white;
+}
+ul.flashes li.success {
+  background-color: #78BE20
+}
+ul.flashes li.error {
+  background-color: #E4002B
+}
+ul.flashes li.info {
+  background-color: #009CDE  
+}
+ul.flashes li.warning {
+  background-color: #FBDB65
+}
