@@ -7,40 +7,45 @@
 {% endblock %}
 
 {% block body %}
+  
   <section style="margin-left: 20px;">
-  <h1>SELECT A COURSE</h1>
   
-  <div>
-    <a href="{{ url_for('web_routes.logout') }}" class="logout-button">Logout</a>
-  </div>
-  
-  <ul>
-    {% for course, role in courses %}
-      {% if role == 'student' %}
-      <li>
-        <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
-          {{ course.name }} (Student View - Chat Interface)
-        </a>
-      </li>
-      {% endif %}
-      {% if role == 'instructor' %}
-      <li>
-        <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
-          {{ course.name }} (Instructor View - Document Upload)
-        </a>
-      </li>    
-      {% endif %}
-      {% if role == 'assistant' %}
-      <li>
-        <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
-          {{ course.name }} (ULA View)
-        </a>
-      </li>
-        <a href="{{ url_for('web_routes.assistant_dashboard') }}">
-          {{ course.name }} (ULA View - Dashboard)
-        </a>
-      </li>    
-      {% endif %}  
-    {% endfor %}
+    <h1>SELECT A COURSE</h1>
+
+    <ul style="list-style: none">
+      {% for course, role in courses %}
+        
+        {% if role == 'student' %}
+          <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
+            <li class="card">
+                {{ course.name }} (Student View - Chat Interface)
+            </li>
+          </a>
+        {% endif %}
+
+        {% if role == 'instructor' %}
+          <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
+            <li class="card">
+              {{ course.name }} (Instructor View - Document Upload)
+            </li> 
+          </a>
+        {% endif %}
+
+        {% if role == 'assistant' %}
+          <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
+            <li class="card">
+                {{ course.name }} (ULA View)
+            </li>
+          </a>
+
+          <a href="{{ url_for('web_routes.assistant_dashboard') }}">
+            <li class="card">
+              {{ course.name }} (ULA View - Dashboard)
+            </li>
+          </a>
+        {% endif %}  
+        
+      {% endfor %}
+    </ul>
   </section>
 {% endblock %}

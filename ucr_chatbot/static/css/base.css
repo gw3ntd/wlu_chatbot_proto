@@ -3,8 +3,12 @@
 
 * {
   box-sizing: border-box;
-  cursor: url("/static/images/cursor.png") 0 0, auto !important; /* cursor for fun */
+  cursor: url("/static/images/cursor.png") 0 0, auto !important; 
 }
+a, button, input, select, textarea, label, [role="button"], .btn, .clickable {
+  cursor: url("/static/images/select-cursor.png") 0 0, pointer !important;
+}
+
 body {
   margin: 0;
   font-family: "Fira Sans", sans-serif;
@@ -14,7 +18,6 @@ body {
   display: flex;
   flex-direction: column; 
 }
-
 #main-layout {
   display: flex;
   flex: 1;
@@ -49,11 +52,6 @@ header {
   padding: 1.5rem 1.5rem;
   border-bottom: 6px #FFB81C solid;
 }
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem; 
-}
 header h1 {
   margin: 0;
   font-family: "Oswald", sans-serif;
@@ -64,6 +62,24 @@ header img {
 }
 h1 span {
   color: #FFB81C; 
+}
+
+/* LOGOUT BUTTON */
+.logout-button {
+  color: black;
+  background-color: #FFB81C;
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  position: fixed; 
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.logout-button:hover {
+  color: white;
+  background-color: #003DA5;
 }
 
 /* FLASH MESSAGES */

@@ -1,5 +1,12 @@
 /* Message PFPs are made with free graphics from Canva, which can be used on websites as long as it is not for sale */
 
+/* Removes the logout button because it gets in the way of the "Type your message..." box 
+This is just a temporary visual fix */
+.logout-button {
+  display: none !important;
+}
+
+
 /* SIDEBAR */
 #sidebar {
   width: 260px;

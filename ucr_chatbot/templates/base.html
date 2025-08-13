@@ -26,8 +26,9 @@
   >
     <header>
       <h1>Scott<span><b>GPT</b></span></h1>
-      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
+      <img src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo" class="ucr-logo">
     </header>
+
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -41,6 +42,10 @@
 
 
     {% block body %}{% endblock %}
+
+    <div>
+      <a href="{{ url_for('web_routes.logout') }}" class="logout-button">Logout</a>
+    </div>
     {% block scripts %}{% endblock %}
   </body>
 </html>
