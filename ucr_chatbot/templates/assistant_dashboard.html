@@ -76,13 +76,8 @@
             </div>
             
             <div class="student-info">
-                <strong>Latest Message:</strong><br>
-                {% if conversation.messages and conversation.messages|length > 0 %}
-                    {% set latest_message = conversation.messages[-1] %}
-                    "{{ latest_message.body[:100] }}{% if latest_message.body|length > 100 %}...{% endif %}"
-                {% else %}
-                    No messages yet
-                {% endif %}
+                <strong>Conversation Summary:</strong><br>
+                {{ conversation.summary }}
             </div>
             
             <span class="btn" style="background-color: #6c757d; cursor: default;">

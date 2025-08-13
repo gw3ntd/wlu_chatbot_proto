@@ -790,8 +790,11 @@ def assistant_dashboard():
             conversation.messages = (
                 session.query(Messages).filter_by(conversation_id=conversation.id).all()
             )
-
-            conversation.summary = generate_conversation_summary(conversation.id, prompt, None, None)
+            if not conversation.summary:
+                summary = generate_conversation_summary(conversation.id, prompt, None, None)
+                conversation.summary = summary
+                session.query(Conversations).filter_by(id=conversation.id).update({"summary": summary})
+        
 
         # Get all resolved conversations from these courses
         resolved_conversations = (
@@ -812,13 +815,18 @@ def assistant_dashboard():
         course_names = {}
         for course in session.query(Courses).filter(Courses.id.in_(course_ids)).all():
             course_names[course.id] = course.name
-
-    return render_template(
+        
+        
+        template = render_template(
         "assistant_dashboard.html",
         ongoing_conversations=ongoing_conversations,
         resolved_conversations=resolved_conversations,
         course_names=course_names,
-    )
+        )
+
+        session.commit()
+
+    return template
 
 
 @bp.route("/assistant/conversation/<int:conversation_id>")

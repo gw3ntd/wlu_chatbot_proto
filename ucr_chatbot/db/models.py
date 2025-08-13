@@ -112,6 +112,7 @@ class Conversations(base):
     resolved = Column(Boolean, default=False, nullable=False)
     redirected = Column(Boolean, default=False, nullable=False)
     title = Column(String, nullable=True)
+    summary = Column(Text, nullable=True)
 
     course = relationship("Courses", back_populates="conversations")
     messages = relationship("Messages", back_populates="conversation", uselist=True)
