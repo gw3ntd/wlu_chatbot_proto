@@ -31,12 +31,7 @@
             
             <div class="student-info">
                 <strong>Conversation Summary:</strong><br>
-                <!-- {% if conversation.messages and conversation.messages|length > 0 %}
-                    {% set latest_message = conversation.messages[-1] %}
-                    "{{ latest_message.body[:100] }}{% if latest_message.body|length > 100 %}...{% endif %}"
-                {% else %}
-                    No messages yet
-                {% endif %} -->
+
                 {{ conversation.summary }}
             </div>
             
