@@ -3,6 +3,7 @@
 
 * {
   box-sizing: border-box;
+  cursor: url("/static/images/cursor.png") 0 0, auto !important; /* cursor for fun */
 }
 body {
   margin: 0;

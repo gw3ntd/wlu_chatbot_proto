@@ -1,0 +1,56 @@
+
+.logout-button {
+  background-color: #FFB81C;
+  color: black;
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
+section h1 {
+    font-family: "Fira Sans";
+    font-weight: bold;
+    font-size: 1.25rem;
+    color: white;
+    padding: 12px 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    margin-right: 20px;
+    box-shadow: 6px 6px 0px #FFB81C; 
+    background-image: 
+        linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
+        url("/static/images/background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; 
+}
+
+section ul {
+  list-style: none;
+  padding: 0;
+  margin-right: 20px;
+}
+
+section ul li {
+  margin-bottom: 10px;
+}
+
+section ul li a {
+  display: inline-block;
+  padding: 10px 14px;
+  background-color: #003DA5; 
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+}
+
+section ul li a:hover {
+  background-color: #FFB81C;
+  color: black;
+}

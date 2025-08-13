@@ -3,15 +3,17 @@
 {% block title %}Landing Page | ScottGPT{% endblock %}
 
 {% block css %}
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}"> -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing_page.css') }}">
 {% endblock %}
 
 {% block body %}
+  <section style="margin-left: 20px;">
+  <h1>SELECT A COURSE</h1>
+  
   <div>
     <a href="{{ url_for('web_routes.logout') }}" class="logout-button">Logout</a>
   </div>
-  <section style="margin-left: 20px;">
-  <h1>Select a Course:</h1>
+  
   <ul>
     {% for course, role in courses %}
       {% if role == 'student' %}

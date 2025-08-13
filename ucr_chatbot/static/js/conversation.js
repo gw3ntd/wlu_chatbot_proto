@@ -186,25 +186,34 @@ async function handleSend(e) {
 
 function appendMessage(sender, text) {
   const messageWrapper = document.createElement("div");
-  messageWrapper.classList.add("message-wrapper", sender);
-
-  const pfp = document.createElement("img");
-  pfp.classList.add("pfp");
-
-  if (sender === "user") {
-    pfp.src = "/static/images/PFPs/User_PFP.png";
-    pfp.alt = "User";
-  } else if (sender === "bot"){
-    pfp.src = "/static/images/PFPs/Bot_PFP.png";
-    pfp.alt = "Bot";
+  messageWrapper.classList.add("message-wrapper");
+  if (sender) {
+    messageWrapper.classList.add(sender);
   }
-  else {
-    pfp.src = "/static/images/PFPs/Assistant_PFP.png";
-    pfp.alt = "Assistant";
+  
+  if (sender === "user" || sender === "bot" || sender === "assistant") {
+    const pfp = document.createElement("img");
+    pfp.classList.add("pfp");
+
+    if (sender === "user") {
+      pfp.src = "/static/images/PFPs/User_PFP.png";
+      pfp.alt = "User";
+    } else if (sender === "bot") {
+      pfp.src = "/static/images/PFPs/Bot_PFP.png";
+      pfp.alt = "Bot";
+    } else if (sender === "assistant") {
+      pfp.src = "/static/images/PFPs/Assistant_PFP.png";
+      pfp.alt = "Assistant";
+    }
+
+    messageWrapper.appendChild(pfp);
   }
 
   const messageDiv = document.createElement("div");
-  messageDiv.classList.add("message", sender);
+  messageDiv.classList.add("message");
+  if (sender) {
+    messageDiv.classList.add(sender);
+  }
 
   const html = converter.makeHtml(text);
   messageDiv.innerHTML = html;
@@ -213,12 +222,12 @@ function appendMessage(sender, text) {
     hljs.highlightElement(block);
   });
 
-  messageWrapper.appendChild(pfp);
   messageWrapper.appendChild(messageDiv);
 
   chatContainer.appendChild(messageWrapper);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
+
 
 function addSidebarMessage(label, convoId) {
   if (document.querySelector(`[data-convo-id="${convoId}"]`)) return;
