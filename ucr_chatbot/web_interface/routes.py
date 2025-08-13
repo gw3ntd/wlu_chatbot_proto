@@ -784,10 +784,14 @@ def assistant_dashboard():
             )
 
         # Load messages for each conversation to avoid template errors
+        prompt = """Given a conversation of a messaages between a student and an AI tutor, generate a short, 1-3 sentence summary of the topic being discussed, focusing on the topic last being discussed and what the student is struggling on. 
+                    Do not generate anything else, only the summary. """
         for conversation in ongoing_conversations:
             conversation.messages = (
                 session.query(Messages).filter_by(conversation_id=conversation.id).all()
             )
+
+            conversation.summary = generate_conversation_summary(conversation.id, prompt, None, None)
 
         # Get all resolved conversations from these courses
         resolved_conversations = (
@@ -1112,10 +1116,11 @@ def add_student(course_id: int):
 
 def generate_conversation_summary(
     conversation_id: int,
+    prompt: str,
     time_start: Optional[datetime],
     time_end: Optional[datetime],
 ) -> str:
-    """Generates a  summary of all student-chatbot interactions that occurred in a single conversation between a start and end time."""
+    """Generates a summary from a given prompt of all student-chatbot interactions that occurred in a single conversation between a start and end time."""
     with Session(engine) as session:
         total_messages: List[str] = []
 
@@ -1144,8 +1149,7 @@ def generate_conversation_summary(
 
         total_messages_txt = "\n".join(total_messages)
 
-        prompt = f"""These are all of the messages within one conversation between a student and a AI chatbot tutor. Create a summary of this conversation, including topics discussed and student performance.
-        Also include a section summarising topics being discussed where students talked to a human assistant. Messages labeled 'AssistantMessage' represent human assistants {total_messages_txt}"""
+        prompt = prompt + total_messages_txt
         response = response_client.get_response(prompt)
 
         return response
@@ -1199,10 +1203,14 @@ def generate_usage_summary(
         conversation_ids = session.execute(stmt).scalars().all()
 
         total_messages: List[str] = []
+        prompt = """These are all of the messages within one conversation between a student and a AI chatbot tutor. Create a summary of this conversation, including topics discussed and student performance.
+        Also include a section for specific topics being discussed where students talked to a human assistant. Messages labeled 'AssistantMessage' represent human assistants"""
         for conv_id in conversation_ids:
+
             total_messages.append(
-                generate_conversation_summary(conv_id, time_start, time_end)
+                generate_conversation_summary(conv_id, prompt, time_start, time_end)
             )
+
 
         total_messages_txt = "\n".join(total_messages)
 
@@ -1213,7 +1221,7 @@ def generate_usage_summary(
                 Do not focus too much on specific/invidual interactions between a student and the chatbot. 
                 Focus more higher level, what topics are being discussed and with what frequency, which topics are students struggling at, how are they struggling.
                 Do not include a title for the report.
-                Also include a section discussing instances where conversations involved the student talking to a human assistant.
+                Also include a section for specific topics where students needed help and required talking to a human assistant.
                 """
 
     response = response_client.get_response(prompt)
