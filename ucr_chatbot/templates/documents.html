@@ -24,7 +24,7 @@
         <h1>ADD STUDENTS TO COURSE</h1>
         <div class="card">
             <h3>Add Student Manually</h3>
-            <form method=post action="{{ url_for('web_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Student Email:</label>
@@ -49,7 +49,7 @@
 
         <div class="card">
             <h3>Add Students from CSV</h3>
-            <form method=post action="{{ url_for('web_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
                 <input type=file name="file">
                 <input type=submit value="Add">
             </form>
@@ -57,7 +57,7 @@
 
         <h1>GENERATE SUMMARY</h1>
         <div class="card">
-            <form action="{{ url_for('web_routes.generate_summary', course_id=course_id) }}" method="post">
+            <form action="{{ url_for('web_interface.instructor_routes.generate_summary', course_id=course_id) }}" method="post">
 
                 <label for="start_date">Start Date:</label>
                 <input type="date" id="start_date" name="start_date"  />
@@ -72,7 +72,7 @@
         <h1>ADD ASSISTANTS TO COURSE</h1>
         <div class="card">
         <h3>Add Assistant Manually</h3>
-        <form method=post action="{{ url_for('web_routes.add_assistant', course_id=course_id) }}" enctype=multipart/form-data>
+        <form method=post action="{{ url_for('web_interface.instructor_routes.add_assistant', course_id=course_id) }}" enctype=multipart/form-data>
             <div class="form-row">
                 <div class="form-group">
                     <label for="email">ULA Email:</label>
@@ -97,7 +97,7 @@
 
         <div class="card">
         <h3>Add Assistants from CSV</h3>
-            <form method=post action="{{ url_for('web_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
                 <input type=file name="file">
                 <input type=submit value="Add">
             </form>

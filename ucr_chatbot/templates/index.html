@@ -13,7 +13,7 @@
 
     <h1>Welcome to <span>ScottGPT!</span></h1>
 
-    <form id="auth-form" action="{{url_for('web_routes.login')}}" method="post">
+    <form id="auth-form" action="{{url_for('web_interface.authentication_routes.login')}}" method="post">
         
       <label for="email">Email:</label>
         <input 
@@ -45,7 +45,7 @@
           type="button" 
           class="btn login-google" 
           value="Login with Google"
-            onclick="window.location.href='{{ url_for('web_routes.login_google')}}'" 
+            onclick="window.location.href='{{ url_for('web_interface.authentication_routes.login_google')}}'" 
         />
     </form>
   </div>

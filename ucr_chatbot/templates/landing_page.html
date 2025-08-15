@@ -16,7 +16,7 @@
       {% for course, role in courses %}
         
         {% if role == 'student' %}
-          <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
+          <a href="{{ url_for('web_interface.conversation_routes.new_conversation', course_id=course.id) }}">
             <li class="card">
                 {{ course.name }} (Student View - Chat Interface)
             </li>
@@ -24,7 +24,7 @@
         {% endif %}
 
         {% if role == 'instructor' %}
-          <a href="{{ url_for('web_routes.course_documents', course_id=course.id) }}">
+          <a href="{{ url_for('web_interface.instructor_routes.course_documents', course_id=course.id) }}">
             <li class="card">
               {{ course.name }} (Instructor View - Document Upload)
             </li> 
@@ -32,13 +32,13 @@
         {% endif %}
 
         {% if role == 'assistant' %}
-          <a href="{{ url_for('web_routes.new_conversation', course_id=course.id) }}">
+          <a href="{{ url_for('web_interface.conversation_routes.new_conversation', course_id=course.id) }}">
             <li class="card">
                 {{ course.name }} (ULA View)
             </li>
           </a>
 
-          <a href="{{ url_for('web_routes.assistant_dashboard') }}">
+          <a href="{{ url_for('web_interface.assistant_routes.assistant_dashboard') }}">
             <li class="card">
               {{ course.name }} (ULA View - Dashboard)
             </li>

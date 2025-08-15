@@ -35,7 +35,7 @@
                 {{ conversation.summary }}
             </div>
             
-            <a href="{{ url_for('web_routes.assistant_conversation', conversation_id=conversation.id) }}" 
+            <a href="{{ url_for('web_interface.assistant_routes.assistant_conversation', conversation_id=conversation.id) }}" 
                 class="btn btn-primary">
                 Handle Conversation
             </a>
@@ -89,7 +89,7 @@
     {% endif %}
     
     <div style="margin-top: 30px; text-align: center;">
-        <a href="{{ url_for('web_routes.course_selection') }}" class="btn btn-primary">
+        <a href="{{ url_for('web_interface.general_routes.course_selection') }}" class="btn btn-primary">
             Back to Course Selection
         </a>
     </div>

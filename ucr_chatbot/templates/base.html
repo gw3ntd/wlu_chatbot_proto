@@ -44,7 +44,7 @@
     {% block body %}{% endblock %}
 
     <div>
-      <a href="{{ url_for('web_routes.logout') }}" class="logout-button">Logout</a>
+      <a href="{{ url_for('web_interface.authentication_routes.logout') }}" class="logout-button">Logout</a>
     </div>
     {% block scripts %}{% endblock %}
   </body>

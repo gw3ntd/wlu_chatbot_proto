@@ -253,7 +253,7 @@ def test_generate_summary(client: FlaskClient, monkeypatch, app):
         sess["_user_id"] = "testsum@ucr.edu"
     
     monkeypatch.setattr(
-        "ucr_chatbot.web_interface.routes.response_client.get_response",
+        "ucr_chatbot.api.summary_generation.response_client.get_response",
         MagicMock(return_value="summary of course conversations")
     )
 
