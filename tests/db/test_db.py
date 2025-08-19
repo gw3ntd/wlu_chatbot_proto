@@ -85,19 +85,19 @@ def test_insert_participates(db: Connection):
     """tests if the relationship between a user and a course can be added and selected out of db"""
 
 
-    stmt = insert(ParticipatesIn).values(email = 'test@ucr.edu', course_id = 1, role='Student')
+    stmt = insert(ParticipatesIn).values(email = 'test@ucr.edu', course_id = 1, role='student')
     db.execute(stmt)
     db.commit()
 
 
-    s = select(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id==1, ParticipatesIn.role == 'Student')
+    s = select(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id==1, ParticipatesIn.role == 'student')
     result = db.execute(s)
 
     answer = None
     for row in result:
         answer = row
     assert answer is not None
-    assert answer == ('test@ucr.edu', 1, 'Student')
+    assert answer == ('test@ucr.edu', 1, 'student')
 
 # def test_print_participation(capsys):
 #     """tests the print_participation wrapper function"""
@@ -298,11 +298,10 @@ def test_delete_conversations(db: Connection):
 
 def test_delete_participates(db: Connection):
     """tests if a user course relationship can be deleted from db"""
-    stmt = delete(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id == 1)
-    db.execute(stmt)
-    db.commit()
+    remove_user_from_course('test@ucr.edu', 1, 'student')
 
-    s = select(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id == 1)
+
+    s = select(ParticipatesIn).where(ParticipatesIn.email=='test@ucr.edu', ParticipatesIn.course_id == 1, ParticipatesIn.role == 'student')
     result = db.execute(s)
     result = list(result)
    

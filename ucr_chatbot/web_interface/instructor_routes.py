@@ -36,6 +36,7 @@ from ucr_chatbot.db.models import (
     add_user_to_course,
     add_students_from_list,
     add_assistants_from_list,
+    remove_user_from_course,
     Users,
 )
 from ucr_chatbot.config import Config
@@ -253,6 +254,21 @@ def add_student(course_id: int):
     role = request.form.get("role", "student")  # Default to student if not provided
 
     add_user_to_course(user_email, user_fname, user_lname, course_id, role)
+    return redirect(url_for(".course_documents", course_id=course_id))
+
+
+@bp.route("/course/<int:course_id>/remove_student", methods=["POST"])
+@login_required
+@roles_required(["instructor"])
+def remove_student(course_id: int):
+    """Removes a student from the current course.
+    :param course_id: The course the student will be removed from.
+    """
+
+    user_email = request.form["email"]
+    role = request.form.get("role", "student")
+
+    remove_user_from_course(user_email, course_id, role)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 

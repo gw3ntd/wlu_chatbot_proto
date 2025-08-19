@@ -21,7 +21,15 @@
             <p>{{body | safe}}</p>
         </body>
 
-        <h1>ADD STUDENTS TO COURSE</h1>
+        <h1>Manage Students</h1>
+        <div class="card">
+            <h3>Add Students from CSV</h3>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+                <input type=file name="file">
+                <input type=submit value="Add">
+            </form>
+        </div>
+
         <div class="card">
             <h3>Add Student Manually</h3>
             <form method=post action="{{ url_for('web_interface.instructor_routes.add_student', course_id=course_id) }}" enctype=multipart/form-data>
@@ -47,11 +55,19 @@
             </form>
         </div>
 
+       
         <div class="card">
-            <h3>Add Students from CSV</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
-                <input type=file name="file">
-                <input type=submit value="Add">
+            <h3>Remove Student Manually</h3>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_student', course_id=course_id) }}" enctype=multipart/form-data>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Student Email:</label>
+                        <input type="text" id="email" name="email">
+                    </div>
+                </div>
+                
+                <input type="hidden" name="role" value="student">
+                <input type=submit value=Remove>
             </form>
         </div>
 

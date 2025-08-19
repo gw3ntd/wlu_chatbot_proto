@@ -249,6 +249,37 @@ def add_user_to_course(
             print("User added to course.")
 
 
+def remove_user_from_course(email: str, course_id: int, role: str):
+    """Removes a user from the specified course.
+    :param email: The email for the user to be removed.
+    :param course_id: The course the user will be removed from.
+    :param role: The role of the user in the course."""
+    with Session(engine) as session:
+        participation_status = (
+            session.query(ParticipatesIn)
+            .filter(
+                ParticipatesIn.email == email,
+                ParticipatesIn.course_id == course_id,
+                ParticipatesIn.role == role,
+            )
+            .first()
+        )
+        if participation_status:
+            user = (
+                session.query(ParticipatesIn)
+                .filter(
+                    ParticipatesIn.email == email,
+                    ParticipatesIn.course_id == course_id,
+                    ParticipatesIn.role == role,
+                )
+                .first()
+            )
+            session.delete(user)
+            session.commit()
+
+            print("User removed from course.")
+
+
 def add_students_from_list(data: pd.DataFrame, course_id: int):
     """Adds students to course from a passed in list.
     :param data: Pandas dataframe containing student information.
