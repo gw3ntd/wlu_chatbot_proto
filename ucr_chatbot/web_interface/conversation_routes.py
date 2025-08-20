@@ -65,7 +65,9 @@ def new_conversation(course_id: int):
         elif request_type == "create":
             return create_conversation(course_id, user_email, content["message"])
 
-    return render_template("conversation.html", course_id=course_id)
+    return render_template(
+        "conversation.html", course_id=course_id, conversation_state="CHATBOT"
+    )
 
 
 @bp.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
@@ -100,10 +102,16 @@ def conversation(conversation_id: int):
             ).scalar_one()
             course_id = conv.course_id
 
+        conversation_state = (
+            "RESOLVED"
+            if bool(conv.resolved)
+            else ("REDIRECTED" if bool(conv.redirected) else ("CHATBOT"))
+        )
         return render_template(
             "conversation.html",
             conversation_id=conversation_id,
             course_id=course_id,
+            conversation_state=conversation_state,
         )
 
 

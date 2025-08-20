@@ -14,14 +14,28 @@ let courseId = document.body.dataset.courseId
 
 let isNewConversation = window.location.pathname.includes("/conversation/new");
 
-let isResolved = false;
+const conversationStatesUnsafe = {
+  "RESOLVED": 1,
+  "REDIRECTED": 2,
+  "CHATBOT": 3,
+}
+
+const conversationStates = new Proxy(conversationStatesUnsafe, {
+  get(target, prop, receiver) {
+    if (!(prop in target)) {
+      throw new Error(`Invalid conversation state: "${prop}". Valid states are: ${Object.keys(target).join(', ')}`);
+    }
+
+    return Reflect.get(target, prop, receiver);
+  }
+});
+
+let conversationState = conversationStates[document.body.dataset.conversationState];
 
 async function loadAllConversationIds() {
   if (!courseId && !conversationId) return;
 
-  let fetchUrl = courseId
-    ? `/conversation/new/${courseId}/chat`
-    : `/conversation/new/0/chat`;
+  let fetchUrl = `/conversation/new/${courseId}/chat`
 
 
   const res = await fetch(fetchUrl, {
@@ -74,43 +88,48 @@ async function loadAllConversationsForUser() {
   const redirect_data = await res_2.json();
 
   if (redirect_data.redirect === "bot") {
-    isResolved = false;
+    conversationState = conversationStates.CHATBOT;
     redirectButton.textContent = "Redirect to ULA";
     redirectButton.disabled = false;
+    userMessageTextarea.disabled = false;
   }
   else if (redirect_data.redirect === "open") {
-    isResolved = true;
+    conversationState = conversationStates.REDIRECTED;
     redirectButton.textContent = "Mark as Resolved";
     redirectButton.disabled = false;
+    userMessageTextarea.disabled = false;
   }
   else {
+    conversationState = conversationStates.RESOLVED;
     redirectButton.textContent = "Resolved";
     redirectButton.disabled = true;
+    userMessageTextarea.disabled = true;
   }
 }
-
-loadAllConversationIds();
 
 function createNewConversation() {
   chatContainer.innerHTML = "";
   conversationId = null;
   isNewConversation = true;
+  userMessageTextarea.disabled = false;
 
   document.querySelectorAll(".conversation-item").forEach(el => {
     el.classList.remove("active");
   });
   
   if (courseId) {
-    window.history.replaceState({}, "", `/conversation/new/${courseId}`);
+    window.history.replaceState({}, "", `/conversation/new/${courseId}/chat`);
   } else {
-    window.history.replaceState({}, "", `/conversation/new`);
+    alert("Internal error");
   }
   
-  userMessageTextarea.value = "";
   redirectButton.textContent = "Redirect to ULA";
-  isResolved = false;
+  redirectButton.disabled = false;
+  conversationState = conversationStates.CHATBOT;
   appendMessage("system", "New conversation started. Type your message below.");
 }
+
+loadAllConversationIds();
 
 // Set up periodic message checking for real-time updates
 let messageCheckInterval;
@@ -135,53 +154,64 @@ async function handleSend(e) {
   appendMessage("user", message);
   userMessageTextarea.value = "";
 
-
   if (isNewConversation) {
-    const res = await fetch(`/conversation/new/${courseId}/chat`, {
+    await fetch(`/conversation/new/${courseId}/chat`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
       body: JSON.stringify({ type: "create", message }),
+    }).then( async response => {
+
+      if (!response.ok) {
+        throw Error("Could not connect to the chatbot server to open a new conversation.")
+      }
+
+      const data = await response.json();
+      conversationId = data.conversationId;
+      isNewConversation = false;
+
+      window.history.replaceState({}, "", `/conversation/${conversationId}`);
+      addSidebarMessage(data.title, data.conversationId);
+    }).catch(error => {
+     appendMessage("system", error.message);
+     return;
     });
-
-    const data = await res.json();
-    conversationId = data.conversationId;
-    isNewConversation = false;
-
-    window.history.replaceState({}, "", `/conversation/${conversationId}`);
-    addSidebarMessage(data.title, data.conversationId);
-
-    try {
-      const botResponse = await fetchBotReply(message);
-      if (botResponse !== "") {
-        appendMessage("bot", botResponse);
-      }
-    } catch (error) {
-      appendMessage("system", error.message);
-      // If conversation is redirected, update the button state
-      if (error.message.includes("redirected to a ULA")) {
-        redirectButton.textContent = "Mark as Resolved";
-        isResolved = true;
-      }
-    }
-  } else {
-    await sendMessage(message);
-    try {
-      const botResponse = await fetchBotReply(message);
-      if (botResponse !== "") {
-        appendMessage("bot", botResponse);
-      }
-    } catch (error) {
-      appendMessage("system", error.message);
-      // If conversation is redirected, update the button state
-      if (error.message.includes("redirected to a ULA")) {
-        redirectButton.textContent = "Mark as Resolved";
-        isResolved = true;
-      }
-    }
   }
+  if (conversationState != conversationStates.CHATBOT) return;
+  let thinkingMessageElement = appendMessage('bot', "Thinking...")
+  let thinkMessageContentElement = thinkingMessageElement.querySelector(".message")
+  let dots = 3;
+  const thinkingInterval = setInterval(() => {
+    dots = (dots % 3) + 1;
+    thinkMessageContentElement.textContent = "Thinking" + ".".repeat(dots);
+  }, 400);
+  
+  fetch(`/conversation/${conversationId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ type: "reply", message: message }),
+  }).then(async response => {
+
+    let data = await response.json()
+    if (!response.ok) {
+      throw Error("Could not get response from language model.");
+    }
+    return data;
+  }).then(async data => {
+    if (data.reply !== "") {
+        appendMessage("bot", data.reply);
+    }
+  }).catch(error => {
+     appendMessage("system", error.message);
+  }).finally(() => {
+      clearInterval(thinkingInterval);
+      thinkingMessageElement.remove();
+  });
 }
 
 function appendMessage(sender, text) {
@@ -226,6 +256,7 @@ function appendMessage(sender, text) {
 
   chatContainer.appendChild(messageWrapper);
   chatContainer.scrollTop = chatContainer.scrollHeight;
+  return messageWrapper;
 }
 
 
@@ -267,85 +298,55 @@ async function sendMessage(message) {
   });
 }
 
-async function fetchBotReply(userMessage) {
-  const res = await fetch(`/conversation/${conversationId}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "reply", message: userMessage }),
-  });
-
-  const data = await res.json();
-  
-  // Check for error responses
-  if (!res.ok) {
-    if (data.error === "conversation_redirected") {
-      throw new Error("This conversation has been redirected to a ULA. Please wait for assistance.");
-    } else if (data.error === "conversation_resolved") {
-      throw new Error("This conversation has been resolved.");
-    } else {
-      throw new Error(data.message || "Failed to get bot reply");
-    }
-  }
-  
-  return data.reply;
-}
-
 // redirect conversation to assistant or mark as resolved
 redirectButton.addEventListener("click", async () => {
   if (!conversationId) {
-    alert("No conversation selected.");
+    appendMessage("system", "There must be at least one message in the conversation before it can be redirected to an Assistant.");
     return;
   }
-
-  if (!isResolved) {
-    try {
-      const res = await fetch(`/conversation/${conversationId}/redirect`, {
+  switch (conversationState) {
+    case conversationStates.CHATBOT:
+      fetch(`/conversation/${conversationId}/redirect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
         body: JSON.stringify({ type: "redirect" }),
-      });
+      }).then( async response => {
+        if (!response.ok) throw new Error("Could not redirect conversation.");
+        const data = await response.json();
+        if (data.status !== "redirected") throw new Error("Could not redirect conversation.");
 
-      if (!res.ok) throw new Error("Redirect request failed");
-
-      const data = await res.json();
-      if (data.status === "redirected") {
         redirectButton.textContent = "Mark as Resolved";
-        isResolved = true;
-        alert("Your conversation is now visible to assistants, the AI chat bot is now disabled for this conversation.");
-      }
-    } catch (error) {
-      console.error("Redirect error:", error);
-      alert("Failed to redirect to assistant. Please try again.");
-    }
-  } else {
-    try {
-      const res = await fetch(`/conversation/${conversationId}/resolve`, {
+        conversationState = conversationStates.REDIRECTED;
+        appendMessage("system", "Your conversation is now visible to assistants and the AI chat bot is disabled for this conversation.");
+      }).catch( error => {
+        appendMessage("system", error.message)
+      });
+      break;
+    case conversationStates.REDIRECTED:
+      fetch(`/conversation/${conversationId}/resolve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
         body: JSON.stringify({ type: "resolve" }),
-      });
+      }).then( async response => {
+        if (!response.ok) throw new Error("Could not resolve conversation.");
+        const data = await response.json();
+        if (data.status !== "resolved") throw new Error("Could not resolve conversation.");
 
-      if (!res.ok) throw new Error("Mark as resolved failed");
-
-      const data = await res.json();
-      if (data.status === "resolved") {
         redirectButton.textContent = "Resolved";
-        redirectButton.disabled = true;
-        alert("Conversation marked as resolved!");
-      }
-    } catch (error) {
-      console.error("Resolve error:", error);
-      alert("Failed to mark as resolved. Please try again.");
-    }
+        conversationState = conversationStates.RESOLVED;
+        userMessageTextarea.disabled = true;
+        appendMessage("system", "Your conversation is now resolved.");
+      }).catch( error => {
+        appendMessage("system", error.message)
+      });
+    case conversationStates.RESOLVED:
+      break;
   }
 });
 
