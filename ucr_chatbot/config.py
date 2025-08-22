@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from enum import Enum
-from pathlib import Path
 
 load_dotenv()
 
@@ -35,6 +34,21 @@ class LLMMode(Enum):
                 raise ValueError(f"Invalid LLM mode '{invalid_name}'")
 
 
+class FileStorageMode(Enum):
+    """The mode in which the file storage is to run."""
+
+    LOCAL = 1
+
+    @staticmethod
+    def from_str(enum_name: str) -> "FileStorageMode":
+        """Creates a FileStorageMode from a string."""
+        match enum_name.lower():
+            case "local":
+                return FileStorageMode.LOCAL
+            case invalid_name:
+                raise ValueError(f"Invalid file storage mode '{invalid_name}'")
+
+
 class Config:
     """The global configuration for the UCR Chatbot."""
 
@@ -52,6 +66,6 @@ class Config:
     GEMINI_API_KEY = get_non_empty_env("GEMINI_API_KEY")
     LLM_MODE = LLMMode.from_str(get_non_empty_env("LLM_MODE", "testing"))
 
-    FILE_STORAGE_PATH = Path(
-        get_non_empty_env("FILE_STORAGE_PATH", Path(__file__).parent / "db" / "uploads")
+    FILE_STORAGE_MODE = FileStorageMode.from_str(
+        get_non_empty_env("FILE_STORAGE_MODE", "local")
     )

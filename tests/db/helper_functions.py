@@ -18,14 +18,6 @@ def clear_db():
     """Deletes all tables in database."""
     base.metadata.drop_all(engine)
 
-def delete_uploads_folder():
-    """Deletes uploads folder and all files within it."""
-    uploads_folder_path = Path(Config.FILE_STORAGE_PATH)
-    if uploads_folder_path.exists():
-        shutil.rmtree(uploads_folder_path)
-    else:
-        print("Uploads folder not found.")
-
 def add_courses():
     """Adds all courses needed for testing to Courses table"""
     course_names: list[str] = [
@@ -109,27 +101,3 @@ def print_embeddings():
         for row in all_entries:
             rows.append((row.id, row.vector, row.segment_id))
         print(tabulate(rows, headers="keys", tablefmt="psql"))
-
-
-if __name__ == "__main__":
-    if "reset" in sys.argv:
-        delete_uploads_folder()
-        clear_db()
-        initialize_db()
-        add_courses()
-        add_new_user("test001@ucr.edu", "test1", "user1")
-        add_new_user("test002@ucr.edu", "test2", "user2")
-        add_new_user("test003@ucr.edu", "test3", "user3")
-        add_new_user("test004@ucr.edu", "test4", "user4")
-        add_user_to_course("test001@ucr.edu", "test1", "user1", 1, "instructor")
-        add_user_to_course("test002@ucr.edu", "test2", "user2", 1, "student")
-        add_user_to_course("test003@ucr.edu", "test3", "user3", 1, "assistant")
-        add_user_to_course("test004@ucr.edu", "test4", "user4", 9, "student")
-        print("Database reset.")
-    # elif "print" in sys.argv:
-    #     print_users()
-    #     print_courses()
-    #     print_participation()
-    #     print_documents()
-    #     print_segments()
-    #     print_embeddings()

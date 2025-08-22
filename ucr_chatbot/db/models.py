@@ -18,8 +18,7 @@ import pandas as pd
 from typing import cast
 import secrets
 import string
-import shutil
-from pathlib import Path
+from pathlib import PurePath
 
 
 from flask_login import UserMixin  # type: ignore
@@ -356,16 +355,16 @@ def set_document_inactive(file_path: str):
             session.commit()
 
 
-def get_active_documents() -> list[str]:
+def get_active_documents() -> list[PurePath]:
     """Returns list of the file paths for all active documents in the database.
     :return: list of the file paths for all active documents:
     """
     with Session(engine) as session:
         active_documents = session.query(Documents).filter_by(is_active=True)
-        file_paths: list[str] = []
+        file_paths: list[PurePath] = []
 
         for doc in active_documents:
-            file_paths.append(getattr(doc, "file_path"))
+            file_paths.append(PurePath(getattr(doc, "file_path")))
 
         return file_paths
 
@@ -406,13 +405,6 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
             session.commit()
         except SQLAlchemyError:
             session.rollback()
-
-
-def delete_uploads_folder():
-    """Deletes uploads folder and all files within it."""
-    uploads_folder_path = Path(Config.FILE_STORAGE_PATH)
-    if uploads_folder_path.exists():
-        shutil.rmtree(uploads_folder_path)
 
 
 def mark_conversation_resolved(conversation_id: int):

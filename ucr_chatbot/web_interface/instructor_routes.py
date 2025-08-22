@@ -4,14 +4,15 @@ from flask import (
     request,
     url_for,
     redirect,
-    send_from_directory,
+    send_file,
     abort,
     flash,
     Response as FlaskResponse,
+    current_app,
 )
 
 from sqlalchemy import select
-from pathlib import Path
+from pathlib import Path, PurePath
 import pandas as pd
 import io
 from werkzeug.utils import secure_filename
@@ -19,7 +20,8 @@ from werkzeug.datastructures import FileStorage
 from flask_login import current_user, login_required  # type: ignore
 from datetime import datetime
 from ucr_chatbot.decorators import roles_required
-from typing import Optional
+from typing import Optional, cast
+from io import BytesIO
 
 
 from ucr_chatbot.db.models import (
@@ -39,12 +41,12 @@ from ucr_chatbot.db.models import (
     remove_user_from_course,
     Users,
 )
-from ucr_chatbot.config import Config
+from ucr_chatbot.api.file_storage import StorageService
 
 from ucr_chatbot.api.summary_generation import generate_usage_summary
 
 
-from ucr_chatbot.api.file_parsing.file_parsing import parse_file
+from ucr_chatbot.api.file_parsing.file_parsing import parse_file, FileParsingError
 from ucr_chatbot.api.embedding.embedding import embed_text
 
 bp = Blueprint("instructor_routes", __name__)
@@ -78,8 +80,9 @@ def course_documents(course_id: int):
         user = session.query(Users).filter_by(email=email).first()
     if user is None:
         abort(404, description="User not found")
-    curr_path = Config.FILE_STORAGE_PATH
     error_msg = ""
+
+    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
 
     if request.method == "POST":
         if "file" not in request.files:
@@ -91,55 +94,64 @@ def course_documents(course_id: int):
             flash("No selected file", "error")
             return redirect(request.url)
 
-        full_local_path = None
-        try:
-            filename = secure_filename(file.filename)
-            relative_path = Path(str(course_id)) / filename
-            full_local_path = curr_path / relative_path
+        filename = secure_filename(file.filename)
+        file_path = Path(str(course_id)) / filename
+        file_extension = file_path.suffix[1:]
 
-            create_upload_folder(course_id=course_id)
-            file.save(str(full_local_path))
-
-            segments = parse_file(str(full_local_path))
-            add_new_document(
-                str(relative_path).replace(str(Path().anchor), ""),
-                course_id,
-            )
-            for seg in segments:
-                seg_id = store_segment(
-                    seg,
-                    str(relative_path).replace(str(Path().anchor), ""),
+        with Session(engine) as session:
+            if session.query(Documents).filter_by(
+                file_path=str(file_path)
+            ).first() or storage_service.file_exists(file_path):
+                flash(
+                    "A file with this name has already been uploaded for this course. Please rename the file to upload it.",
+                    "error",
                 )
+                return redirect(request.url, code=400)
 
-                embedding = embed_text(seg)
-                store_embedding(embedding, seg_id)
-            flash("File uploaded and processed successfully!", "success")
+        file_data = io.BytesIO(file.stream.read())
+
+        segments = None
+        try:
+            segments = parse_file(file_data, file_extension)
+        except FileParsingError:
+            flash("You can't upload this type of file", "error")
             return redirect(url_for(".course_documents", course_id=course_id))
 
-        except (ValueError, TypeError):
-            if full_local_path and full_local_path.exists():
-                full_local_path.unlink()
-            flash("You can't upload this type of file", "error")
+        add_new_document(
+            str(file_path).replace(str(Path().anchor), ""),
+            course_id,
+        )
+        for seg in segments:
+            seg_id = store_segment(
+                seg,
+                str(file_path).replace(str(Path().anchor), ""),
+            )
+
+            embedding = embed_text(seg)
+            store_embedding(embedding, seg_id)
+
+        file_data.seek(0)
+        storage_service.save_file(file_data, file_path)
+
+        flash("File uploaded and processed successfully!", "success")
+        return redirect(url_for(".course_documents", course_id=course_id))
 
     docs_html = ""
     active_docs = get_active_documents()
-    docs_dir = Path(curr_path) / str(course_id)
-    if docs_dir.is_dir():
-        for idx, doc in enumerate(docs_dir.iterdir(), 1):
-            if not doc.is_file():
-                continue
+    docs_dir = PurePath(str(course_id))
 
-            file_path = str(Path(str(course_id)) / secure_filename(doc.name))
-            # file_path = f"{course_id}/{secure_filename(doc.name)}"
+    for idx, file_path in enumerate(storage_service.list_directory(docs_dir), start=1):
+        if storage_service.is_directory(file_path):
+            continue
 
-            if file_path not in active_docs:
-                continue
+        if file_path not in active_docs:
+            continue
 
-            docs_html += f"""
+        docs_html += f"""
               <div style="margin-bottom:4px;">
-                  {idx}. <a href="{url_for(".download_file", file_path=file_path)}">{doc.name}</a>
+                  {idx}. <a href="{url_for(".download_file", file_path=file_path)}">{file_path.name}</a>
                   <form action="{url_for(".delete_document", file_path=file_path)}" method="post" style="display:inline;">
-                      <button type="submit" onclick="return confirm('Delete {doc.name}?');">Delete</button>
+                      <button type="submit" onclick="return confirm('Delete {file_path.name}?');">Delete</button>
 
                   </form>
               </div>
@@ -177,7 +189,7 @@ def delete_document(file_path: str):
     if current_user.is_anonymous:
         abort(403)
 
-    full_path = str(Path(Config.FILE_STORAGE_PATH) / file_path)
+    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
 
     with Session(engine) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
@@ -196,7 +208,7 @@ def delete_document(file_path: str):
 
         course_id = document.course_id
 
-        if Path(full_path).exists():
+        if storage_service.file_exists(Path(file_path)):
             set_document_inactive(file_path)
 
     return redirect(url_for(".course_documents", course_id=course_id))
@@ -236,9 +248,10 @@ def download_file(file_path: str):
             abort(403)
 
     path_obj = Path(file_path)
-    directory = str(path_obj.parent)
-    name = path_obj.name
-    return send_from_directory(str(Path(Config.FILE_STORAGE_PATH) / directory), name)
+
+    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
+
+    return send_file(BytesIO(storage_service.get_file(path_obj).read()), path_obj.name)
 
 
 @bp.route("/course/<int:course_id>/add_student", methods=["POST"])
@@ -391,16 +404,3 @@ def add_assistant_from_csv(course_id: int):
             return redirect(request.url)
 
     return redirect(url_for(".course_documents", course_id=course_id))
-
-
-def create_upload_folder(course_id: int):
-    """Creates a folder named after the course id within the uploads folder.
-    :param course_id: name of the folder to be created
-    """
-    upload_path = Path(Config.FILE_STORAGE_PATH)
-    if not upload_path.is_dir():
-        upload_path.mkdir(parents=True, exist_ok=True)
-
-    course_path = upload_path / str(course_id)
-    if not course_path.is_dir():
-        course_path.mkdir(parents=True, exist_ok=True)

@@ -39,7 +39,6 @@ try:
         add_new_user,
         add_user_to_course,
         Session,
-        delete_uploads_folder,
     )
 except ModuleNotFoundError:
     from models import (
@@ -51,7 +50,6 @@ except ModuleNotFoundError:
         add_new_user,
         add_user_to_course,
         Session,
-        delete_uploads_folder,
     )
 
 inspector = inspect(engine)
@@ -81,7 +79,6 @@ def initialize(force: bool):
         print("Database initialized.")
     elif force:
         base.metadata.drop_all(engine)
-        delete_uploads_folder()
         base.metadata.create_all(engine)
         print("Database cleared and initialized.")
     else:

@@ -6,7 +6,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import tempfile
-from typing import List
+from typing import List, IO
 from pypdf import PdfReader
 from pathlib import Path
 
@@ -24,26 +24,27 @@ class InvalidFileExtensionError(FileParsingError):
         super().__init__(f'Cannot interpret file with extension "{extension}"')
 
 
-def parse_file(path: str) -> list[str]:
+def parse_file(file: IO[bytes], extension: str) -> list[str]:
     """Parses a file into text.
 
-    :param path: A file path to the file to be parsed.
+    :param file: A file-like object to be parsed.
+    :param extension: The file extension (e.g., "txt", "pdf") to determine the parsing method.
     :raises InvalidFileExtension: If the input path has an invalid file extension at the end.
     :return: A textual representation of the file.
     """
-    extension = Path(path).suffix[1:]
-    with open(path, "rb") as f:
-        if extension == "txt":
-            return _parse_txt(f, lenseg=1000)
-        elif extension == "wav":
-            return _parse_audio(path, segments=True)
-        elif extension == "mp3":
-            return _parse_audio(path, segments=True)
-        elif extension == "md":
-            return _parse_md(f, 1000)
-        elif extension == "pdf":
-            return _parse_pdf(f, chars_per_seg=1000, overlap=2)
-        else:
+
+    match extension.lower():
+        case "txt":
+            return _parse_txt(file, lenseg=1000)
+        case "wav":
+            return _parse_audio(file, segments=True)
+        case "mp3":
+            return _parse_audio(file, segments=True)
+        case "md":
+            return _parse_md(file, 1000)
+        case "pdf":
+            return _parse_pdf(file, chars_per_seg=1000, overlap=2)
+        case _:
             raise InvalidFileExtensionError(extension)
 
 

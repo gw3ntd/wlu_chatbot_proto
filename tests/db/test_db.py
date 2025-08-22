@@ -18,7 +18,6 @@ from helper_functions import *
 
 def test_initialize_db():
   """Tests initialize_db wrapper function"""
-  delete_uploads_folder()
   clear_db()
   initialize_db()
   inspector = inspect(engine)
@@ -379,8 +378,7 @@ def test_get_active_documents(db: Connection):
   set_document_inactive("slide_1.pdf")
   result = get_active_documents()
   print(result)
-  
-  assert result == ['slide_2.pdf', 'slide_3.pdf']
+  assert result == [PurePath('slide_2.pdf'), PurePath('slide_3.pdf')]
 
 def test_store_segment(db: Connection):
     """Tests the store_segment wrapper function"""

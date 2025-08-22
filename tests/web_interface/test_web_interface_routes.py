@@ -1,21 +1,24 @@
-from flask.testing import FlaskClient
 import io
-import os
 import sys
 from pathlib import Path
-from ucr_chatbot.db.models import engine, Session
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from db.helper_functions import *
 from unittest.mock import MagicMock
 
-from ucr_chatbot.config import Config
+
+from flask.testing import FlaskClient
+
+
+from ucr_chatbot.db.models import engine, Session
+from ucr_chatbot.api.file_storage import StorageService
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from db.helper_functions import *
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
     assert "200 OK" == response.status
     assert "200 OK" == response.status
 
-def test_file_upload(client: FlaskClient, monkeypatch, app):
+def test_file_upload(client: FlaskClient, monkeypatch, app: FlaskClient, storage_service: StorageService):
     # --- Step 1: Add test user to DB ---
     with app.app_context():
         add_new_user("testupload@ucr.edu", "John", "Doe")
@@ -35,12 +38,11 @@ def test_file_upload(client: FlaskClient, monkeypatch, app):
     assert response.status_code == 200
     assert b"test_file.txt" in response.data
 
-    app_instance = client.application
-    file_path = Path(Config.FILE_STORAGE_PATH) / "1" / "test_file.txt"
-    assert file_path.exists()
-    with file_path.open("rb") as f:
+    file_path = Path("1",  "test_file.txt")
+
+    with storage_service.get_file(file_path) as f:
         assert f.read() == b"Test file for CS009A"
-    file_path.unlink()
+    storage_service.delete_file(file_path)
 
 
 def test_file_upload_empty(client: FlaskClient):
@@ -56,7 +58,7 @@ def test_file_upload_no_file(client: FlaskClient):
     assert "302 FOUND" == response.status # Successful redirect
 
 
-def test_file_upload_invalid_extension(client: FlaskClient, app):
+def test_file_upload_invalid_extension(client: FlaskClient, app: FlaskClient):
     # create and log in a test user
     with app.app_context():
         add_new_user("testinvalid@ucr.edu", "John", "Doe")
@@ -81,7 +83,7 @@ def test_file_upload_invalid_extension(client: FlaskClient, app):
 
 
 
-def test_file_download(client: FlaskClient, monkeypatch, app):
+def test_file_download(client: FlaskClient, monkeypatch, app: FlaskClient):
     with app.app_context():
         add_new_user("testdownload@ucr.edu", "John", "Doe")
         add_user_to_course("testdownload@ucr.edu", "John", "Doe", 1, "instructor")
@@ -111,16 +113,6 @@ def test_file_download(client: FlaskClient, monkeypatch, app):
     #assert response.status_code == 200
     print(response.data)
     assert response.data == b"Test file for CS009A"
-
-    file_path_abs = Path(Config.FILE_STORAGE_PATH) / file_path_rel
-    assert file_path_abs.exists()
-    with file_path_abs.open("rb") as f:
-
-        assert f.read() == b"Test file for CS009A"
-    
-    response = client.get("/course/1/documents")
-    assert response.status_code == 200
-    os.remove(str(file_path_abs))
 
 
 def test_file_delete(client: FlaskClient, monkeypatch, app):

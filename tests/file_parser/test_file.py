@@ -40,13 +40,15 @@ import os
 
 def test_text_pdf():
     #print(parse_file("tests{os.sep}file_parser{os.sep}text_test_1.pdf"))
-    assert isinstance(parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf"), list)
-    #print(parse_file("tests{os.sep}file_parser{os.sep}text_test_2.pdf"))
-    assert isinstance(parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf"), list)
+
+    with open(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf", "rb") as f:
+        assert isinstance(parse_file(f, "pdf"), list)
+    with open(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}text_test_2.pdf", "rb") as f:
+        assert isinstance(parse_file(f, "pdf"), list)
 
 
 def test_complex_pdf():
-    result = parse_file(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}test_textbook2.pdf")
-    print(result)
-    #assert result == ["dog"]
+    with open(f"tests{os.sep}file_parser{os.sep}test_files{os.sep}test_textbook2.pdf", "rb") as f:
+        result = parse_file(f, "pdf")
+    assert "writing classes" in "".join(result)
     assert isinstance(result, list)
