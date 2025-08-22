@@ -86,3 +86,4 @@ jobs:
         DB_URL: ${{ env.DB_URL }}
         DB_NAME: ${{ env.DB_NAME }}
         LLM_MODE: testing
+        REQUIRE_OAUTH: false

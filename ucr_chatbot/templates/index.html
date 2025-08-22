@@ -1,4 +1,3 @@
-<!-- Login Page -->
 {% extends "base.html" %}
 
 {% block title %}Login | ScottGPT{% endblock %}
@@ -12,42 +11,51 @@
     <img class="ucr-logo" src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}" alt="UCR Logo">
 
     <h1>Welcome to <span>ScottGPT!</span></h1>
-
-    <form id="auth-form" action="{{url_for('web_interface.authentication_routes.login')}}" method="post">
-        
-      <label for="email">Email:</label>
-        <input 
-          type="hidden" 
-          name="csrf_token" 
-          value="{{ csrf_token }}">        
-        
-          <input 
-          type="text" 
-          name="email"
-          class="input-field"
-        />
-        
-      <label for="password">Password:</label>
-        <input 
-          type="password" 
-          name="password"
-          class="input-field"
-        />
-        
-        <input 
-          type="submit" 
-          value="Login" 
-          class="btn btn-login" 
-          onclick="setActionForm('login')"
-        />
-        
-        <input 
+    {% if require_oauth %}
+      <input 
           type="button" 
-          class="btn login-google" 
+          class="btn btn-login" 
           value="Login with Google"
             onclick="window.location.href='{{ url_for('web_interface.authentication_routes.login_google')}}'" 
         />
-    </form>
+    {% else %}
+      <form id="auth-form" action="{{url_for('web_interface.authentication_routes.login')}}" method="post">
+          
+        <label for="email">Email:</label>
+          <input 
+            type="hidden" 
+            name="csrf_token" 
+            value="{{ csrf_token }}">        
+          
+            <input 
+            type="text" 
+            name="email"
+            class="input-field"
+          />
+          
+        <label for="password">Password:</label>
+          <input 
+            type="password" 
+            name="password"
+            class="input-field"
+          />
+          
+          <input 
+            type="submit" 
+            value="Login" 
+            class="btn btn-login" 
+            onclick="setActionForm('login')"
+          />
+          
+          <input 
+            type="button" 
+            class="btn login-google" 
+            value="Login with Google"
+              onclick="window.location.href='{{ url_for('web_interface.authentication_routes.login_google')}}'" 
+          />
+      </form>
+    {% endif %}
+    
   </div>
 {% endblock %}
 

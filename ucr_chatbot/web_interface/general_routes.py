@@ -3,6 +3,7 @@ from flask import (
     render_template,
     url_for,
     redirect,
+    current_app,
 )
 
 from sqlalchemy import select
@@ -32,7 +33,9 @@ def home():
     """
     if current_user.is_authenticated:
         return redirect(url_for("web_interface.general_routes.course_selection"))
-    return render_template("index.html")
+    return render_template(
+        "index.html", require_oauth=current_app.config["REQUIRE_OAUTH"]
+    )
 
 
 @bp.route("/course_selection")

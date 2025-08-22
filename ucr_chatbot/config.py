@@ -60,7 +60,9 @@ class Config:
     DB_URL = os.environ["DB_URL"]
 
     GOOGLE_CLIENT_ID = get_non_empty_env("GOOGLE_CLIENT_ID")
-    GOOGLE_SECRET = get_non_empty_env("GOOGLE_SECRET")
+    GOOGLE_CLIENT_SECRET = get_non_empty_env("GOOGLE_CLIENT_SECRET")
+
+    REQUIRE_OAUTH = get_non_empty_env("REQUIRE_OAUTH", "true").lower() == "true"
 
     OLLAMA_URL = get_non_empty_env("OLLAMA_URL", "http://localhost:11434")
     GEMINI_API_KEY = get_non_empty_env("GEMINI_API_KEY")

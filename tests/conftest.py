@@ -14,7 +14,8 @@ def app(tmp_path: Path):
     app = create_app({
         'TESTING': True,
         'FILE_STORAGE_MODE': 'local',
-        'FILE_STORAGE': LocalStorage(tmp_path)
+        'FILE_STORAGE': LocalStorage(tmp_path),
+        "REQUIRE_OAUTH": False
     })
     app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
     yield app
