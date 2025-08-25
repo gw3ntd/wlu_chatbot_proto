@@ -1,44 +1,22 @@
-"""Initialize and runs the UCR Chatbot application.
+import sys
+from ucr_chatbot import create_app
+from ucr_chatbot.quickstart import main as quickstart_main
 
-This script initializes the database and launches the application.
-If the environment variable `MOCK_DB` is set, the database will be initialized with mock data.
-"""
+if len(sys.argv) == 1:
+    print(__doc__)
+    exit(0)
 
-import subprocess
-from pathlib import Path
-import os
+match sys.argv[1]:
+    case "help":
+        print(__doc__)
+    case "db":
+        import ucr_chatbot.db.cli
 
-
-"""
-Initializes the application by creating the 'vector' extension in the database,
-installing dependencies, initializing the database, and then starting the Gunicorn web server.
-"""
-
-commands = [
-    "uv pip install .",
-    f"uv run {Path('ucr_chatbot/db')} {'mock' if os.getenv('MOCK_DB') in ['true', 'TRUE', 'True'] else 'initialize'}",
-]
-
-for command in commands:
-    print(f"Executing: {command}")
-    try:
-        subprocess.run(command, shell=True, check=True)
-        print(f"Successfully executed: {command}\n")
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command: {command}")
-        print(e)
+        with create_app().app_context():
+            ucr_chatbot.db.cli.main(sys.argv[2:])
+    case "quickstart":
+        with create_app().app_context():
+            quickstart_main()
+    case _:
+        print("Unknown command", file=sys.stderr)
         exit(1)
-
-gunicorn_command = "uv run gunicorn 'ucr_chatbot:create_app()' --bind 0.0.0.0:5000"
-print(f"Starting Gunicorn: {gunicorn_command}")
-try:
-    os.execvp(
-        "uv",
-        ["uv", "run", "gunicorn", "ucr_chatbot:create_app()", "--bind", "0.0.0.0:5000"],
-    )
-except FileNotFoundError:
-    print("Error: 'uv' command not found. Ensure 'uv' is in your PATH.")
-    exit(1)
-except Exception as e:
-    print(f"An unexpected error occurred while starting Gunicorn: {e}")
-    exit(1)

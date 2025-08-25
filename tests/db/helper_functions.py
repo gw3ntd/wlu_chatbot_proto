@@ -1,22 +1,19 @@
-import shutil
 from tabulate import tabulate
 import typing
 import sys
 import os
-from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from ucr_chatbot.db.models import *
-from ucr_chatbot.config import Config
 
 def initialize_db():
     """Creates database using specified engine."""
-    base.metadata.create_all(engine)
+    base.metadata.create_all(get_engine())
 
 
 def clear_db():
     """Deletes all tables in database."""
-    base.metadata.drop_all(engine)
+    base.metadata.drop_all(get_engine())
 
 def add_courses():
     """Adds all courses needed for testing to Courses table"""
@@ -39,7 +36,7 @@ def add_courses():
 
 def print_users():
     """Prints all users and their information"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(Users).all()
         rows: list[typing.Tuple[Column[str], Column[str], Column[str]]] = []
 
@@ -50,7 +47,7 @@ def print_users():
 
 def print_courses():
     """Prints all users and their information"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(Courses).all()
         rows: list[typing.Tuple[Column[int], Column[str]]] = []
 
@@ -61,7 +58,7 @@ def print_courses():
 
 def print_participation():
     """Prints all relationships between users and courses"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(ParticipatesIn).all()
         rows: list[typing.Tuple[Column[str], Column[int], Column[str]]] = []
 
@@ -72,7 +69,7 @@ def print_participation():
 
 def print_documents():
     """Prints all documents instances"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(Documents).all()
         rows: list[typing.Tuple[Column[str], Column[int], Column[bool]]] = []
 
@@ -83,7 +80,7 @@ def print_documents():
 
 def print_segments():
     """Prints all segments instances"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(Segments).all()
         rows: list[typing.Tuple[Column[int], Column[str], Column[str]]] = []
 
@@ -94,7 +91,7 @@ def print_segments():
 
 def print_embeddings():
     """Prints all embeddings instances"""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         all_entries = session.query(Embeddings).all()
         rows: list[typing.Tuple[Column[int], Column[Sequence[float]], Column[int]]] = []
 

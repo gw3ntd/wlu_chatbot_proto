@@ -16,7 +16,7 @@ from typing import List
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Messages,
     MessageType,
     Conversations,
@@ -35,7 +35,7 @@ def assistant_dashboard():
     """Dashboard for assistants to view and handle redirected conversations."""
     user_email = current_user.email
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         # Get all courses where the user is an assistant
         assistant_courses = (
             session.query(ParticipatesIn)
@@ -124,7 +124,7 @@ def assistant_conversation(conversation_id: int):
     user_email = current_user.email
 
     # Check if user is an assistant for this conversation's course
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -168,7 +168,7 @@ def assistant_send_message(conversation_id: int):
     message = content.get("message", "")
 
     # Check if user is an assistant for this conversation's course
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )

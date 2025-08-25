@@ -9,13 +9,13 @@ from flask import (
 from sqlalchemy import select, insert
 import json
 from flask_login import current_user, login_required  # type: ignore
-from ucr_chatbot.api.language_model.response import client as response_client
+from ucr_chatbot.api.language_model import get_language_model_client
 from ucr_chatbot.api.context_retrieval.retriever import retriever
 
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Messages,
     MessageType,
     Conversations,
@@ -96,7 +96,7 @@ def conversation(conversation_id: int):
             return jsonify({"error": "Unknown request type"})
 
     else:
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             conv = session.execute(
                 select(Conversations).where(Conversations.id == conversation_id)
             ).scalar_one()
@@ -123,7 +123,7 @@ def redirect_conversation(conversation_id: int):
     """
     user_email = current_user.email
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -166,7 +166,7 @@ def resolve_conversation(conversation_id: int):
     """
     user_email = current_user.email
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -199,7 +199,7 @@ def get_conv_messages(conversation_id: int):
 
     :param conversation_id: The id of the conversation to return messages for.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         stmt = (
             select(Messages)
             .where(Messages.conversation_id == conversation_id)
@@ -233,7 +233,7 @@ def get_conversation_ids(user_email: str, course_id: int):
     :param courseID: The id of the course
     """
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         stmt = (
             select(Conversations.id, Conversations.title)
             .where(
@@ -254,7 +254,7 @@ def generate_title(message: str):
     :param message: the first message in a new conversation to be used to generate the title
     """
     prompt = f"With a user's first message in a AI chatbot conversation, {message}, generate a 30 character max title for this conversation. Do not actually answer the queestion, just sumarize it in 30 characters max. Do not generate anything else, only the 30 character max title"
-    response = response_client.get_response(prompt)[0:30]
+    response = get_language_model_client().get_response(prompt)[0:30]
 
     return response
 
@@ -268,7 +268,7 @@ def create_conversation(course_id: int, user_email: str, message: str):
     :param message: the first message within the new conversation
     """
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         title = generate_title(message)
 
         new_conv = Conversations(
@@ -316,7 +316,7 @@ def generate_response(
     if stop_sequences is None:
         stop_sequences = []
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         course_id_row = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -334,8 +334,7 @@ def generate_response(
 
     segments = retriever.get_segments_for(prompt, course_id=course_id, num_segments=10)  # type: ignore
     context = "\n".join(
-        # Assuming each 's' object has 'segment_id' and 'text' attributes
-        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)  # type: ignore
+        map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)
     )
 
     prompt_with_context = SYSTEM_PROMPT.format(
@@ -346,26 +345,22 @@ def generate_response(
         ],
     )
 
-    generation_params = {  # type: ignore
-        "prompt": prompt_with_context,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "stop_sequences": stop_sequences,
-    }
-
     if stream:
-        # Define a generator function to format the stream as Server-Sent Events (SSE)
+
         def stream_generator():
-            for chunk in response_client.stream_response(**generation_params):  # type: ignore
-                # Format each chunk as a Server-Sent Event
+            for chunk in get_language_model_client().stream_response(
+                prompt=prompt_with_context,
+                max_tokens=max_tokens,
+            ):
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
 
         return FlaskResponse(stream_generator(), mimetype="text/event-stream")
     else:
-        response_text = response_client.get_response(**generation_params)  # type: ignore
+        response_text = get_language_model_client().get_response(
+            prompt=prompt_with_context, max_tokens=max_tokens
+        )
 
-        # Dynamically create the list of source IDs
-        sources = [{"segment_id": s.id} for s in segments]  # type: ignore
+        sources = [{"segment_id": s.id} for s in segments]
 
         return jsonify(
             {
@@ -384,7 +379,7 @@ def reply_conversation(conversation_id: int, user_email: str, message: str):
     :param message: the user's message the LLM is responding to
 
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         # Check if conversation has been redirected to ULA
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
@@ -400,7 +395,7 @@ def reply_conversation(conversation_id: int, user_email: str, message: str):
     ).get_json()
     llm_response = llm_response_data["text"]
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         insert_msg = (
             insert(Messages)
             .values(
@@ -434,7 +429,7 @@ def send_conversation(conversation_id: int, user_email: str, message: str):
     :param message: The message to be stored
     """
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         insert_msg = insert(Messages).values(
             body=message,
             conversation_id=conversation_id,
@@ -452,7 +447,7 @@ def conversation_redirect_status(conversation_id: int):
 
     :param conversation_id: The ID of the current conversation.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         course_id_row = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )

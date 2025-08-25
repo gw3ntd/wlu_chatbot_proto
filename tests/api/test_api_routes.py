@@ -41,7 +41,7 @@ def test_generate_non_stream_success(client, monkeypatch):
     mock_retriever.get_segments_for.assert_called_once_with("What is Python?", 0, num_segments=3)
 
 
-def test_generate_stream_success(client, monkeypatch):
+def test_generate_stream_success(client, monkeypatch, app_context):
     """
     Tests a successful streaming POST request to /generate.
     Uses TestingClient for language model but mocks retriever to avoid database issues.

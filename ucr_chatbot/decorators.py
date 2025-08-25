@@ -4,7 +4,7 @@ from flask_login import current_user  # type: ignore
 from ucr_chatbot.db.models import (
     Session as DBSession,
     ParticipatesIn,
-    engine,
+    get_engine,
     Documents,
 )
 from typing import Callable, ParamSpec, Optional, cast
@@ -40,7 +40,7 @@ def roles_required(
                     Optional[str], kwargs.get("file_path")
                 ) or request.args.get("file_path")
                 if file_path:
-                    with DBSession(engine) as db:
+                    with DBSession(get_engine()) as db:
                         doc = db.query(Documents).filter_by(file_path=file_path).first()
                         if doc:
                             course_id_raw = str(doc.course_id)
@@ -59,7 +59,7 @@ def roles_required(
                 flash("Please log in to access this page.", "warning")
                 return redirect(url_for("web_interface.authentication_routes.login"))
 
-            with DBSession(engine) as db:
+            with DBSession(get_engine()) as db:
                 record = (
                     db.query(ParticipatesIn)
                     .filter_by(email=current_user.email, course_id=int(course_id))

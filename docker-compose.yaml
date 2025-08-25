@@ -16,11 +16,10 @@ services:
       OLLAMA_URL: ${OLLAMA_URL}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       FILE_STORAGE_PATH: ${FILE_STORAGE_PATH}
-      MOCK_DB: ${MOCK_DB:-true}
     depends_on:
       db:
         condition: service_healthy
-    command: uv run ucr_chatbot
+    command: uv run ucr_chatbot quickstart
   db:
     image: pgvector/pgvector:pg17
     environment:

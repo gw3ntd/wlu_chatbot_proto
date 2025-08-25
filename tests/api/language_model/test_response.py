@@ -1,14 +1,12 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-# Adjust the import path to match your project structure
 from ucr_chatbot.api.language_model.response import (
     Gemini,
     Ollama,
     TestingClient,
 )
 
-# --- Test TestingClient Class ---
 
 def test_testing_client_init():
     """Tests successful initialization of the TestingClient."""

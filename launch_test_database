@@ -1,0 +1,1 @@
+docker run --rm -p 5001:5432 -e POSTGRES_DB=test -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test pgvector/pgvector:pg17

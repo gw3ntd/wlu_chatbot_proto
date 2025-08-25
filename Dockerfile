@@ -4,12 +4,13 @@ WORKDIR /app
 
 EXPOSE 5000
 
-COPY . .
-
 RUN pip install uv
-
-RUN uv sync
 
 RUN apt-get update -qq && apt-get install ffmpeg -y
 
-CMD ["uv", "run", "ucr_chatbot"]
+COPY . .
+
+RUN uv sync
+RUN uv pip install .
+
+CMD ["uv", "run", "ucr_chatbot", "quickstart"]

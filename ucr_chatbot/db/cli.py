@@ -29,36 +29,22 @@ This file contains the following functions:
 import argparse
 from sqlalchemy import inspect, text
 
-try:
-    from ucr_chatbot.db.models import (
-        engine,
-        base,
-        Courses,
-        Users,
-        add_new_course,
-        add_new_user,
-        add_user_to_course,
-        Session,
-    )
-except ModuleNotFoundError:
-    from models import (
-        engine,
-        base,
-        Courses,
-        Users,
-        add_new_course,
-        add_new_user,
-        add_user_to_course,
-        Session,
-    )
-
-inspector = inspect(engine)
+from ucr_chatbot.db.models import (
+    get_engine,
+    base,
+    Courses,
+    Users,
+    add_new_course,
+    add_new_user,
+    add_user_to_course,
+    Session,
+)
 
 
 def create_vector_extension():
     """Connects to the database and runs CREATE EXTENSION IF NOT EXISTS vector."""
     try:
-        with engine.begin() as connection:
+        with get_engine().begin() as connection:
             connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
 
         print("'vector' extension created successfully.")
@@ -74,12 +60,12 @@ def initialize(force: bool):
     :param force: If True, clears existing tables and creates empty tables.
     """
     create_vector_extension()
-    if not inspector.has_table("Users"):
-        base.metadata.create_all(engine)
+    if not inspect(get_engine()).has_table("Users"):
+        base.metadata.create_all(get_engine())
         print("Database initialized.")
     elif force:
-        base.metadata.drop_all(engine)
-        base.metadata.create_all(engine)
+        base.metadata.drop_all(get_engine())
+        base.metadata.create_all(get_engine())
         print("Database cleared and initialized.")
     else:
         print("Database already initialized.")
@@ -91,10 +77,10 @@ def mock():
     """
     create_vector_extension()
 
-    if not inspector.has_table("Users"):
-        base.metadata.create_all(engine)
+    if not inspect(get_engine()).has_table("Users"):
+        base.metadata.create_all(get_engine())
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         courses_empty = not session.query(session.query(Courses).exists()).scalar()
         users_empty = not session.query(session.query(Users).exists()).scalar()
 

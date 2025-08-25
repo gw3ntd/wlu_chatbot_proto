@@ -1,40 +1,37 @@
-import sys
 import shlex
-import pytest
-from pathlib import Path
-from sqlalchemy import insert, select, delete, inspect
+from sqlalchemy import select, inspect
 from sqlalchemy.engine import Connection
+import pytest
+
+from flask import Flask
+
+from ucr_chatbot.db.models import base, get_engine, Users, Courses
+from ucr_chatbot.db.cli import main, initialize, mock
 
 
-from ucr_chatbot.db.models import *
-from ucr_chatbot.db.cli import *
-from helper_functions import clear_db
-
-
-
-def test_main(capsys):
+def test_main(capsys, app_context):
   """Tests that arguments are parsed corrrectly in main"""
-  base.metadata.drop_all(engine)
+  base.metadata.drop_all(get_engine())
   main(shlex.split('initialize'))
   output = capsys.readouterr().out.rstrip()
   assert "Database initialized." in output
 
-def test_initialize():
+def test_initialize(app_context):
   """Tests that dataabase is initialized correctly"""
-  base.metadata.drop_all(engine)
+  base.metadata.drop_all(get_engine())
   initialize(False)
-  inspector = inspect(engine)
+  inspector = inspect(get_engine())
   assert inspector.has_table("Users") == True
 
-def test_initialize_force():
+def test_initialize_force(app_context):
   """Tests that database is initialized correctly with --force"""
-  base.metadata.drop_all(engine)
+  base.metadata.drop_all(get_engine())
   initialize(False)
   initialize(True)
-  inspector = inspect(engine)
+  inspector = inspect(get_engine())
   assert inspector.has_table("Users") == True
 
-def test_mock(db: Connection):
+def test_mock(db: Connection, app_context):
   """Tests that mock data is added correctly to database"""
   initialize(True)
   mock()

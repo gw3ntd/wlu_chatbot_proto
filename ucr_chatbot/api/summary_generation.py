@@ -5,13 +5,13 @@ from flask import (
 from sqlalchemy import select, func
 
 from datetime import datetime
-from ucr_chatbot.api.language_model.response import client as response_client
+from ucr_chatbot.api.language_model import get_language_model_client
 from typing import List, Optional
 
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Messages,
     Conversations,
     MessageType,
@@ -28,7 +28,7 @@ def generate_conversation_summary(
     time_end: Optional[datetime],
 ) -> str:
     """Generates a summary from a given prompt of all student-chatbot interactions that occurred in a single conversation between a start and end time."""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         total_messages: List[str] = []
 
         stmt = (
@@ -57,7 +57,7 @@ def generate_conversation_summary(
         total_messages_txt = "\n".join(total_messages)
 
         prompt = prompt + total_messages_txt
-        response = response_client.get_response(prompt)
+        response = get_language_model_client().get_response(prompt)
 
         return response
 
@@ -70,7 +70,7 @@ def generate_usage_summary(
 ) -> str:
     """Generates a summary of all student-chatbot interactions that occurred between a start and end time."""
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         stmt = (
             select(func.count(func.distinct(Messages.written_by)))
             .join(Conversations, Messages.conversation_id == Conversations.id)
@@ -129,7 +129,7 @@ def generate_usage_summary(
                 Also include a section for specific topics where students needed help and required talking to a human assistant.
                 """
 
-    response = response_client.get_response(prompt)
+    response = get_language_model_client().get_response(prompt)
 
     if time_start and time_end:
         title = f"## {course_name} Chatbot Interaction Report ({time_start.date()} - {time_end.date()})\n\n"

@@ -8,7 +8,6 @@ from flask import (
     abort,
     flash,
     Response as FlaskResponse,
-    current_app,
 )
 
 from sqlalchemy import select
@@ -20,13 +19,13 @@ from werkzeug.datastructures import FileStorage
 from flask_login import current_user, login_required  # type: ignore
 from datetime import datetime
 from ucr_chatbot.decorators import roles_required
-from typing import Optional, cast
+from typing import Optional
 from io import BytesIO
 
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Courses,
     ParticipatesIn,
     Documents,
@@ -41,11 +40,8 @@ from ucr_chatbot.db.models import (
     remove_user_from_course,
     Users,
 )
-from ucr_chatbot.api.file_storage import StorageService
-
+from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.api.summary_generation import generate_usage_summary
-
-
 from ucr_chatbot.api.file_parsing.file_parsing import parse_file, FileParsingError
 from ucr_chatbot.api.embedding.embedding import embed_text
 
@@ -76,13 +72,13 @@ def course_documents(course_id: int):
 
     """
     email = current_user.email
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         user = session.query(Users).filter_by(email=email).first()
     if user is None:
         abort(404, description="User not found")
     error_msg = ""
 
-    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
+    storage_service = get_storage_service()
 
     if request.method == "POST":
         if "file" not in request.files:
@@ -98,7 +94,7 @@ def course_documents(course_id: int):
         file_path = Path(str(course_id)) / filename
         file_extension = file_path.suffix[1:]
 
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             if session.query(Documents).filter_by(
                 file_path=str(file_path)
             ).first() or storage_service.file_exists(file_path):
@@ -189,9 +185,9 @@ def delete_document(file_path: str):
     if current_user.is_anonymous:
         abort(403)
 
-    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
+    storage_service = get_storage_service()
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
             abort(404, description="Document not found")
@@ -234,7 +230,7 @@ def download_file(file_path: str):
     :rtype: flask.wrappers.Response
     """
     email = current_user.email
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document is None:
             abort(404)
@@ -249,7 +245,7 @@ def download_file(file_path: str):
 
     path_obj = Path(file_path)
 
-    storage_service = cast(StorageService, current_app.config["FILE_STORAGE"])
+    storage_service = get_storage_service()
 
     return send_file(BytesIO(storage_service.get_file(path_obj).read()), path_obj.name)
 
@@ -308,7 +304,7 @@ def generate_summary(course_id: int):
     start_date = conv_date(start_date)
     end_date = conv_date(end_date)
 
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         stmt = select(Courses.name).where(Courses.id == course_id)
 
         course_name = session.execute(stmt).scalar_one()

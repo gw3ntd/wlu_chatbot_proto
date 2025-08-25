@@ -3,6 +3,10 @@ from pathlib import PurePath, Path
 from typing import IO
 import io
 
+from flask import g
+
+from ucr_chatbot.config import FileStorageMode, app_config
+
 
 class StorageService(ABC):
     """Controls interactions with file storage backends."""
@@ -74,3 +78,12 @@ class LocalStorage(StorageService):
             PurePath(item.relative_to(self._storage_path))
             for item in full_path.iterdir()
         ]
+
+
+def get_storage_service() -> StorageService:
+    """Gets the storage service instance. Must be called from within a request context."""
+    if g.get("_storage_service") is None:
+        match app_config.FILE_STORAGE_MODE:
+            case FileStorageMode.LOCAL:
+                g._storage_service = LocalStorage(Path(app_config.FILE_STORAGE_PATH))
+    return g._storage_service

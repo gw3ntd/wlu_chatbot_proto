@@ -5,7 +5,6 @@ from flask import (
     url_for,
     redirect,
     flash,
-    current_app,
     Response as FlaskResponse,
     make_response,
     abort,
@@ -21,9 +20,10 @@ from typing import cast, Union, Any, Dict
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Users,
 )
+from ucr_chatbot.config import app_config
 
 bp = Blueprint("authentication_routes", __name__)
 
@@ -34,14 +34,14 @@ def login():
     user is successfully logged in and redirected to the dashboard
     """
 
-    if current_app.config["REQUIRE_OAUTH"]:
+    if app_config.REQUIRE_OAUTH:
         abort(403, description="OAuth login is required.")
 
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
 
-        with Session(engine) as db_session:
+        with Session(get_engine()) as db_session:
             user: Users | None = db_session.query(Users).filter_by(email=email).first()
 
         if user and check_password_hash(cast(str, user.password_hash), password):
@@ -80,7 +80,7 @@ def login_google() -> Union[FlaskResponse, tuple[str, int]]:
     authorization endpoint.
     """
 
-    google = current_app.config["OAUTH"].google  # type: ignore
+    google = app_config.OAUTH_CLIENT.google  # type: ignore
     redirect_uri = url_for(
         "web_interface.authentication_routes.authorize_google", _external=True
     )
@@ -98,7 +98,7 @@ def authorize_google():
         flash("Google authorization failed: No code received", "error")
         return redirect(url_for("web_interface.general_routes.home"))
 
-    google = current_app.config["OAUTH"].google  # type: ignore
+    google = app_config.OAUTH_CLIENT.google  # type: ignore
     token = google.authorize_access_token()  # type: ignore
     if not token:
         flash("Could not verify account with Google.", "error")
@@ -110,7 +110,7 @@ def authorize_google():
     user_info = cast(Dict[str, Any], resp.json())  # type: ignore
 
     email: str = user_info["email"]
-    with Session(engine) as db_session:
+    with Session(get_engine()) as db_session:
         user = db_session.query(Users).filter(func.lower(Users.email) == email).first()
         if not user:
             flash(

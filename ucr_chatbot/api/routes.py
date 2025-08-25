@@ -4,9 +4,9 @@ from flask import (
     jsonify,
     Response,
 )
-from ucr_chatbot.db.models import Session, engine, Conversations
+from ucr_chatbot.db.models import Session, get_engine, Conversations
 from .context_retrieval import retriever
-from .language_model.response import client as client
+from .language_model import get_language_model_client
 import json
 from ucr_chatbot.config import LLMMode
 
@@ -55,7 +55,7 @@ def generate():
     ):  # Single test with the generate route. No courses uploaded, so manually set it
         course_id = 0
     else:
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             course_id_row = (
                 session.query(Conversations).filter_by(id=conversation_id).first()
             )
@@ -93,13 +93,15 @@ def generate():
     if stream:
         # Define a generator function to format the stream as Server-Sent Events (SSE)
         def stream_generator():
-            for chunk in client.stream_response(**generation_params):  # type: ignore
+            for chunk in get_language_model_client().stream_response(
+                **generation_params  # type: ignore
+            ):
                 # Format each chunk as a Server-Sent Event
                 yield f"data: {json.dumps({'text': chunk})}\n\n"
 
         return Response(stream_generator(), mimetype="text/event-stream")
     else:
-        response_text = client.get_response(**generation_params)  # type: ignore
+        response_text = get_language_model_client().get_response(**generation_params)  # type: ignore
 
         # Dynamically create the list of source IDs
         sources = [{"segment_id": s.id} for s in segments]  # type: ignore

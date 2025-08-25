@@ -3,7 +3,6 @@ from flask import (
     render_template,
     url_for,
     redirect,
-    current_app,
 )
 
 from sqlalchemy import select
@@ -14,11 +13,11 @@ from flask_login import current_user, login_required  # type: ignore
 
 from ucr_chatbot.db.models import (
     Session,
-    engine,
+    get_engine,
     Courses,
     ParticipatesIn,
 )
-
+from ucr_chatbot.config import app_config
 
 bp = Blueprint("general_routes", __name__)
 
@@ -33,9 +32,7 @@ def home():
     """
     if current_user.is_authenticated:
         return redirect(url_for("web_interface.general_routes.course_selection"))
-    return render_template(
-        "index.html", require_oauth=current_app.config["REQUIRE_OAUTH"]
-    )
+    return render_template("index.html", require_oauth=app_config.REQUIRE_OAUTH)
 
 
 @bp.route("/course_selection")
@@ -43,7 +40,7 @@ def home():
 def course_selection():
     """Renders the main landing page with a list of the user's courses."""
     user_email = current_user.email
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         stmt = (
             select(Courses, ParticipatesIn.role)
             .join(ParticipatesIn, Courses.id == ParticipatesIn.course_id)

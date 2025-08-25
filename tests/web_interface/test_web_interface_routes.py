@@ -4,10 +4,11 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 
+from flask import Flask
 from flask.testing import FlaskClient
 
 
-from ucr_chatbot.db.models import engine, Session
+from ucr_chatbot.db.models import get_engine, Session
 from ucr_chatbot.api.file_storage import StorageService
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -18,19 +19,13 @@ def test_course_selection_ok_response(client: FlaskClient):
     assert "200 OK" == response.status
     assert "200 OK" == response.status
 
-def test_file_upload(client: FlaskClient, monkeypatch, app: FlaskClient, storage_service: StorageService):
-    # --- Step 1: Add test user to DB ---
-    with app.app_context():
+def test_file_upload(client: FlaskClient, app: Flask, storage_service: StorageService):
+    with app.test_request_context():
         add_new_user("testupload@ucr.edu", "John", "Doe")
         add_user_to_course("testupload@ucr.edu", "John", "Doe", 1, "instructor")
 
     with client.session_transaction() as session:
         session["_user_id"] = "testupload@ucr.edu" 
-
-    mock_ollama_client = MagicMock()
-    fake_embedding = [i for i in range(100)]
-    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
-    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
     data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.txt")}
     response = client.post("/course/1/documents", data=data, content_type="multipart/form-data", follow_redirects=True)
@@ -47,7 +42,7 @@ def test_file_upload(client: FlaskClient, monkeypatch, app: FlaskClient, storage
 
 def test_file_upload_empty(client: FlaskClient):
     response = client.post("/course/1/documents", data={}, content_type="multipart/form-data")
-    assert "302 FOUND" == response.status # Successful redirect
+    assert "302 FOUND" == response.status
 
 
 def test_file_upload_no_file(client: FlaskClient):
@@ -58,7 +53,7 @@ def test_file_upload_no_file(client: FlaskClient):
     assert "302 FOUND" == response.status # Successful redirect
 
 
-def test_file_upload_invalid_extension(client: FlaskClient, app: FlaskClient):
+def test_file_upload_invalid_extension(client: FlaskClient, app: Flask):
     # create and log in a test user
     with app.app_context():
         add_new_user("testinvalid@ucr.edu", "John", "Doe")
@@ -83,18 +78,13 @@ def test_file_upload_invalid_extension(client: FlaskClient, app: FlaskClient):
 
 
 
-def test_file_download(client: FlaskClient, monkeypatch, app: FlaskClient):
+def test_file_download(client: FlaskClient, app: FlaskClient):
     with app.app_context():
         add_new_user("testdownload@ucr.edu", "John", "Doe")
         add_user_to_course("testdownload@ucr.edu", "John", "Doe", 1, "instructor")
 
     with client.session_transaction() as sess:
         sess["_user_id"] = "testdownload@ucr.edu"
-
-    mock_ollama_client = MagicMock()
-    fake_embedding = [i for i in range(100)]
-    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
-    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
     data = {
         "file": (io.BytesIO(b"Test file for CS009A"), "test_file_download.txt")
@@ -110,23 +100,16 @@ def test_file_download(client: FlaskClient, monkeypatch, app: FlaskClient):
     file_path_rel = str(Path("1") / Path("test_file_download.txt"))
     response = client.get(f"/document/{file_path_rel}/download")
 
-    #assert response.status_code == 200
-    print(response.data)
     assert response.data == b"Test file for CS009A"
 
 
-def test_file_delete(client: FlaskClient, monkeypatch, app):
+def test_file_delete(client: FlaskClient, app: Flask):
     with app.app_context():
         add_new_user("testdelete@ucr.edu", "John", "Doe")
         add_user_to_course("testdelete@ucr.edu", "John", "Doe", 1, "instructor")
 
     with client.session_transaction() as sess:
         sess["_user_id"] = "testdelete@ucr.edu"
-
-    mock_ollama_client = MagicMock()
-    fake_embedding = [i for i in range(100)]
-    mock_ollama_client.embeddings.return_value = {"embedding": fake_embedding}
-    monkeypatch.setattr("ucr_chatbot.api.embedding.embedding.client", mock_ollama_client)
 
     data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file_delete.txt")}
     response = client.post(
@@ -144,12 +127,12 @@ def test_file_delete(client: FlaskClient, monkeypatch, app):
     assert response.status_code == 302
 
     with app.app_context():
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             document = session.query(Documents).filter_by(file_path=file_path_rel).first()
             assert document is not None
             assert not document.is_active
 
-def test_chatroom_conversation_flow(client: FlaskClient, app):
+def test_chatroom_conversation_flow(client: FlaskClient, app: Flask):
     with app.app_context():
 
         add_new_user("testconversation@ucr.edu", "Test", "User")
@@ -203,7 +186,7 @@ def test_chatroom_conversation_flow(client: FlaskClient, app):
     assert isinstance(data["reply"], str)
     assert len(data["reply"]) > 0
 
-def test_add_user(client: FlaskClient, app):
+def test_add_user(client: FlaskClient, app: Flask):
     with app.app_context():
         add_new_user("testadd_instructor@ucr.edu", "John", "Doe")
         add_user_to_course("testadd_instructor@ucr.edu", "John", "Doe", 1, "instructor")
@@ -215,7 +198,7 @@ def test_add_user(client: FlaskClient, app):
     response = client.post("/course/1/add_student", data=data, content_type="multipart/form-data")
     assert "302 FOUND" == response.status
 
-def test_add_students_from_list(client: FlaskClient, app):
+def test_add_students_from_list(client: FlaskClient, app: Flask):
     with app.app_context():
         add_new_user("testaddlist_instructor@ucr.edu", "John", "Doe")
         add_user_to_course("testaddlist_instructor@ucr.edu", "John", "Doe", 1, "instructor")
@@ -236,7 +219,7 @@ def test_add_students_from_list(client: FlaskClient, app):
     assert "302 FOUND" == response.status
 
 
-def test_generate_summary(client: FlaskClient, monkeypatch, app):
+def test_generate_summary(client: FlaskClient, app: Flask):
     with app.app_context():
         add_new_user("testsum@ucr.edu", "John", "Doe")
         add_user_to_course("testsum@ucr.edu", "John", "Doe", 1, "instructor")
@@ -244,10 +227,6 @@ def test_generate_summary(client: FlaskClient, monkeypatch, app):
     with client.session_transaction() as sess:
         sess["_user_id"] = "testsum@ucr.edu"
     
-    monkeypatch.setattr(
-        "ucr_chatbot.api.summary_generation.response_client.get_response",
-        MagicMock(return_value="summary of course conversations")
-    )
 
     response = client.post(
     "/course/1/generate_summary",
@@ -256,7 +235,7 @@ def test_generate_summary(client: FlaskClient, monkeypatch, app):
     )
     llm_summary = response.data.decode()
     assert response.status_code == 200
-    assert "summary of course conversations" in llm_summary
+    assert "Interaction Report" in llm_summary
 
     
     

@@ -1,8 +1,13 @@
-import google.generativeai as genai
-import ollama
 from typing import Generator, List, Any
 from abc import ABC, abstractmethod
-from ucr_chatbot.config import Config, LLMMode
+
+
+import google.generativeai as genai
+import ollama
+from flask import g
+
+
+from ucr_chatbot.config import LLMMode, app_config
 
 
 class LanguageModelClient(ABC):
@@ -285,12 +290,17 @@ class Ollama(LanguageModelClient):
         self.stop_sequences = stop
 
 
-match Config.LLM_MODE:
-    case LLMMode.TESTING:
-        client = TestingClient()
-    case LLMMode.OLLAMA:
-        client = Ollama(host=Config.OLLAMA_URL)
-    case LLMMode.GEMINI:
-        if not Config.GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY environment variable not set.")
-        client: LanguageModelClient = Gemini(key=Config.GEMINI_API_KEY)
+def get_language_model_client() -> LanguageModelClient:
+    """Gets the language model client instance. Must be called from within a request context."""
+    if g.get("_llm_client") is None:
+        match app_config.LLM_MODE:
+            case LLMMode.TESTING:
+                g._llm_client = TestingClient()
+            case LLMMode.OLLAMA:
+                g._llm_client = Ollama(host=app_config.OLLAMA_URL)
+            case LLMMode.GEMINI:
+                if not app_config.GEMINI_API_KEY:
+                    raise ValueError("GEMINI_API_KEY environment variable not set.")
+                g._llm_client = Gemini(key=app_config.GEMINI_API_KEY)
+
+    return g._llm_client

@@ -1,6 +1,11 @@
 import os
 from dotenv import load_dotenv
 from enum import Enum
+from typing import no_type_check
+from pathlib import PurePath
+
+from flask import current_app
+from authlib.integrations.flask_client import OAuth  # type: ignore
 
 load_dotenv()
 
@@ -71,3 +76,96 @@ class Config:
     FILE_STORAGE_MODE = FileStorageMode.from_str(
         get_non_empty_env("FILE_STORAGE_MODE", "local")
     )
+    FILE_STORAGE_PATH = get_non_empty_env("FILE_STORAGE_PATH", "storage")
+
+
+class ConfigProxy:
+    """A typed proxy for accessing Flask's configuration."""
+
+    @property
+    @no_type_check
+    def SECRET_KEY(self) -> str | bytes:  # noqa: N802
+        """The secret key for the Flask application."""
+        return current_app.config["SECRET_KEY"]
+
+    @property
+    @no_type_check
+    def DB_NAME(self) -> str:  # noqa: N802
+        """The name of the database."""
+        return current_app.config["DB_NAME"]
+
+    @property
+    @no_type_check
+    def DB_USER(self) -> str:  # noqa: N802
+        """The user for the database."""
+        return current_app.config["DB_USER"]
+
+    @property
+    @no_type_check
+    def DB_PASSWORD(self) -> str:  # noqa: N802
+        """The password for the DB"""
+        return current_app.config["DB_PASSWORD"]
+
+    @property
+    @no_type_check
+    def DB_URL(self) -> str:  # noqa: N802
+        """The database URL."""
+        return current_app.config["DB_URL"]
+
+    @property
+    @no_type_check
+    def GOOGLE_CLIENT_ID(self) -> str:  # noqa: N802
+        """The client ID for Google OAuth."""
+        return current_app.config["GOOGLE_CLIENT_ID"]
+
+    @property
+    @no_type_check
+    def GOOGLE_CLIENT_SECRET(self) -> str:  # noqa: N802
+        """The client secret for Google OAuth."""
+        return current_app.config["GOOGLE_CLIENT_SECRET"]
+
+    @property
+    @no_type_check
+    def REQUIRE_OAUTH(self) -> bool:  # noqa: N802
+        """Whether OAUTH is the only acceptable form of user authentication."""
+        return current_app.config["REQUIRE_OAUTH"]
+
+    @property
+    @no_type_check
+    def OLLAMA_URL(self) -> str:  # noqa: N802
+        """The URL for OLLAMA"""
+        return current_app.config["OLLAMA_URL"]
+
+    @property
+    @no_type_check
+    def GEMINI_API_KEY(self) -> str:  # noqa: N802
+        """The API key for Google Gemini."""
+        return current_app.config["GEMINI_API_KEY"]
+
+    @property
+    @no_type_check
+    def LLM_MODE(self) -> LLMMode:  # noqa: N802
+        """The type of LLM that is used."""
+        return current_app.config["LLM_MODE"]
+
+    @property
+    @no_type_check
+    def FILE_STORAGE_MODE(self) -> FileStorageMode:  # noqa: N802
+        """The mode in which the file storage is to run."""
+        return current_app.config["FILE_STORAGE_MODE"]
+
+    @property
+    @no_type_check
+    def OAUTH_CLIENT(self) -> OAuth:  # noqa: N802
+        """The OAuth client instance."""
+        return current_app.config["OAUTH_CLIENT"]
+
+    @property
+    @no_type_check
+    def FILE_STORAGE_PATH(self) -> PurePath:  # noqa: N802
+        """The location where files are stored if relevant to the file storage mode."""
+        return PurePath(current_app.config["FILE_STORAGE_PATH"])
+
+
+app_config = ConfigProxy()
+"""A global instance of the ConfigProxy for accessing application configuration values."""

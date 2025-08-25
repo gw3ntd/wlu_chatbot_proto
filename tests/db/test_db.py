@@ -1,5 +1,4 @@
 import sys
-import os
 from pathlib import Path
 
 from sqlalchemy import insert, select, delete, inspect
@@ -16,11 +15,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from ucr_chatbot.db.models import *
 from helper_functions import *
 
-def test_initialize_db():
+def test_initialize_db(app_context):
   """Tests initialize_db wrapper function"""
   clear_db()
   initialize_db()
-  inspector = inspect(engine)
+  inspector = inspect(get_engine())
   table_names = inspector.get_table_names()
   assert "Users" in table_names
   assert "Courses" in table_names
@@ -159,7 +158,7 @@ def test_add_new_document(db: Connection):
     assert answer is not None
     assert answer == ("slide_1.pdf", 1, True)
 
-def test_add_document_integrity(capsys):
+def test_add_document_integrity(capsys, app_context):
     """tests the add_new_document function exception occurs when error"""
     add_new_document(file_path="slide_1.pdf", course_id=1)
     captured = capsys.readouterr()

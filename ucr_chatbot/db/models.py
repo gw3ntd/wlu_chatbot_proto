@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    Engine,
     create_engine,
     String,
     Column,
@@ -19,20 +20,25 @@ from typing import cast
 import secrets
 import string
 from pathlib import PurePath
+from typing import Sequence
 
 
 from flask_login import UserMixin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from typing import Sequence
-
-
-from ucr_chatbot.config import Config
+from flask import g
 
 
-engine = create_engine(
-    f"""postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_URL}/{Config.DB_NAME}"""
-)
+from ucr_chatbot.config import app_config
+
+
+def get_engine() -> Engine:
+    """Gets the database engine instance. Must be called from within a request context."""
+    if g.get("_db_engine") is None:
+        g._db_engine = create_engine(
+            f"""postgresql+psycopg2://{app_config.DB_USER}:{app_config.DB_PASSWORD}@{app_config.DB_URL}/{app_config.DB_NAME}"""
+        )
+    return g._db_engine
+
 
 base = declarative_base()
 
@@ -188,17 +194,14 @@ class References(base):
     segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
 
 
-# base.metadata.drop_all(engine)
-# base.metadata.create_all(engine)
-
-
 def add_new_user(email: str, first_name: str, last_name: str):
     """Adds new user entry to Users table with the given parameters.
+    Must be called within a request context.
     :param email: new user's email address
     :param first_name: new user's first name
     :param last_name: new user's last_name
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         try:
             alphabet = string.ascii_letters + string.digits
             password = "".join(secrets.choice(alphabet) for _ in range(10))
@@ -220,12 +223,14 @@ def add_user_to_course(
     email: str, first_name: str, last_name: str, course_id: int, role: str
 ):
     """Adds a user to the specified course.
+    Must be called within a request context.
+
     :param email: The email for the user to be added.
     :param first_name: The first name for the user to be added.
     :param last_name: The last name for the user to be added.
     :param course_id: The course the user will be added to.
     :param role: The role of the user in the course."""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         user = session.query(Users).filter(Users.email == email).first()
         if not user:
             add_new_user(email, first_name, last_name)
@@ -250,10 +255,11 @@ def add_user_to_course(
 
 def remove_user_from_course(email: str, course_id: int, role: str):
     """Removes a user from the specified course.
+    Must be called within a request context.
     :param email: The email for the user to be removed.
     :param course_id: The course the user will be removed from.
     :param role: The role of the user in the course."""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         participation_status = (
             session.query(ParticipatesIn)
             .filter(
@@ -281,9 +287,11 @@ def remove_user_from_course(email: str, course_id: int, role: str):
 
 def add_students_from_list(data: pd.DataFrame, course_id: int):
     """Adds students to course from a passed in list.
+    Must be called within a request context.
+
     :param data: Pandas dataframe containing student information.
     :param course_id: Course the students will be added to."""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         course = session.query(Courses).filter(Courses.id == course_id).first()
         if course:
             for _, row in data.iterrows():
@@ -296,9 +304,11 @@ def add_students_from_list(data: pd.DataFrame, course_id: int):
 
 def add_assistants_from_list(data: pd.DataFrame, course_id: int):
     """Adds assistants to course from a passed in list.
+    Must be called within a request context.
+
     :param data: Pandas dataframe containing assistant information.
     :param course_id: Course the assistants will be added to."""
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         course = session.query(Courses).filter(Courses.id == course_id).first()
         if course:
             for _, row in data.iterrows():
@@ -311,10 +321,12 @@ def add_assistants_from_list(data: pd.DataFrame, course_id: int):
 
 def add_new_course(name: str):
     """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.
+    Must be called within a request context.
+
     :param id: id for course to be added
     :param name: name of course to be added
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         try:
             new_course = Courses(name=name)
 
@@ -327,10 +339,12 @@ def add_new_course(name: str):
 
 def add_new_document(file_path: str, course_id: int):
     """Adds new document to the Documents table with the given parameters.
+    Must be called within a request context.
+
     :param file_path: path pointing to where new document is stored.
     :param course_id: id for course document was uploaded to.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         try:
             new_document = Documents(
                 file_path=file_path,
@@ -346,9 +360,11 @@ def add_new_document(file_path: str, course_id: int):
 
 def set_document_inactive(file_path: str):
     """Sets the is_active column of a document entry to false.
+    Must be called within a request context.
+
     :param file_path: The file path of the document to be set inactive.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         document = session.query(Documents).filter_by(file_path=file_path).first()
         if document:
             document.is_active = False  # type: ignore
@@ -357,9 +373,11 @@ def set_document_inactive(file_path: str):
 
 def get_active_documents() -> list[PurePath]:
     """Returns list of the file paths for all active documents in the database.
+    Must be called within a request context.
+
     :return: list of the file paths for all active documents:
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         active_documents = session.query(Documents).filter_by(is_active=True)
         file_paths: list[PurePath] = []
 
@@ -371,11 +389,13 @@ def get_active_documents() -> list[PurePath]:
 
 def store_segment(segment_text: str, file_path: str) -> int:
     """Creates new Segments instance and stores it into Segments table.
+    Must be called within a request context.
+
     :param segment_text: The segment text to be added.
     :param file_path: The file path of the document the segment was parsed from.
     :return: An int representing the segment ID.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         # document = session.query(Documents).filter_by(file_path=file_path).first()
         new_segment = Segments(
             text=segment_text,
@@ -391,10 +411,12 @@ def store_segment(segment_text: str, file_path: str) -> int:
 
 def store_embedding(embedding: Sequence[float], segment_id: int):
     """Creates new Embeddings instance and stores it into Embeddings table.
+    Must be called within a request context.
+
     :param embedding: List of floats representing the vector embedding.
     :param segment_id: ID for the segment the vector embedding represents.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         # segment = session.query(Segments).filter_by(id=segment_id).first()
         try:
             new_embedding = Embeddings(
@@ -409,9 +431,11 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
 
 def mark_conversation_resolved(conversation_id: int):
     """Marks a conversation as resolved.
+    Must be called within a request context.
+
     :param conversation_id: The ID of the conversation to mark as resolved.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -425,9 +449,11 @@ def mark_conversation_resolved(conversation_id: int):
 
 def mark_conversation_unresolved(conversation_id: int):
     """Marks a conversation as unresolved.
+    Must be called within a request context.
+
     :param conversation_id: The ID of the conversation to mark as unresolved.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -441,10 +467,12 @@ def mark_conversation_unresolved(conversation_id: int):
 
 def get_conversation_resolved_status(conversation_id: int) -> bool:
     """Gets the resolved status of a conversation.
+    Must be called within a request context.
+
     :param conversation_id: The ID of the conversation to check.
     :return: True if the conversation is resolved, False otherwise.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         conversation = (
             session.query(Conversations).filter_by(id=conversation_id).first()
         )
@@ -457,10 +485,12 @@ def get_conversation_resolved_status(conversation_id: int) -> bool:
 
 def get_resolved_conversations(course_id: int | None = None) -> list[Conversations]:
     """Gets all resolved conversations, optionally filtered by course.
+    Must be called within a request context.
+
     :param course_id: Optional course ID to filter conversations.
     :return: List of resolved conversations.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         query = session.query(Conversations).filter_by(resolved=True)
         if course_id is not None:
             query = query.filter_by(course_id=course_id)
@@ -469,10 +499,12 @@ def get_resolved_conversations(course_id: int | None = None) -> list[Conversatio
 
 def get_unresolved_conversations(course_id: int | None = None) -> list[Conversations]:
     """Gets all unresolved conversations, optionally filtered by course.
+    Must be called within a request context.
+
     :param course_id: Optional course ID to filter conversations.
     :return: List of unresolved conversations.
     """
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         query = session.query(Conversations).filter_by(resolved=False)
         if course_id is not None:
             query = query.filter_by(course_id=course_id)

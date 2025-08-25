@@ -1,24 +1,30 @@
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 import pytest
 from flask import Flask
-from typing import cast
 from ucr_chatbot import create_app
-from ucr_chatbot.db.models import engine
-from ucr_chatbot.api.file_storage import LocalStorage
+from ucr_chatbot.db.models import get_engine
+from ucr_chatbot.api.file_storage import get_storage_service
+from ucr_chatbot.config import LLMMode, FileStorageMode
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 @pytest.fixture(scope="function")
-def app(tmp_path: Path):
+def app():
     app = create_app({
         'TESTING': True,
-        'FILE_STORAGE_MODE': 'local',
-        'FILE_STORAGE': LocalStorage(tmp_path),
-        "REQUIRE_OAUTH": False
+        'FILE_STORAGE_MODE': FileStorageMode.LOCAL,
+        "FILE_STORAGE_PATH": "test_storage",
+        "REQUIRE_OAUTH": False,
+        "LLM_MODE": LLMMode.TESTING
     })
     app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
     yield app
+
+@pytest.fixture
+def app_context(app: Flask):
+    with app.app_context():
+        yield
 
 
 @pytest.fixture
@@ -30,15 +36,14 @@ def storage_service(app: Flask):
     """
     A fixture to directly access the configured StorageService instance.
     """
-    return cast(LocalStorage, app.config['FILE_STORAGE'])
-
-@pytest.fixture
-def runner(app: Flask):
-    return app.test_cli_runner()
+    with app.app_context():
+        yield get_storage_service()
+        get_storage_service().recursive_delete(PurePath(""))
 
 
 @pytest.fixture
-def db():
-    connection = engine.connect()
-    yield connection
-    connection.close()
+def db(app: Flask):
+    with app.test_request_context():
+        connection = get_engine().connect()
+        yield connection
+        connection.close()
