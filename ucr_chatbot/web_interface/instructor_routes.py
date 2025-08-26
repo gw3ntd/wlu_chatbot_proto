@@ -83,12 +83,12 @@ def course_documents(course_id: int):
     if request.method == "POST":
         if "file" not in request.files:
             flash("No file part", "error")
-            return redirect(request.url)
+            return redirect(request.url, 400)
 
         file: FileStorage = request.files["file"]
         if not file.filename:
             flash("No selected file", "error")
-            return redirect(request.url)
+            return redirect(request.url, 400)
 
         filename = secure_filename(file.filename)
         file_path = Path(str(course_id)) / filename
@@ -111,7 +111,7 @@ def course_documents(course_id: int):
             segments = parse_file(file_data, file_extension)
         except FileParsingError:
             flash("You can't upload this type of file", "error")
-            return redirect(url_for(".course_documents", course_id=course_id))
+            return redirect(url_for(".course_documents", course_id=course_id), 400)
 
         add_new_document(
             str(file_path).replace(str(Path().anchor), ""),
@@ -329,14 +329,15 @@ def add_from_csv(course_id: int):
     """
     if request.method == "POST":
         if "file" not in request.files:
-            return redirect(request.url)
+            return redirect(request.url, 400)
 
         file: FileStorage = request.files["file"]
         if not file or not file.filename or not file.filename.endswith(".csv"):
-            return redirect(request.url)
-        try:
-            if file and file.filename.endswith(".csv"):
-                stream = io.TextIOWrapper(file.stream, encoding="utf-8")
+            return redirect(request.url, 400)
+        if file and file.filename.endswith(".csv"):
+            stream = io.TextIOWrapper(file.stream, encoding="utf-8")
+
+            try:
                 data: pd.DataFrame = pd.read_csv(  # type: ignore
                     stream,
                     header=0,
@@ -344,11 +345,12 @@ def add_from_csv(course_id: int):
                     usecols=["Student", "SIS User ID"],
                     dtype=str,  # type: ignore
                 )
-                data["Student"] = data["Student"].str.strip()
-                data[["Last Name", "First Name"]] = data["Student"].str.split(",")
-                add_students_from_list(data, course_id)
-        except Exception:
-            return redirect(request.url)
+            except ValueError as e:
+                flash(f"Invalid CSV file submitted: {e}", "error")
+                return redirect(request.url, 400)
+            data["Student"] = data["Student"].str.strip()
+            data[["Last Name", "First Name"]] = data["Student"].str.split(",")
+            add_students_from_list(data, course_id)
 
     return redirect(url_for(".course_documents", course_id=course_id))
 

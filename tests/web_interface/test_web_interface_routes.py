@@ -1,34 +1,52 @@
 import io
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from dataclasses import dataclass
 
-
+import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
 
-from ucr_chatbot.db.models import get_engine, Session
+from ucr_chatbot.db.models import get_engine, Session, Users, Courses, ParticipatesIn, Documents
 from ucr_chatbot.api.file_storage import StorageService
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from db.helper_functions import *
 
 def test_course_selection_ok_response(client: FlaskClient):
     response = client.get('/')
     assert "200 OK" == response.status
     assert "200 OK" == response.status
 
-def test_file_upload(client: FlaskClient, app: Flask, storage_service: StorageService):
-    with app.test_request_context():
-        add_new_user("testupload@ucr.edu", "John", "Doe")
-        add_user_to_course("testupload@ucr.edu", "John", "Doe", 1, "instructor")
 
+@dataclass
+class MockCourse:
+    course_id: int
+    instructor_email: str
+    student_email: str
+
+@pytest.fixture(scope="function")
+def mock_course(app: Flask) -> MockCourse:
+    mock_course: MockCourse
+    with Session(get_engine()) as session:
+        mock_course = MockCourse(
+            course_id=1,
+            instructor_email="instructor@ucr.edu",
+            student_email="student@ucr.edu",
+        )
+        session.add(Courses(id = 1, name="CS009A"))
+        session.add(Users(email="instructor@ucr.edu", first_name="John", last_name="Doe", password_hash=""))
+        session.add(Users(email="student@ucr.edu", first_name="Jane", last_name="Smith", password_hash=""))
+        session.add(ParticipatesIn(email="instructor@ucr.edu", course_id=1, role="instructor"))
+        session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
+        session.commit()
+    return mock_course
+
+
+def test_file_upload(client: FlaskClient, mock_course: MockCourse, storage_service: StorageService):
     with client.session_transaction() as session:
-        session["_user_id"] = "testupload@ucr.edu" 
+        session["_user_id"] = mock_course.instructor_email
 
     data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.txt")}
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data", follow_redirects=True)
+    response = client.post(f"/course/{mock_course.course_id}/documents", data=data, content_type="multipart/form-data", follow_redirects=True)
 
     assert response.status_code == 200
     assert b"test_file.txt" in response.data
@@ -40,57 +58,53 @@ def test_file_upload(client: FlaskClient, app: Flask, storage_service: StorageSe
     storage_service.delete_file(file_path)
 
 
-def test_file_upload_empty(client: FlaskClient):
-    response = client.post("/course/1/documents", data={}, content_type="multipart/form-data")
-    assert "302 FOUND" == response.status
+def test_file_upload_empty(client: FlaskClient, mock_course: MockCourse):
+    with client.session_transaction() as session:
+        session["_user_id"] = mock_course.instructor_email
+    response = client.post(f"/course/{mock_course.course_id}/documents", data={}, content_type="multipart/form-data")
+    assert response.status_code >= 400
 
 
-def test_file_upload_no_file(client: FlaskClient):
+def test_file_upload_no_file(client: FlaskClient, mock_course: MockCourse):
+    with client.session_transaction() as session:
+        session["_user_id"] = mock_course.instructor_email
     data = {}
     data["file"] = (io.BytesIO(b""), "")
 
-    response = client.post("/course/1/documents", data=data, content_type="multipart/form-data")
-    assert "302 FOUND" == response.status # Successful redirect
+    response = client.post(f"/course/{mock_course.course_id}/documents", data=data, content_type="multipart/form-data")
+    assert response.status_code >= 400
 
 
-def test_file_upload_invalid_extension(client: FlaskClient, app: Flask):
-    # create and log in a test user
-    with app.app_context():
-        add_new_user("testinvalid@ucr.edu", "John", "Doe")
-        add_user_to_course("testinvalid@ucr.edu", "John", "Doe", 1, "instructor")
+def test_file_upload_invalid_extension(client: FlaskClient, app: Flask, mock_course: MockCourse):
 
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testinvalid@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
 
     data = {
         "file": (io.BytesIO(b"dog,cat,bird"), "animals.csv")
     }
 
     response = client.post(
-        "/course/1/documents",
+        f"/course/{mock_course.course_id}/documents",
         data=data,
         content_type="multipart/form-data",
         follow_redirects=True  
     )
 
 
-    assert response.status_code == 200
+    assert response.status_code >= 400
 
 
 
-def test_file_download(client: FlaskClient, app: FlaskClient):
-    with app.app_context():
-        add_new_user("testdownload@ucr.edu", "John", "Doe")
-        add_user_to_course("testdownload@ucr.edu", "John", "Doe", 1, "instructor")
-
+def test_file_download(client: FlaskClient, app: FlaskClient, mock_course: MockCourse):
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testdownload@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
 
     data = {
         "file": (io.BytesIO(b"Test file for CS009A"), "test_file_download.txt")
     }
     response = client.post(
-        "/course/1/documents",
+        f"/course/{mock_course.course_id}/documents",
         data=data,
         content_type="multipart/form-data",
         follow_redirects=True,
@@ -103,17 +117,14 @@ def test_file_download(client: FlaskClient, app: FlaskClient):
     assert response.data == b"Test file for CS009A"
 
 
-def test_file_delete(client: FlaskClient, app: Flask):
-    with app.app_context():
-        add_new_user("testdelete@ucr.edu", "John", "Doe")
-        add_user_to_course("testdelete@ucr.edu", "John", "Doe", 1, "instructor")
+def test_file_delete(client: FlaskClient, app: Flask, mock_course: MockCourse):
 
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testdelete@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
 
     data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file_delete.txt")}
     response = client.post(
-        "/course/1/documents",
+        f"/course/{mock_course.course_id}/documents",
         data=data,
         content_type="multipart/form-data",
         follow_redirects=True,
@@ -132,19 +143,13 @@ def test_file_delete(client: FlaskClient, app: Flask):
             assert document is not None
             assert not document.is_active
 
-def test_chatroom_conversation_flow(client: FlaskClient, app: Flask):
-    with app.app_context():
-
-        add_new_user("testconversation@ucr.edu", "Test", "User")
-        add_user_to_course("testconversatio@ucr.edu", "Test", "User", 1, "student")
-
+def test_chatroom_conversation_flow(client: FlaskClient, mock_course: MockCourse):
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testconversation@ucr.edu"
+        sess["_user_id"] = mock_course.student_email
 
-    course_id = 1
     init_message = "Hello, I need help with my homework."
     response = client.post(
-        f"/conversation/new/{course_id}/chat",
+        f"/conversation/new/{mock_course.course_id}/chat",
         json={"type": "create", "message": init_message},
         headers={"Accept": "application/json"}
     )
@@ -186,50 +191,61 @@ def test_chatroom_conversation_flow(client: FlaskClient, app: Flask):
     assert isinstance(data["reply"], str)
     assert len(data["reply"]) > 0
 
-def test_add_user(client: FlaskClient, app: Flask):
-    with app.app_context():
-        add_new_user("testadd_instructor@ucr.edu", "John", "Doe")
-        add_user_to_course("testadd_instructor@ucr.edu", "John", "Doe", 1, "instructor")
-
+def test_add_user(client: FlaskClient, app: Flask, mock_course: MockCourse):
+    
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testadd_instructor@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
 
     data = {"email": "testadd@ucr.edu", "fname": "testadd_fname", "lname": "testadd_lname", "role": "student"}
-    response = client.post("/course/1/add_student", data=data, content_type="multipart/form-data")
-    assert "302 FOUND" == response.status
+    response = client.post(f"/course/{mock_course.course_id}/add_student", data=data, content_type="multipart/form-data")
+    assert response.status_code <= 400
 
-def test_add_students_from_list(client: FlaskClient, app: Flask):
-    with app.app_context():
-        add_new_user("testaddlist_instructor@ucr.edu", "John", "Doe")
-        add_user_to_course("testaddlist_instructor@ucr.edu", "John", "Doe", 1, "instructor")
+    with Session(get_engine()) as session:
+        user = session.query(Users).filter_by(email="testadd@ucr.edu").first()
+        assert user is not None
+        assert user.first_name == "testadd_fname"
+        assert user.last_name == "testadd_lname"
+        for participation in user.participates_in:
+            assert participation.course_id == mock_course.course_id
+            assert participation.role == "student"
+
+def test_add_students_from_list(client: FlaskClient, app: Flask, mock_course: MockCourse):
 
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testaddlist_instructor@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
 
-    csv_data = """Student, SIS User ID
-    extra line 1
-    extra line 2
-    lname1, fname1,s001
-    lname2, fname2, s002
-    """
+    csv_data = """Student,SIS User ID
+This is row 1 and will be skipped
+This is row 2 and will be skipped
+"lname1, fname1",s001
+"lname2, fname2",s002
+"""
     data = {}
     data["file"] = (io.BytesIO(csv_data.encode()), "student_list.csv")
 
-    response = client.post("/course/1/add_from_csv", data=data, content_type="multipart/form-data")
-    assert "302 FOUND" == response.status
+    response = client.post(f"/course/{mock_course.course_id}/add_from_csv", data=data, content_type="multipart/form-data")
+
+    assert response.status_code < 400
+
+    with Session(get_engine()) as session:
+        user1 = session.query(Users).filter_by(email="s001@ucr.edu").first()
+        user2 = session.query(Users).filter_by(email="s002@ucr.edu").first()
+        assert user1 is not None
+        assert user2 is not None
+        for user in [user1, user2]:
+            for participation in user.participates_in:
+                assert participation.course_id == mock_course.course_id
+                assert participation.role == "student"
 
 
-def test_generate_summary(client: FlaskClient, app: Flask):
-    with app.app_context():
-        add_new_user("testsum@ucr.edu", "John", "Doe")
-        add_user_to_course("testsum@ucr.edu", "John", "Doe", 1, "instructor")
+def test_generate_summary(client: FlaskClient, mock_course: MockCourse):
 
     with client.session_transaction() as sess:
-        sess["_user_id"] = "testsum@ucr.edu"
+        sess["_user_id"] = mock_course.instructor_email
     
 
     response = client.post(
-    "/course/1/generate_summary",
+    f"/course/{mock_course.course_id}/generate_summary",
     data={"start_date": "2025-06-01", "end_date": "2025-07-31"},
     follow_redirects=True
     )

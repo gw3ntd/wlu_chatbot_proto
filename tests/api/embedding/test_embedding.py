@@ -1,6 +1,6 @@
 from ucr_chatbot.api.embedding.embedding import embed_text
 
-def test_embed_text_success(app_context: None):
+def test_embed_text_success(app):
     """
     Tests that embed_text correctly calls the client and returns a list of floats.
     """

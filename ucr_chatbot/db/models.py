@@ -62,7 +62,7 @@ class Users(base, UserMixin):
 
     conversations = relationship("Conversations", back_populates="user", uselist=True)
     messages = relationship("Messages", back_populates="user", uselist=True)
-    participates = relationship("ParticipatesIn", back_populates="user")
+    participates_in = relationship("ParticipatesIn", back_populates="user")
 
     def set_password(self, password: str):
         """Takes a plain text password and uses generate_password_hash
@@ -103,8 +103,8 @@ class ParticipatesIn(base):
     course_id = Column(Integer, ForeignKey("Courses.id"), primary_key=True)
     role = Column(String, nullable=False)
 
-    user = relationship("Users", back_populates="participates")
-    course = relationship("Courses", back_populates="participates")
+    user = relationship("Users", back_populates="participates_in")
+    course = relationship("Courses", back_populates="participates_in")
 
 
 class Conversations(base):
@@ -133,7 +133,7 @@ class Courses(base):
 
     conversations = relationship("Conversations", back_populates="course", uselist=True)
     documents = relationship("Documents", back_populates="course", uselist=True)
-    participates = relationship("ParticipatesIn", back_populates="course")
+    participates_in = relationship("ParticipatesIn", back_populates="course")
 
 
 class Documents(base):

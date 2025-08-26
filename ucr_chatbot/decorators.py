@@ -47,17 +47,19 @@ def roles_required(
 
             if not course_id_raw:
                 flash("Missing course context.", "danger")
-                return redirect(url_for("web_interface.general_routes.home"))
+                return redirect(url_for("web_interface.general_routes.home"), 400)
 
             try:
                 course_id = int(str(course_id_raw))
             except (ValueError, TypeError):
                 flash("Invalid course ID.", "danger")
-                return redirect(url_for("web_interface.general_routes.home"))
+                return redirect(url_for("web_interface.general_routes.home"), 404)
 
             if not current_user.is_authenticated:
                 flash("Please log in to access this page.", "warning")
-                return redirect(url_for("web_interface.authentication_routes.login"))
+                return redirect(
+                    url_for("web_interface.authentication_routes.login"), 401
+                )
 
             with DBSession(get_engine()) as db:
                 record = (
@@ -68,7 +70,7 @@ def roles_required(
 
                 if not record or record.role not in allowed_roles:
                     flash("You do not have permission to access this page.", "danger")
-                    return redirect(url_for("web_interface.general_routes.home"))
+                    return redirect(url_for("web_interface.general_routes.home"), 403)
 
             return f(*args, **kwargs)
 
