@@ -19,7 +19,11 @@ def app():
         "LLM_MODE": LLMMode.TESTING
     })
     app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
+
     yield app
+
+    with app.app_context():
+        get_storage_service().recursive_delete(PurePath(""))
 
 @pytest.fixture
 def app_context(app: Flask):
@@ -38,7 +42,6 @@ def storage_service(app: Flask):
     """
     with app.app_context():
         yield get_storage_service()
-        get_storage_service().recursive_delete(PurePath(""))
 
 
 @pytest.fixture
