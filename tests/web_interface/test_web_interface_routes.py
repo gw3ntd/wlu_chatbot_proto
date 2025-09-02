@@ -167,14 +167,14 @@ def test_chatroom_conversation_flow(client: FlaskClient, mock_course: MockCourse
     assert isinstance(data["reply"], str)
     assert len(data["reply"]) > 0
 
-def test_add_user(client: FlaskClient, app: Flask, mock_course: MockCourse):
+def test_add_participant(client: FlaskClient, app: Flask, mock_course: MockCourse):
     
     with client.session_transaction() as sess:
         sess["_user_id"] = mock_course.instructor_email
 
     data = {"email": "testadd@ucr.edu", "fname": "testadd_fname", "lname": "testadd_lname", "role": "student"}
-    response = client.post(f"/course/{mock_course.course_id}/add_student", data=data, content_type="multipart/form-data")
-    assert response.status_code <= 400
+    response = client.post(f"/course/{mock_course.course_id}/add_participant", data=data, content_type="multipart/form-data")
+    assert response.status_code < 400
 
     with Session(get_engine()) as session:
         user = session.query(Users).filter_by(email="testadd@ucr.edu").first()

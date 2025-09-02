@@ -37,7 +37,6 @@ from ucr_chatbot.db.models import (
     add_user_to_course,
     add_students_from_list,
     add_assistants_from_list,
-    remove_user_from_course,
     Users,
 )
 from ucr_chatbot.api.file_storage import get_storage_service
@@ -250,24 +249,40 @@ def download_file(file_path: str):
     return send_file(BytesIO(storage_service.get_file(path_obj).read()), path_obj.name)
 
 
-@bp.route("/course/<int:course_id>/add_student", methods=["POST"])
+@bp.route("/course/<int:course_id>/add_participant", methods=["POST"])
 @login_required
 @roles_required(["instructor"])
-def add_student(course_id: int):
+def add_participant(course_id: int):
     """Adds a student to the current course.
     :param course_id: The course the student will be added to.
     """
     user_email = request.form["email"]
     role = request.form.get("role", "student")  # Default to student if not provided
 
-    add_user_to_course(user_email, course_id, role)
+    with Session(get_engine()) as sess:
+        participation = (
+            sess.query(ParticipatesIn)
+            .where(
+                ParticipatesIn.course_id == course_id,
+                ParticipatesIn.email == user_email,
+            )
+            .first()
+        )
+        if participation:
+            flash(
+                f"User '{user_email}' is already in to this course as a(n) {participation.role}",
+                "error",
+            )
+        else:
+            add_user_to_course(user_email, course_id, role)
+            flash(f"Added '{user_email}' as a(n) {role}", "success")
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
-@bp.route("/course/<int:course_id>/remove_student", methods=["POST"])
+@bp.route("/course/<int:course_id>/remove_participant", methods=["POST"])
 @login_required
 @roles_required(["instructor"])
-def remove_student(course_id: int):
+def remove_participant(course_id: int):
     """Removes a student from the current course.
     :param course_id: The course the student will be removed from.
     """
@@ -275,7 +290,29 @@ def remove_student(course_id: int):
     user_email = request.form["email"]
     role = request.form.get("role", "student")
 
-    remove_user_from_course(user_email, course_id, role)
+    if role not in ["student", "assistant"]:
+        abort(400)
+
+    with Session(get_engine()) as session:
+        participation_status = (
+            session.query(ParticipatesIn)
+            .filter(
+                ParticipatesIn.email == user_email,
+                ParticipatesIn.course_id == course_id,
+                ParticipatesIn.role == role,
+            )
+            .first()
+        )
+        if participation_status:
+            session.delete(participation_status)
+            session.commit()
+            flash(f"Removed '{user_email}' as a(n) {role}", "info")
+        else:
+            flash(
+                f"There is no {role} with the email '{user_email}' in this course.",
+                "error",
+            )
+
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
@@ -348,20 +385,6 @@ def add_from_csv(course_id: int):
                 return redirect(request.url, 400)
             add_students_from_list(data, course_id)
 
-    return redirect(url_for(".course_documents", course_id=course_id))
-
-
-@bp.route("/course/<int:course_id>/add_assistant", methods=["POST"])
-@login_required
-@roles_required(["instructor"])
-def add_assistant(course_id: int):
-    """Adds an assistant to the current course.
-    :param course_id: The course the assistant will be added to.
-    """
-    user_email = request.form["email"]
-    role = request.form.get("role", "assistant")
-
-    add_user_to_course(user_email, course_id, role)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
