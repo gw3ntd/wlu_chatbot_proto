@@ -33,8 +33,8 @@ def mock_course(app: Flask) -> MockCourse:
             student_email="student@ucr.edu",
         )
         session.add(Courses(id = 1, name="CS009A"))
-        session.add(Users(email="instructor@ucr.edu", first_name="John", last_name="Doe", password_hash=""))
-        session.add(Users(email="student@ucr.edu", first_name="Jane", last_name="Smith", password_hash=""))
+        session.add(Users(email="instructor@ucr.edu", password_hash=""))
+        session.add(Users(email="student@ucr.edu",  password_hash=""))
         session.add(ParticipatesIn(email="instructor@ucr.edu", course_id=1, role="instructor"))
         session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
         session.commit()
@@ -203,8 +203,6 @@ def test_add_user(client: FlaskClient, app: Flask, mock_course: MockCourse):
     with Session(get_engine()) as session:
         user = session.query(Users).filter_by(email="testadd@ucr.edu").first()
         assert user is not None
-        assert user.first_name == "testadd_fname"
-        assert user.last_name == "testadd_lname"
         for participation in user.participates_in:
             assert participation.course_id == mock_course.course_id
             assert participation.role == "student"

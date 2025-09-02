@@ -56,8 +56,6 @@ class Users(base, UserMixin):
 
     __tablename__ = "Users"
     email = Column(String, primary_key=True)
-    first_name = Column(String)
-    last_name = Column(String)
     password_hash = Column(String(255), nullable=False)
 
     conversations = relationship("Conversations", back_populates="user", uselist=True)
@@ -194,12 +192,10 @@ class References(base):
     segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
 
 
-def add_new_user(email: str, first_name: str, last_name: str):
+def add_new_user(email: str):
     """Adds new user entry to Users table with the given parameters.
     Must be called within a request context.
     :param email: new user's email address
-    :param first_name: new user's first name
-    :param last_name: new user's last_name
     """
     with Session(get_engine()) as session:
         try:
@@ -207,8 +203,6 @@ def add_new_user(email: str, first_name: str, last_name: str):
             password = "".join(secrets.choice(alphabet) for _ in range(10))
             new_user = Users(
                 email=email,
-                first_name=first_name,
-                last_name=last_name,
                 password_hash="",
             )
             new_user.set_password(password)
@@ -219,21 +213,17 @@ def add_new_user(email: str, first_name: str, last_name: str):
             session.rollback()
 
 
-def add_user_to_course(
-    email: str, first_name: str, last_name: str, course_id: int, role: str
-):
+def add_user_to_course(email: str, course_id: int, role: str):
     """Adds a user to the specified course.
     Must be called within a request context.
 
     :param email: The email for the user to be added.
-    :param first_name: The first name for the user to be added.
-    :param last_name: The last name for the user to be added.
     :param course_id: The course the user will be added to.
     :param role: The role of the user in the course."""
     with Session(get_engine()) as session:
         user = session.query(Users).filter(Users.email == email).first()
         if not user:
-            add_new_user(email, first_name, last_name)
+            add_new_user(email)
 
         participation_status = (
             session.query(ParticipatesIn)
@@ -297,9 +287,7 @@ def add_students_from_list(data: pd.DataFrame, course_id: int):
             for _, row in data.iterrows():
                 row: pd.Series
                 email = str(row["SIS User ID"]) + "@ucr.edu"
-                fname = str(row["First Name"])
-                lname = str(row["Last Name"])
-                add_user_to_course(email, fname, lname, course_id, "student")
+                add_user_to_course(email, course_id, "student")
 
 
 def add_assistants_from_list(data: pd.DataFrame, course_id: int):
@@ -314,9 +302,7 @@ def add_assistants_from_list(data: pd.DataFrame, course_id: int):
             for _, row in data.iterrows():
                 row: pd.Series
                 email = str(row["SIS User ID"]) + "@ucr.edu"
-                fname = str(row["First Name"])
-                lname = str(row["Last Name"])
-                add_user_to_course(email, fname, lname, course_id, "assistant")
+                add_user_to_course(email, course_id, "assistant")
 
 
 def add_new_course(name: str):

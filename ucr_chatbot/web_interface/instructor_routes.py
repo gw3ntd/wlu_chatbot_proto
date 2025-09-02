@@ -258,11 +258,9 @@ def add_student(course_id: int):
     :param course_id: The course the student will be added to.
     """
     user_email = request.form["email"]
-    user_fname = request.form["fname"]
-    user_lname = request.form["lname"]
     role = request.form.get("role", "student")  # Default to student if not provided
 
-    add_user_to_course(user_email, user_fname, user_lname, course_id, role)
+    add_user_to_course(user_email, course_id, role)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
@@ -348,8 +346,6 @@ def add_from_csv(course_id: int):
             except ValueError as e:
                 flash(f"Invalid CSV file submitted: {e}", "error")
                 return redirect(request.url, 400)
-            data["Student"] = data["Student"].str.strip()
-            data[["Last Name", "First Name"]] = data["Student"].str.split(",")
             add_students_from_list(data, course_id)
 
     return redirect(url_for(".course_documents", course_id=course_id))
@@ -363,11 +359,9 @@ def add_assistant(course_id: int):
     :param course_id: The course the assistant will be added to.
     """
     user_email = request.form["email"]
-    user_fname = request.form["fname"]
-    user_lname = request.form["lname"]
     role = request.form.get("role", "assistant")
 
-    add_user_to_course(user_email, user_fname, user_lname, course_id, role)
+    add_user_to_course(user_email, course_id, role)
     return redirect(url_for(".course_documents", course_id=course_id))
 
 
@@ -395,8 +389,6 @@ def add_assistant_from_csv(course_id: int):
                     usecols=["Assistant", "SIS User ID"],
                     dtype=str,  # type: ignore
                 )
-                data["Assistant"] = data["Assistant"].str.strip()
-                data[["Last Name", "First Name"]] = data["Assistant"].str.split(",")
                 add_assistants_from_list(data, course_id)
         except Exception:
             return redirect(request.url)
