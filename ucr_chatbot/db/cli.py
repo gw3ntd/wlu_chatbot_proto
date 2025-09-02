@@ -1,29 +1,7 @@
-"""
-Database Initialization Script
+"""A database management CLI tool for the UCR Chatbot.
 
-This script allows the user to initialize the database tables, optionally clearing all existing data.
-It also allows the user to add mock data to the database for demonstration purposes.
-
-Usage (assuming running from project root):
-  uv run ucr_chatbot/db/cli.py initialize [--force]
-  uv run ucr_chatbot/db/cli.py mock
-
-
-This file contains the following functions:
-
-    * initialize(force: bool) - Creates all database tables if they have not already been created.
-      If --force is passed, deletes all tables and then creates them.
-
-    * mock() - Adds mock courses and users with different roles to the database.
-      Copy email and password info output when users are created for later use.
-      Mock users:
-      - test001@ucr.edu (instructor access)
-      - test002@ucr.edu (student access)
-      - test003@ucr.edu (assistant access)
-
-    * main() - Initializes the argument parser, parses the CLI arguments,
-      and calls the corresponding functions.
-
+This tool should be used to initialize a database, i.e. to create the necessary tables.
+This tool may be used to create new users as needed.
 """
 
 import argparse
@@ -38,7 +16,102 @@ from ucr_chatbot.db.models import (
     add_new_user,
     add_user_to_course,
     Session,
+    ParticipatesIn,
 )
+
+
+def main(arg_list: list[str] | None = None):
+    """Executes the database management script."""
+    parser = argparse.ArgumentParser(
+        "db-manager",
+        description=__doc__,
+    )
+
+    # Command options
+    sub_parsers = parser.add_subparsers(
+        dest="command",
+        required=True,
+        help="specifies the action to be taken on the database.",
+    )
+
+    init_parser = sub_parsers.add_parser(
+        "initialize",
+        help="initialize the database tables if they are not already initialized.",
+    )
+    init_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="if set, forcefully clears all tables and recreates them, deleting all data.",
+    )
+
+    mock_parser = sub_parsers.add_parser(
+        "mock",
+        help="initialize all tables and adds mock data if the database is uninitialized.",
+    )
+    mock_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="if set, forcefully clears all tables and recreates them, deleting all data.",
+    )
+
+    create_parser = sub_parsers.add_parser(
+        "create", help="create a new entity in the database."
+    )
+
+    ## Create options
+    create_sub = create_parser.add_subparsers(
+        dest="entity_type", help="the entity to be created."
+    )
+
+    course_parser = create_sub.add_parser("course")
+    course_parser.add_argument("name")
+
+    user_parser = create_sub.add_parser("user")
+    user_parser.add_argument("email")
+    user_parser.add_argument("password")
+
+    participates_in_parser = create_sub.add_parser("participates_in")
+    participates_in_parser.add_argument("email")
+    participates_in_parser.add_argument("course_id", type=int)
+    participates_in_parser.add_argument(
+        "role", choices=["instructor", "assistant", "student"]
+    )
+
+    args = parser.parse_args(arg_list)
+
+    if args.command == "initialize":
+        initialize(args.force)
+    elif args.command == "mock":
+        mock(args.force)
+    elif args.command == "create":
+        match args.entity_type:
+            case "course":
+                with Session(get_engine()) as sess:
+                    course = Courses(name=args.name)
+                    sess.add(course)
+                    sess.commit()
+                    print(
+                        f"Course '{course.name}' added successfully with ID '{course.id}'."
+                    )
+            case "user":
+                with Session(get_engine()) as sess:
+                    user = Users(email=args.email)
+                    user.set_password(args.password)
+                    sess.add(user)
+                    sess.commit()
+                    print(f"User '{user.email}' added successfully.")
+            case "participates_in":
+                with Session(get_engine()) as sess:
+                    part_in = ParticipatesIn(
+                        email=args.email, course_id=args.course_id, role=args.role
+                    )
+                    sess.add(part_in)
+                    sess.commit()
+                    print(
+                        f"User '{part_in.email}' now participates in the course with id '{part_in.course_id}' as a(n) '{part_in.role}'."
+                    )
+            case type_:
+                raise ValueError(f"Invalid entity type '{type_}'.")
 
 
 def create_vector_extension():
@@ -71,7 +144,7 @@ def initialize(force: bool):
         print("Database already initialized.")
 
 
-def mock():
+def mock(force: bool):
     """Adds mock courses and users with varying roles to the database.
     Only adds mock data if the Users and Courses tables are empty.
     """
@@ -79,6 +152,8 @@ def mock():
 
     if not inspect(get_engine()).has_table("Users"):
         base.metadata.create_all(get_engine())
+    elif force:
+        initialize(True)
 
     with Session(get_engine()) as session:
         courses_empty = not session.query(session.query(Courses).exists()).scalar()
@@ -103,39 +178,6 @@ def mock():
             print("Mock data added to database.")
         else:
             print("Mock data not added, database already has data.")
-
-
-def main(arg_list: list[str] | None = None):
-    """Initializes the argument parser and gets the arguments passed in through the CLI
-
-    Usage:
-      uv run ucr_chatbot/db/cli.py initialize [--force]
-      uv run ucr_chatbot/db/cli.py mock
-    """
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        prog="uv run ucr_chatbot/db/cli.py",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "action",
-        type=str,
-        choices=["initialize", "mock"],
-        help="use 'initialize' to set up database tables or 'mock' to add mock data",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        default=False,
-        help="use with 'initialize' to forcefully clear and recreate all tables",
-    )
-
-    args = parser.parse_args(arg_list)
-
-    if args.action == "initialize":
-        initialize(args.force)
-    elif args.action == "mock":
-        mock()
 
 
 if __name__ == "__main__":
