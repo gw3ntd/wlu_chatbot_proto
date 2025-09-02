@@ -1,13 +1,12 @@
 import io
 from pathlib import Path
-from dataclasses import dataclass
 
-import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
+from ..conftest import MockCourse
 
-from ucr_chatbot.db.models import get_engine, Session, Users, Courses, ParticipatesIn, Documents
+from ucr_chatbot.db.models import get_engine, Session, Users, Documents
 from ucr_chatbot.api.file_storage import StorageService
 
 
@@ -16,29 +15,6 @@ def test_course_selection_ok_response(client: FlaskClient):
     assert "200 OK" == response.status
     assert "200 OK" == response.status
 
-
-@dataclass
-class MockCourse:
-    course_id: int
-    instructor_email: str
-    student_email: str
-
-@pytest.fixture(scope="function")
-def mock_course(app: Flask) -> MockCourse:
-    mock_course: MockCourse
-    with Session(get_engine()) as session:
-        mock_course = MockCourse(
-            course_id=1,
-            instructor_email="instructor@ucr.edu",
-            student_email="student@ucr.edu",
-        )
-        session.add(Courses(id = 1, name="CS009A"))
-        session.add(Users(email="instructor@ucr.edu", password_hash=""))
-        session.add(Users(email="student@ucr.edu",  password_hash=""))
-        session.add(ParticipatesIn(email="instructor@ucr.edu", course_id=1, role="instructor"))
-        session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
-        session.commit()
-    return mock_course
 
 
 def test_file_upload(client: FlaskClient, mock_course: MockCourse, storage_service: StorageService):

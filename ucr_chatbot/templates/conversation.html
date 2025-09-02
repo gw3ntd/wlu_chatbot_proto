@@ -26,6 +26,8 @@
             placeholder="Type your message..."
           ></textarea>
           <button type="submit" id="sendButton" class="fira-sans">Send</button>
+
+          {% if redirectable %}
           <button type="button" id="redirectButton" class="fira-sans">
             {% if conversation_state == "CHATBOT" %}
             Redirect to ULA
@@ -35,6 +37,7 @@
             Resolved
             {% endif %}
           </button>
+          {% endif %}
         </form>
       </div>
     </div>

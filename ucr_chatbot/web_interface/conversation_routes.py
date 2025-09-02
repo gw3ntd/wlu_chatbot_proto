@@ -4,6 +4,7 @@ from flask import (
     request,
     jsonify,
     Response as FlaskResponse,
+    abort,
 )
 
 from sqlalchemy import select, insert
@@ -65,8 +66,18 @@ def new_conversation(course_id: int):
         elif request_type == "create":
             return create_conversation(course_id, user_email, content["message"])
 
+    with Session(get_engine()) as session:
+        number_of_assistants = (
+            session.query(ParticipatesIn)
+            .where(ParticipatesIn.role == "assistant")
+            .count()
+        )
+
     return render_template(
-        "conversation.html", course_id=course_id, conversation_state="CHATBOT"
+        "conversation.html",
+        course_id=course_id,
+        conversation_state="CHATBOT",
+        redirectable=number_of_assistants > 0,
     )
 
 
@@ -102,16 +113,24 @@ def conversation(conversation_id: int):
             ).scalar_one()
             course_id = conv.course_id
 
+            number_of_assistants = (
+                session.query(ParticipatesIn)
+                .where(ParticipatesIn.role == "assistant")
+                .count()
+            )
+
         conversation_state = (
             "RESOLVED"
             if bool(conv.resolved)
             else ("REDIRECTED" if bool(conv.redirected) else ("CHATBOT"))
         )
+
         return render_template(
             "conversation.html",
             conversation_id=conversation_id,
             course_id=course_id,
             conversation_state=conversation_state,
+            redirectable=number_of_assistants > 0,
         )
 
 
@@ -122,6 +141,16 @@ def redirect_conversation(conversation_id: int):
     :param conversation_id: The ID of the conversation to redirect.
     """
     user_email = current_user.email
+
+    with Session(get_engine()) as session:
+        number_of_assistants = (
+            session.query(ParticipatesIn)
+            .where(ParticipatesIn.role == "assistant")
+            .count()
+        )
+
+    if number_of_assistants == 0:
+        abort(400)
 
     with Session(get_engine()) as session:
         conversation = (
