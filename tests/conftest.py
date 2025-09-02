@@ -2,12 +2,12 @@ import sys
 from pathlib import Path, PurePath
 import pytest
 from flask import Flask
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ucr_chatbot import create_app
 from ucr_chatbot.db.models import get_engine, base
 from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.config import LLMMode, FileStorageMode
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 @pytest.fixture(scope="function")
 def app():
