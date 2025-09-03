@@ -1,3 +1,8 @@
+from typing import Optional, cast, Any
+from io import BytesIO
+from pathlib import Path, PurePath
+
+
 from flask import (
     Blueprint,
     render_template,
@@ -11,7 +16,6 @@ from flask import (
 )
 
 from sqlalchemy import select
-from pathlib import Path, PurePath
 import pandas as pd
 import io
 from werkzeug.utils import secure_filename
@@ -19,8 +23,6 @@ from werkzeug.datastructures import FileStorage
 from flask_login import current_user, login_required  # type: ignore
 from datetime import datetime
 from ucr_chatbot.decorators import roles_required
-from typing import Optional
-from io import BytesIO
 
 
 from ucr_chatbot.db.models import (
@@ -47,9 +49,23 @@ from ucr_chatbot.api.embedding.embedding import embed_text
 bp = Blueprint("instructor_routes", __name__)
 
 
+def course_from_document_in_url(kwargs: dict[str, Any]) -> Optional[int]:
+    """Gets the course_id from the file_path in the url."""
+    with Session(get_engine()) as sess:
+        doc = sess.get(Documents, kwargs["file_path"])
+        if not doc:
+            return None
+        return cast(int, doc.course_id)
+
+
+def course_from_url(kwargs: dict[str, Any]) -> int:
+    """Gets the course_id from the url of a route"""
+    return int(kwargs["course_id"])
+
+
 @bp.route("/course/<int:course_id>/documents", methods=["GET", "POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def course_documents(course_id: int):
     """Page where user uploads and sees their documents for a specific course.
 
@@ -158,7 +174,7 @@ def course_documents(course_id: int):
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_document_in_url)
 def delete_document(file_path: str):
     """Deletes a document uploaded by a user in a specific course
 
@@ -211,7 +227,7 @@ def delete_document(file_path: str):
 
 @bp.route("/document/<path:file_path>/download", methods=["GET"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_document_in_url)
 def download_file(file_path: str):
     """this function delivers a file that was already uploaded by a user
     and it makes sure that only the authorized user can download the file
@@ -251,7 +267,7 @@ def download_file(file_path: str):
 
 @bp.route("/course/<int:course_id>/add_participant", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def add_participant(course_id: int):
     """Adds a student to the current course.
     :param course_id: The course the student will be added to.
@@ -281,7 +297,7 @@ def add_participant(course_id: int):
 
 @bp.route("/course/<int:course_id>/remove_participant", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def remove_participant(course_id: int):
     """Removes a student from the current course.
     :param course_id: The course the student will be removed from.
@@ -325,7 +341,7 @@ def conv_date(date: Optional[str]) -> Optional[datetime]:
 
 @bp.route("/course/<int:course_id>/generate_summary", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def generate_summary(course_id: int):
     """Generates a summary of student conversations for a course
     :param course_id: The course that is to be summarised.
@@ -357,7 +373,7 @@ def generate_summary(course_id: int):
 
 @bp.route("/course/<int:course_id>/add_from_csv", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def add_from_csv(course_id: int):
     """Adds multiple students an uploaded student list csv file.
     :params course_id: The course the students will be added to.
@@ -390,7 +406,7 @@ def add_from_csv(course_id: int):
 
 @bp.route("/course/<int:course_id>/add_assistant_from_csv", methods=["POST"])
 @login_required
-@roles_required(["instructor"])
+@roles_required(["instructor"], course_from_url)
 def add_assistant_from_csv(course_id: int):
     """Adds multiple assistants an uploaded assistant list csv file.
     :params course_id: The course the assistants will be added to.

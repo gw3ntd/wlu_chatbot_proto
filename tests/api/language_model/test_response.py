@@ -7,6 +7,8 @@ from ucr_chatbot.api.language_model.response import (
     TestingClient,
 )
 
+TestingClient.__test__ = False
+
 
 def test_testing_client_init():
     """Tests successful initialization of the TestingClient."""

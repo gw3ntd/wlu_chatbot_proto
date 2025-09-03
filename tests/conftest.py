@@ -70,3 +70,20 @@ def mock_course(app: Flask) -> MockCourse:
         session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
         session.commit()
     return mock_course
+
+@pytest.fixture(scope="function")
+def mock_course2(app: Flask) -> MockCourse:
+    mock_course: MockCourse
+    with Session(get_engine()) as session:
+        mock_course = MockCourse(
+            course_id=2,
+            instructor_email="instructor2@ucr.edu",
+            student_email="student2@ucr.edu",
+        )
+        session.add(Courses(id = 2, name="CS009A"))
+        session.add(Users(email="instructor2@ucr.edu", password_hash=""))
+        session.add(Users(email="student2@ucr.edu",  password_hash=""))
+        session.add(ParticipatesIn(email="instructor2@ucr.edu", course_id=2, role="instructor"))
+        session.add(ParticipatesIn(email="student2@ucr.edu", course_id=2, role="student"))
+        session.commit()
+    return mock_course
