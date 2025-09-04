@@ -1,3 +1,4 @@
+from typing import Any
 from flask import (
     Blueprint,
     render_template,
@@ -12,7 +13,7 @@ import json
 from flask_login import current_user, login_required  # type: ignore
 from ucr_chatbot.api.language_model import get_language_model_client
 from ucr_chatbot.api.context_retrieval.retriever import retriever
-
+from ucr_chatbot.decorators import roles_required, consent_required
 
 from ucr_chatbot.db.models import (
     Session,
@@ -46,8 +47,24 @@ If the context is not relevant, or if it is not a follow up question, then you s
 """
 
 
+def get_course_from_url(kwargs: dict[str, Any]):
+    """Gets the course id from the url"""
+    return int(kwargs["course_id"])
+
+
+def get_course_from_conversation_in_url(kwargs: dict[str, Any]):
+    """Gets the course id from the conversation_id in the url."""
+    with Session(get_engine()) as session:
+        conversation = session.get(Conversations, int(kwargs["conversation_id"]))
+        if conversation is None:
+            return None
+        return int(conversation.course_id)  # type: ignore
+
+
 @bp.route("/conversation/new/<int:course_id>/chat", methods=["GET", "POST"])
 @login_required
+@roles_required(["student", "assistant", "instructor"], get_course_from_url)
+@consent_required(get_course_from_url)
 def new_conversation(course_id: int):
     """Renders the conversation page for a new conversation.
 
@@ -83,6 +100,10 @@ def new_conversation(course_id: int):
 
 @bp.route("/conversation/<int:conversation_id>", methods=["GET", "POST"])
 @login_required
+@roles_required(
+    ["student", "assistant", "instructor"], get_course_from_conversation_in_url
+)
+@consent_required(get_course_from_conversation_in_url)
 def conversation(conversation_id: int):
     """Renders the conversation page for an existing conversation.
     :param conversation_id: The id of the conversation to be displayed.
@@ -136,6 +157,10 @@ def conversation(conversation_id: int):
 
 @bp.route("/conversation/<int:conversation_id>/redirect", methods=["POST"])
 @login_required
+@roles_required(
+    ["student", "assistant", "instructor"], get_course_from_conversation_in_url
+)
+@consent_required(get_course_from_conversation_in_url)
 def redirect_conversation(conversation_id: int):
     """Redirects a conversation to an assistant for manual handling.
     :param conversation_id: The ID of the conversation to redirect.
@@ -189,6 +214,10 @@ def redirect_conversation(conversation_id: int):
 
 @bp.route("/conversation/<int:conversation_id>/resolve", methods=["POST"])
 @login_required
+@roles_required(
+    ["student", "assistant", "instructor"], get_course_from_conversation_in_url
+)
+@consent_required(get_course_from_conversation_in_url)
 def resolve_conversation(conversation_id: int):
     """Marks a conversation as resolved.
     :param conversation_id: The ID of the conversation to resolve.

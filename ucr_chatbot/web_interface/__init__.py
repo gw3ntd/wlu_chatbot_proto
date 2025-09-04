@@ -5,6 +5,8 @@ from . import instructor_routes
 from . import assistant_routes
 from . import conversation_routes
 from . import general_routes
+from . import consent_form_routes
+from . import consent_routes
 from flask import Blueprint
 
 bp = Blueprint("web_interface", __name__, url_prefix="")
@@ -13,3 +15,5 @@ bp.register_blueprint(instructor_routes.bp, url_prefix="")
 bp.register_blueprint(assistant_routes.bp, url_prefix="")
 bp.register_blueprint(conversation_routes.bp, url_prefix="")
 bp.register_blueprint(general_routes.bp, url_prefix="")
+bp.register_blueprint(consent_form_routes.bp, url_prefix="")
+bp.register_blueprint(consent_routes.bp, url_prefix="")

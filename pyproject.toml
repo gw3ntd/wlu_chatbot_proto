@@ -33,6 +33,7 @@ dependencies = [
     "flask-wtf>=1.2.2",
     "argparse>=1.4.0",
     "gunicorn>=23.0.0",
+    "markdown>=3.9",
 ]
 
 [tool.setuptools.packages.find]

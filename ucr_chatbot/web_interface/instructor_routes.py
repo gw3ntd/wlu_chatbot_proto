@@ -167,9 +167,13 @@ def course_documents(course_id: int):
                   </form>
               </div>
             """
-
     body = error_msg + (docs_html or "No documents uploaded yet.")
-    return render_template("documents.html", body=body, course_id=course_id)
+
+    with Session(get_engine()) as sess:
+        course = sess.get(Courses, course_id)
+        if course is None:
+            abort(404)
+        return render_template("documents.html", body=body, course=course)
 
 
 @bp.route("/document/<path:file_path>/delete", methods=["POST"])

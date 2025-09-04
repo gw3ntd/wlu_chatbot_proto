@@ -26,6 +26,7 @@ from typing import Sequence
 from flask_login import UserMixin  # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import g
+import markdown
 
 
 from ucr_chatbot.config import app_config
@@ -132,6 +133,38 @@ class Courses(base):
     conversations = relationship("Conversations", back_populates="course", uselist=True)
     documents = relationship("Documents", back_populates="course", uselist=True)
     participates_in = relationship("ParticipatesIn", back_populates="course")
+    consent_forms = relationship("ConsentForm", back_populates="course", uselist=True)
+
+
+class ConsentForm(base):
+    """Represents a consent form to be filled out before accessing the AI Tutor."""
+
+    __tablename__ = "consent_forms"
+    id = Column(Integer, primary_key=True)
+    course_id = Column(Integer, ForeignKey("Courses.id"))
+    body = Column(Text, nullable=False)
+    title = Column(Text, nullable=False)
+    course = relationship("Courses", back_populates="consent_forms")
+    consents = relationship(
+        "Consent",
+        backref="consent_form",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    def body_as_html(self):
+        """Returns the HTML version of this consent forms body."""
+        return markdown.markdown(str(self.body))
+
+
+class Consent(base):
+    """Represents a user's consenting to a form"""
+
+    __tablename__ = "consents"
+    consent_form_id = Column(
+        Integer, ForeignKey("consent_forms.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_email = Column(String, ForeignKey("Users.email"), primary_key=True)
 
 
 class Documents(base):

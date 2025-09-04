@@ -1,8 +1,15 @@
 from flask import Flask
 from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
-from ucr_chatbot.db.models import get_engine, ParticipatesIn, Users, Conversations
+from ucr_chatbot.db.models import (
+    get_engine,
+    ParticipatesIn,
+    Users,
+    Conversations,
+    ConsentForm,
+    Consent)
 from ..conftest import MockCourse
+from .. import authenticate_as
 
 
 def  test_no_redirect_to_ula_button_when_no_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
@@ -80,3 +87,35 @@ def test_redirectable_when_assistants_added(mock_course: MockCourse, app: Flask,
         conv = sess.query(Conversations).where(Conversations.id == conv_id).first()
         assert conv.redirected == True
         assert conv.resolved == False
+
+
+def test_conversation_redirects_to_consent_form_when_not_consented(mock_course: MockCourse, app: Flask, client: FlaskClient):
+
+    with Session(get_engine()) as sess:
+        consent_form = ConsentForm(course_id=mock_course.course_id, body="test consent body", title="test consent title")
+        sess.add(consent_form)
+        sess.commit()
+
+    authenticate_as(client, mock_course.student_email)
+    response = client.get(f"/conversation/new/{mock_course.course_id}/chat", follow_redirects=True)
+    assert response.status_code < 400
+    assert "test consent body" in response.text.lower()
+
+
+def test_conversation_visitable_when_consent_form_agreed(mock_course: MockCourse, app: Flask, client: FlaskClient):
+
+    with Session(get_engine()) as sess:
+        consent_form = ConsentForm(course_id=mock_course.course_id, body="test consent body", title="test consent title")
+        sess.add(consent_form)
+        sess.commit()
+        sess.add(Consent(user_email=mock_course.student_email, consent_form_id=consent_form.id))
+        sess.commit()    
+
+    authenticate_as(client, mock_course.student_email)
+
+    response = client.get(f"/conversation/new/{mock_course.course_id}/chat", follow_redirects=True)
+
+    assert response.status_code < 400
+    assert "test consent body" not in response.text.lower()
+    assert "new conversation" in response.text.lower()
+    

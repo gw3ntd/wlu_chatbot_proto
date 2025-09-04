@@ -9,7 +9,7 @@
 {% block body %}
     <section style="margin-left: 20px; margin-right: 20px">
         
-        <h1>UPLOAD NEW FILE</h1>
+        <h1>Files</h1>
         <div class="card">
             <form method=post enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
                 <input type=file name=file required>
@@ -21,10 +21,48 @@
             <p>{{body | safe}}</p>
         </body>
 
-        <h1>Manage Students</h1>
+
+        <h1>Consent Forms</h1>
+
+        {% if course.consent_forms %}
+        <div class="card">
+            <h3>Active Consent Forms</h3>
+            <ul>
+                {% for consent_form in course.consent_forms %}
+                    <li>
+                        {{consent_form.title}}
+                        <a href="{{ url_for('web_interface.consent_form_routes.get_consent_form', consent_form_id=consent_form.id) }}" class="model-link">(view)</a> 
+                        <a href="{{ url_for('web_interface.consent_form_routes.delete_consent_form', consent_form_id=consent_form.id) }}" class="model-link delete-link">(remove)</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h3>Add Consent Form</h3>
+            <form method=post action="{{ url_for('web_interface.consent_form_routes.post_consent_form') }}" enctype=multipart/form-data>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title">
+                        <label for="title">Form Content</label>
+
+                        <label for="body"></label>
+                        <textarea id="body" name="body"></textarea>
+                        <input type="hidden" name="course_id" value="{{course.id}}">
+                    </div>
+                </div>
+                
+                <input type="hidden" name="role" value="student">
+                <input type=submit value=Add>
+            </form>
+        </div>
+
+        <h1>Students</h1>
         <div class="card">
             <h3>Add Students from CSV</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course.id) }}" enctype=multipart/form-data>
                 <input type=file name="file">
                 <input type=submit value="Add">
             </form>
@@ -32,7 +70,7 @@
 
         <div class="card">
             <h3>Add Student Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course.id) }}" enctype=multipart/form-data>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Student Email:</label>
@@ -48,7 +86,7 @@
        
         <div class="card">
             <h3>Remove Student Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course.id) }}" enctype=multipart/form-data>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Student Email:</label>
@@ -61,9 +99,9 @@
             </form>
         </div>
 
-        <h1>GENERATE SUMMARY</h1>
+        <h1>Usage Summary</h1>
         <div class="card">
-            <form action="{{ url_for('web_interface.instructor_routes.generate_summary', course_id=course_id) }}" method="post">
+            <form action="{{ url_for('web_interface.instructor_routes.generate_summary', course_id=course.id) }}" method="post">
 
                 <label for="start_date">Start Date:</label>
                 <input type="date" id="start_date" name="start_date"  />
@@ -75,10 +113,10 @@
             </form>
         </div>
 
-        <h1>ADD ASSISTANTS TO COURSE</h1>
+        <h1>Assistants</h1>
         <div class="card">
             <h3>Add Assistant Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course.id) }}" enctype=multipart/form-data>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">ULA Email:</label>
@@ -93,7 +131,7 @@
 
         <div class="card">
             <h3>Remove Assistant Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course.id) }}" enctype=multipart/form-data>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Student Email:</label>
@@ -108,7 +146,7 @@
 
         <div class="card">
         <h3>Add Assistants from CSV</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_assistant_from_csv', course_id=course_id) }}" enctype=multipart/form-data>
+            <form method=post action="{{ url_for('web_interface.instructor_routes.add_assistant_from_csv', course_id=course.id) }}" enctype=multipart/form-data>
                 <input type=file name="file">
                 <input type=submit value="Add">
             </form>
@@ -124,4 +162,20 @@
         button.value = "Uploading...";
     }
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    if (event.target.tagName === 'INPUT') {
+                        event.preventDefault();
+                    }
+                }
+                });
+            });
+        });
+    </script>
+
 {% endblock %}

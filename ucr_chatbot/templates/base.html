@@ -48,5 +48,39 @@
       <a href="{{ url_for('web_interface.authentication_routes.logout') }}" class="logout-button">Logout</a>
     </div>
     {% block scripts %}{% endblock %}
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const deleteLinks = document.querySelectorAll('.delete-link');        
+        deleteLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                if (confirm('Are you sure you want to delete this item?')) {
+                    const url = this.getAttribute('href');
+
+                    fetch(url, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Deletion failed.');
+                    })
+                    .then(data => {
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred: ' + error.message);
+                    });
+                }
+            });
+        });
+      });
+    </script>
   </body>
 </html>

@@ -3,10 +3,14 @@
 
 * {
   box-sizing: border-box;
-  cursor: url("/static/images/cursor.png") 0 0, auto !important; 
+  /* cursor: url("/static/images/cursor.png") 0 0, auto !important;  */
 }
-a, button, input, select, textarea, label, [role="button"], .btn, .clickable {
+/* a, button, input, select, textarea, label, [role="button"], .btn, .clickable {
   cursor: url("/static/images/select-cursor.png") 0 0, pointer !important;
+} */ */
+
+input[type="submit"]:hover {
+  cursor: pointer;
 }
 
 body {
@@ -74,7 +78,7 @@ h1 span {
   transition: background-color 0.2s ease;
   position: fixed; 
   bottom: 20px;
-  left: 50%;
+  left: 85%;
   transform: translateX(-50%);
 }
 .logout-button:hover {
@@ -118,4 +122,14 @@ ul.flashes li.info {
 ul.flashes li.warning {
   background-color: #FBDB65;
   color: black;
+}
+
+a.model-link {
+  color: #FFB81C; 
+  text-decoration: none;
+}
+
+a.model-link:visited {
+  color: #FFB81C;
+  text-decoration: none;
 }

@@ -63,6 +63,7 @@ section h1 {
   background-color: #003DA5; 
   color: white;
 }
+.card textarea,
 .card input[type="text"] {
   width: 100%;             
   max-width: 400px;        
@@ -75,6 +76,7 @@ section h1 {
   margin-bottom: 12px;      
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+.card textarea,
 .card input[type="text"]:focus {
   border-color: #FFB81C;     
   outline: none;           
