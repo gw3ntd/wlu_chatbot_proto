@@ -13,6 +13,7 @@ def get_embedding_client() -> Client | None:
             case _:
                 g._embedding_client = Client(host=app_config.OLLAMA_URL)
                 return g._embedding_client
+    return g._embedding_client
 
 
 def embed_text(text: str) -> Sequence[float]:
