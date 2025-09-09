@@ -17,6 +17,7 @@ from ucr_chatbot.db.models import (
     add_user_to_course,
     Session,
     ParticipatesIn,
+    Limit,
 )
 
 
@@ -60,7 +61,9 @@ def main(arg_list: list[str] | None = None):
 
     ## Create options
     create_sub = create_parser.add_subparsers(
-        dest="entity_type", help="the entity to be created."
+        dest="entity_type",
+        help="the entity to be created.",
+        required=True,
     )
 
     course_parser = create_sub.add_parser("course")
@@ -75,6 +78,23 @@ def main(arg_list: list[str] | None = None):
     participates_in_parser.add_argument("course_id", type=int)
     participates_in_parser.add_argument(
         "role", choices=["instructor", "assistant", "student"]
+    )
+
+    limit_parser = create_sub.add_parser("limit")
+    limit_parser.add_argument("course_id", type=int)
+    limit_parser.add_argument("number_of_uses", type=int)
+    limit_parser.add_argument(
+        "--per",
+        required=True,
+        choices=[
+            "week",
+            "day",
+            "hour",
+            "minute",
+            "ten-seconds",
+            "five-seconds",
+            "second",
+        ],
     )
 
     args = parser.parse_args(arg_list)
@@ -109,6 +129,28 @@ def main(arg_list: list[str] | None = None):
                     sess.commit()
                     print(
                         f"User '{part_in.email}' now participates in the course with id '{part_in.course_id}' as a(n) '{part_in.role}'."
+                    )
+            case "limit":
+                word_to_seconds = {
+                    "second": 1,
+                    "five-seconds": 5,
+                    "ten-seconds": 10,
+                    "minute": 60,
+                    "hour": 60 * 60,
+                    "day": 24 * 60 * 60,
+                    "week": 7 * 24 * 60 * 60,
+                }
+                args.per
+                with Session(get_engine()) as sess:
+                    limit = Limit(
+                        course_id=args.course_id,
+                        maximum_number_of_uses=args.number_of_uses,
+                        time_span_seconds=word_to_seconds[args.per],
+                    )
+                    sess.add(limit)
+                    sess.commit()
+                    print(
+                        f"Limit with id '{limit.id}' has been added for the course with id '{args.course_id}'"
                     )
             case type_:
                 raise ValueError(f"Invalid entity type '{type_}'.")

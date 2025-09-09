@@ -44,12 +44,12 @@ def get_engine() -> Engine:
 base = declarative_base()
 
 
-class MessageType(enum.Enum):
+class MessageType(str, enum.Enum):
     """Manditory choices for Message type"""
 
-    ASSISTANT_MESSAGES = "AssistantMessage"
-    STUDENT_MESSAGES = "StudentMessage"
-    BOT_MESSAGES = "BotMessage"
+    ASSISTANT_MESSAGE = "ASSISTANT_MESSAGE"
+    STUDENT_MESSAGE = "STUDENT_MESSAGE"
+    BOT_MESSAGE = "BOT_MESSAGE"
 
 
 class Users(base, UserMixin):
@@ -106,6 +106,12 @@ class ParticipatesIn(base):
     course = relationship("Courses", back_populates="participates_in")
 
 
+class ConversationState(str, enum.Enum):
+    CHATBOT = "CHATBOT"
+    REDIRECTED = "REDIRECTED"
+    RESOLVED = "RESOLVED"
+
+
 class Conversations(base):
     """Represents the conversations a user can initiate"""
 
@@ -113,8 +119,11 @@ class Conversations(base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     initiated_by = Column(String, ForeignKey("Users.email"), nullable=False)
     course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
-    resolved = Column(Boolean, default=False, nullable=False)
-    redirected = Column(Boolean, default=False, nullable=False)
+    state: ConversationState = Column(
+        Enum(ConversationState),
+        nullable=False,
+        default=ConversationState.CHATBOT,  # type: ignore
+    )
     title = Column(String, nullable=True)
     summary = Column(Text, nullable=True)
 
@@ -206,6 +215,16 @@ class Messages(base):
     user = relationship("Users", back_populates="messages")
 
 
+class Limit(base):
+    """Represents the per-user limit for LLM access"""
+
+    __tablename__ = "limits"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
+    maximum_number_of_uses = Column(Integer)
+    time_span_seconds = Column(Integer)
+
+
 class Embeddings(base):
     """Represents the embedding of a segment"""
 
@@ -217,12 +236,16 @@ class Embeddings(base):
     segment = relationship("Segments", back_populates="embeddings")
 
 
-class References(base):
+class Reference(base):
     """Represents the relationship between a message and referenced segments"""
 
-    __tablename__ = "References"
-    message = Column(Integer, ForeignKey("Messages.id"), primary_key=True)
-    segment = Column(Integer, ForeignKey("Segments.id"), primary_key=True)
+    __tablename__ = "references"
+    message_id = Column(
+        Integer, ForeignKey("Messages.id", ondelete="CASCADE"), primary_key=True
+    )
+    segment_id = Column(
+        Integer, ForeignKey("Segments.id", ondelete="CASCADE"), primary_key=True
+    )
 
 
 def add_new_user(email: str):
@@ -274,38 +297,6 @@ def add_user_to_course(email: str, course_id: int, role: str):
             session.add(new_participation)
             session.commit()
             print("User added to course.")
-
-
-def remove_user_from_course(email: str, course_id: int, role: str):
-    """Removes a user from the specified course.
-    Must be called within a request context.
-    :param email: The email for the user to be removed.
-    :param course_id: The course the user will be removed from.
-    :param role: The role of the user in the course."""
-    with Session(get_engine()) as session:
-        participation_status = (
-            session.query(ParticipatesIn)
-            .filter(
-                ParticipatesIn.email == email,
-                ParticipatesIn.course_id == course_id,
-                ParticipatesIn.role == role,
-            )
-            .first()
-        )
-        if participation_status:
-            user = (
-                session.query(ParticipatesIn)
-                .filter(
-                    ParticipatesIn.email == email,
-                    ParticipatesIn.course_id == course_id,
-                    ParticipatesIn.role == role,
-                )
-                .first()
-            )
-            session.delete(user)
-            session.commit()
-
-            print("User removed from course.")
 
 
 def add_students_from_list(data: pd.DataFrame, course_id: int):
@@ -446,85 +437,3 @@ def store_embedding(embedding: Sequence[float], segment_id: int):
             session.commit()
         except SQLAlchemyError:
             session.rollback()
-
-
-def mark_conversation_resolved(conversation_id: int):
-    """Marks a conversation as resolved.
-    Must be called within a request context.
-
-    :param conversation_id: The ID of the conversation to mark as resolved.
-    """
-    with Session(get_engine()) as session:
-        conversation = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
-        if conversation:
-            conversation.resolved = True  # type: ignore
-            session.commit()
-            print(f"Conversation {conversation_id} marked as resolved.")
-        else:
-            print(f"Conversation {conversation_id} not found.")
-
-
-def mark_conversation_unresolved(conversation_id: int):
-    """Marks a conversation as unresolved.
-    Must be called within a request context.
-
-    :param conversation_id: The ID of the conversation to mark as unresolved.
-    """
-    with Session(get_engine()) as session:
-        conversation = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
-        if conversation:
-            conversation.resolved = False  # type: ignore
-            session.commit()
-            print(f"Conversation {conversation_id} marked as unresolved.")
-        else:
-            print(f"Conversation {conversation_id} not found.")
-
-
-def get_conversation_resolved_status(conversation_id: int) -> bool:
-    """Gets the resolved status of a conversation.
-    Must be called within a request context.
-
-    :param conversation_id: The ID of the conversation to check.
-    :return: True if the conversation is resolved, False otherwise.
-    """
-    with Session(get_engine()) as session:
-        conversation = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
-        if conversation:
-            return bool(conversation.resolved)  # type: ignore
-        else:
-            print(f"Conversation {conversation_id} not found.")
-            return False
-
-
-def get_resolved_conversations(course_id: int | None = None) -> list[Conversations]:
-    """Gets all resolved conversations, optionally filtered by course.
-    Must be called within a request context.
-
-    :param course_id: Optional course ID to filter conversations.
-    :return: List of resolved conversations.
-    """
-    with Session(get_engine()) as session:
-        query = session.query(Conversations).filter_by(resolved=True)
-        if course_id is not None:
-            query = query.filter_by(course_id=course_id)
-        return query.all()
-
-
-def get_unresolved_conversations(course_id: int | None = None) -> list[Conversations]:
-    """Gets all unresolved conversations, optionally filtered by course.
-    Must be called within a request context.
-
-    :param course_id: Optional course ID to filter conversations.
-    :return: List of unresolved conversations.
-    """
-    with Session(get_engine()) as session:
-        query = session.query(Conversations).filter_by(resolved=False)
-        if course_id is not None:
-            query = query.filter_by(course_id=course_id)
-        return query.all()

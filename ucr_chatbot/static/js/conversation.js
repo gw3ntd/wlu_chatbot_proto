@@ -8,11 +8,10 @@ let conversationId = document.body.dataset.conversationId
   ? Number(document.body.dataset.conversationId)
   : null;
 
-let courseId = document.body.dataset.courseId
-  ? Number(document.body.dataset.courseId)
-  : null;
-
-let isNewConversation = window.location.pathname.includes("/conversation/new");
+if (document.body.dataset.courseId == undefined) {
+  throw Error("Course ID not Provided");
+}
+const courseId = Number(document.body.dataset.courseId);
 
 const conversationStatesUnsafe = {
   "RESOLVED": 1,
@@ -32,96 +31,102 @@ const conversationStates = new Proxy(conversationStatesUnsafe, {
 
 let conversationState = conversationStates[document.body.dataset.conversationState];
 
-async function loadAllConversationIds() {
-  if (!courseId && !conversationId) return;
-
-  let fetchUrl = `/conversation/new/${courseId}/chat`
-
-
-  const res = await fetch(fetchUrl, {
-    method: "POST",
+async function loadSidebar() {
+  fetch(`/conversations?course_id=${courseId}`, {
+    method: "GET",
     headers: { 
       "Content-Type": "application/json",
       "Accept": "application/json"
     },
-    body: JSON.stringify({ type: "ids" }),
-  });
+  }).then(async response => {
+    if (!response.ok) {
+      throw Error("Could not fetch past conversations.")
+    }
+    const data = await response.json();
+    sidebarMessages.innerHTML = "";
 
-  const conversations = await res.json();
+    data.conversations.reverse().forEach(c => {
+      addSidebarMessage(c.title, c.id);
+    });
+  }).catch(error => {
+    appendMessage("system", error.message);
+  });  
+}
 
-  sidebarMessages.innerHTML = "";
+async function loadMessages() {
+  if (!conversationId) {
+    throw Error("conversationId is not set.")
+  };
 
-  conversations.reverse().forEach(c => {
-    addSidebarMessage(c.title, c.id);
+  fetch(`/messages?conversation_id=${conversationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+  }).then(response => {
+    if (!response.ok) {
+      console.log(response);
+      throw Error("Could not fetch messages for the conversation.");
+    }
+    return response.json();
+  }).then(data => {
+    chatContainer.innerHTML = "";
+    data.messages.forEach((msg) => {
+      appendMessage(msg.type === "ASSISTANT_MESSAGE" ? "assistant" : (msg.type === "STUDENT_MESSAGE" ? "user" : "bot"), msg.body);
+    });
+  }).catch(error => {
+    appendMessage("system", error.message);
   });
 }
 
-async function loadAllConversationsForUser() {
-  if (!conversationId) return;
-
-  const res = await fetch(`/conversation/${conversationId}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "conversation" }),
+async function loadConversationState() {
+  fetch(`/conversations/${conversationId}`, {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  }}).then(response => {
+    if (!response.ok) {
+      throw Error("Could not load redirection data.")
+    }
+    return response.json();
+  }).then(conversation => {
+    switch (conversationStates[conversation.state]) {
+    case conversationStates.CHATBOT:
+      conversationState = conversationStates.CHATBOT;
+      redirectButton.textContent = "Redirect to ULA";
+      redirectButton.disabled = false;
+      userMessageTextarea.disabled = false;
+      break;
+    case conversationStates.REDIRECTED:
+      conversationState = conversationStates.REDIRECTED;
+      redirectButton.textContent = "Mark as Resolved";
+      redirectButton.disabled = false;
+      userMessageTextarea.disabled = false;
+      break;
+    case conversationStates.RESOLVED:
+      conversationState = conversationStates.RESOLVED;
+      redirectButton.textContent = "Resolved";
+      redirectButton.disabled = true;
+      userMessageTextarea.disabled = true;
+      break;
+    default:
+      throw Error(`Invalid conversation state: '${conversation.state}'`)
+    }
   });
-
-  const data = await res.json();
-
-  chatContainer.innerHTML = "";
-
-  data.messages.forEach((msg) => {
-    appendMessage(msg.sender === "AssistantMessage" ? "assistant" : (msg.sender === "StudentMessage" ? "user" : "bot"), msg.body);
-  });
-
-  const res_2 = await fetch(`/conversation/${conversationId}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "redirect" }),
-  });
-
-  const redirect_data = await res_2.json();
-
-  if (redirect_data.redirect === "bot") {
-    conversationState = conversationStates.CHATBOT;
-    redirectButton.textContent = "Redirect to ULA";
-    redirectButton.disabled = false;
-    userMessageTextarea.disabled = false;
-  }
-  else if (redirect_data.redirect === "open") {
-    conversationState = conversationStates.REDIRECTED;
-    redirectButton.textContent = "Mark as Resolved";
-    redirectButton.disabled = false;
-    userMessageTextarea.disabled = false;
-  }
-  else {
-    conversationState = conversationStates.RESOLVED;
-    redirectButton.textContent = "Resolved";
-    redirectButton.disabled = true;
-    userMessageTextarea.disabled = true;
-  }
 }
 
 function createNewConversation() {
   chatContainer.innerHTML = "";
   conversationId = null;
-  isNewConversation = true;
   userMessageTextarea.disabled = false;
 
   document.querySelectorAll(".conversation-item").forEach(el => {
     el.classList.remove("active");
   });
   
-  if (courseId) {
-    window.history.replaceState({}, "", `/conversation/new/${courseId}/chat`);
-  } else {
-    alert("Internal error");
-  }
+  window.history.replaceState({}, "", `/conversations/new?course_id=${courseId}`);
   
   redirectButton.textContent = "Redirect to ULA";
   redirectButton.disabled = false;
@@ -129,89 +134,98 @@ function createNewConversation() {
   appendMessage("system", "New conversation started. Type your message below.");
 }
 
-loadAllConversationIds();
-
-// Set up periodic message checking for real-time updates
-let messageCheckInterval;
-
-if (!isNewConversation && conversationId) {
-  loadAllConversationsForUser();
-}
-
-userMessageTextarea.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    handleSend(event);
-  }
-});
-
-async function handleSend(e) {
+async function sendMessage(e) {
   e.preventDefault();
-  const textarea = document.getElementById("userMessage");
   const message = userMessageTextarea.value.trim();
- if (!message) return;
+  if (!message) return;
 
   appendMessage("user", message);
   userMessageTextarea.value = "";
 
-  if (isNewConversation) {
-    await fetch(`/conversation/new/${courseId}/chat`, {
+  if (conversationId === null) {
+    let created = await fetch(`/conversations`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify({ type: "create", message }),
+      body: JSON.stringify({ course_id: courseId, title: "Conversation" }),
     }).then( async response => {
-
       if (!response.ok) {
-        throw Error("Could not connect to the chatbot server to open a new conversation.")
+        throw Error((await response.json()).error || "Could not open new conversation: trouble connecting to server");
       }
+      return response.json();
+    }).then(data => {
+      conversationId = data.conversation_id;
 
-      const data = await response.json();
-      conversationId = data.conversationId;
-      isNewConversation = false;
-
-      window.history.replaceState({}, "", `/conversation/${conversationId}`);
-      addSidebarMessage(data.title, data.conversationId);
+      window.history.replaceState({}, "", `/conversations/${conversationId}`);
+      addSidebarMessage("Conversation", conversationId);
+      return true;
     }).catch(error => {
      appendMessage("system", error.message);
-     return;
+     return false;
     });
-  }
-  if (conversationState != conversationStates.CHATBOT) return;
-  let thinkingMessageElement = appendMessage('bot', "Thinking...")
-  let thinkMessageContentElement = thinkingMessageElement.querySelector(".message")
-  let dots = 3;
-  const thinkingInterval = setInterval(() => {
-    dots = (dots % 3) + 1;
-    thinkMessageContentElement.textContent = "Thinking" + ".".repeat(dots);
-  }, 400);
-  
-  fetch(`/conversation/${conversationId}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "reply", message: message }),
-  }).then(async response => {
 
-    let data = await response.json()
-    if (!response.ok) {
-      throw Error("Could not get response from language model.");
+    if (!created) {
+      return;
     }
-    return data;
-  }).then(async data => {
-    if (data.reply !== "") {
-        appendMessage("bot", data.reply);
+  }
+  let thinkingInterval;
+  let thinkingMessageElement;
+  const conversationItemElement = document.querySelector(`[data-convo-id="${conversationId}"]`);
+  if (conversationState == conversationStates.CHATBOT) {
+    thinkingMessageElement = appendMessage('bot', "Thinking...")
+    let thinkMessageContentElement = thinkingMessageElement.querySelector(".message")
+    let dots = 3;
+    thinkingInterval = setInterval(() => {
+      dots = (dots % 3) + 1;
+      thinkMessageContentElement.textContent = "Thinking" + ".".repeat(dots);
+    }, 400);
+    userMessageTextarea.disabled = true;
+  }
+  
+  await fetch("/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "applicaiton/json"
+    },
+    body: JSON.stringify({body: message, conversation_id: conversationId})
+  }).then(async response => {
+    if (!response.ok) {
+      throw Error((await response.json()).error || "Could not send message.")
     }
   }).catch(error => {
-     appendMessage("system", error.message);
-  }).finally(() => {
-      clearInterval(thinkingInterval);
-      thinkingMessageElement.remove();
+    appendMessage("system", error.message);
   });
+
+  if (conversationState == conversationStates.CHATBOT) {
+    await fetch(`/conversations/${conversationId}/generate-ai-response`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({prompt: message}),
+    }).then(async response => {
+
+      if (!response.ok) {
+        throw Error((await response.json()).error || "Could not get AI Tutor response.");
+      }
+
+      return response.json()
+    }).then(async data => {
+        appendMessage("bot", data.text);
+        conversationItemElement.textContent = data.title;
+    }).catch(error => {
+      appendMessage("system", error.message);
+    }).finally(() => {
+        clearInterval(thinkingInterval);
+        thinkingMessageElement.remove();
+    });
+  }
+  userMessageTextarea.disabled = false;
+  userMessageTextarea.focus();
 }
 
 function appendMessage(sender, text) {
@@ -273,11 +287,11 @@ function addSidebarMessage(label, convoId) {
       el.classList.remove("active");
     });
     item.classList.add("active");
-    window.history.replaceState({}, "", `/conversation/${convoId}`);
+    window.history.replaceState({}, "", `/conversations/${convoId}`);
     conversationId = convoId;
     chatContainer.innerHTML = "";
-    isNewConversation = false
-    loadAllConversationsForUser();
+    loadMessages();
+    loadConversationState();
   });
 
   if (window.location.pathname.endsWith(convoId.toString())) {
@@ -287,16 +301,21 @@ function addSidebarMessage(label, convoId) {
   sidebarMessages.insertBefore(item, sidebarMessages.firstChild);
 }
 
-async function sendMessage(message) {
-  await fetch(`/conversation/${conversationId}`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    },
-    body: JSON.stringify({ type: "send", message }),
-  });
+loadSidebar();
+
+
+if (conversationId !== null) {
+  loadMessages();
+  loadConversationState();
 }
+
+userMessageTextarea.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage(event);
+  }
+});
+
 
 // redirect conversation to assistant or mark as resolved
 redirectButton.addEventListener("click", async () => {
@@ -306,18 +325,15 @@ redirectButton.addEventListener("click", async () => {
   }
   switch (conversationState) {
     case conversationStates.CHATBOT:
-      fetch(`/conversation/${conversationId}/redirect`, {
-        method: "POST",
+      fetch(`/conversations/${conversationId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ type: "redirect" }),
+        body: JSON.stringify({ state: "REDIRECTED" }),
       }).then( async response => {
-        if (!response.ok) throw new Error("Could not redirect conversation.");
-        const data = await response.json();
-        if (data.status !== "redirected") throw new Error("Could not redirect conversation.");
-
+        if (!response.ok) throw Error("Could not redirect conversation.");
         redirectButton.textContent = "Mark as Resolved";
         conversationState = conversationStates.REDIRECTED;
         appendMessage("system", "Your conversation is now visible to assistants and the AI chat bot is disabled for this conversation.");
@@ -326,18 +342,15 @@ redirectButton.addEventListener("click", async () => {
       });
       break;
     case conversationStates.REDIRECTED:
-      fetch(`/conversation/${conversationId}/resolve`, {
-        method: "POST",
+      fetch(`/conversations/${conversationId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ type: "resolve" }),
+        body: JSON.stringify({ state: "RESOLVED" }),
       }).then( async response => {
-        if (!response.ok) throw new Error("Could not resolve conversation.");
-        const data = await response.json();
-        if (data.status !== "resolved") throw new Error("Could not resolve conversation.");
-
+        if (!response.ok) throw Error("Could not resolve conversation.");
         redirectButton.textContent = "Resolved";
         conversationState = conversationStates.RESOLVED;
         userMessageTextarea.disabled = true;
@@ -350,88 +363,31 @@ redirectButton.addEventListener("click", async () => {
   }
 });
 
-// Function to check for new messages from assistants
 async function checkForNewMessages() {
+  if (conversationState != conversationStates.REDIRECTED) return;
   if (!conversationId) return;
-  
-  try {
-    const res = await fetch(`/conversation/${conversationId}`, {
-      method: "POST",
+    response = await fetch(`/messages?conversation_id=${conversationId}`, {
+      method: "GET",
       headers: { 
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify({ type: "conversation" }),
     });
 
-    if (!res.ok) return;
+    if (!response.ok) return;
 
-    const data = await res.json();
-    const currentMessageCount = chatContainer.children.length;
-    
-    // If there are new messages, reload the conversation
-    if (data.messages.length > currentMessageCount) {
-      loadAllConversationsForUser();
-      
-      // Show notification for assistant messages
-      const newMessages = data.messages.slice(currentMessageCount);
-      const assistantMessages = newMessages.filter(msg => msg.sender === "AssistantMessage");
-      if (assistantMessages.length > 0) {
-        // Show notification
-        showNotification("New message from assistant!");
+    await response.json().then(data => {
+      const currentMessageCount = chatContainer.children.length;
+      if (data.messages.length > currentMessageCount) {
+        loadMessages();
       }
-    }
-  } catch (error) {
-    console.error("Error checking for new messages:", error);
-  }
+    }).catch(error => {
+      console.error("Error checking for new messages:", error);
+    });
 }
 
-// Start periodic message checking for existing conversations
-messageCheckInterval = setInterval(checkForNewMessages, 5000); // Check every 5 seconds
+let messageCheckInterval = setInterval(checkForNewMessages, 5000);
 
-// Function to show notifications
-function showNotification(message) {
-  // Create notification element
-  const notification = document.createElement("div");
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #28a745;
-    color: white;
-    padding: 15px 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 1000;
-    font-family: 'Fira Sans', sans-serif;
-    animation: slideIn 0.3s ease-out;
-  `;
-  notification.textContent = message;
-  
-  // Add CSS animation
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-  `;
-  document.head.appendChild(style);
-  
-  document.body.appendChild(notification);
-  
-  // Remove notification after 3 seconds
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease-in';
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 300);
-  }, 3000);
-}
-
-// Clean up interval when page is unloaded
 window.addEventListener('beforeunload', function() {
   if (messageCheckInterval) {
     clearInterval(messageCheckInterval);

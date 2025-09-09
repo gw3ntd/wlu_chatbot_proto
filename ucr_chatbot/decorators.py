@@ -1,7 +1,7 @@
 from typing import Callable, ParamSpec, Optional, Any
 from functools import wraps
 
-from flask import flash, redirect, url_for, request
+from flask import flash, redirect, url_for, request, g, abort
 from flask.typing import ResponseReturnValue  # type: ignore
 
 from flask_login import current_user  # type: ignore
@@ -36,8 +36,7 @@ def roles_required(
             course_id = get_course_id(kwargs)
 
             if not course_id:
-                flash("Missing course context.", "danger")
-                return redirect(url_for("web_interface.general_routes.home"), 400)
+                abort(400, "Missing course_id")
 
             if not current_user.is_authenticated:
                 flash("Please log in to access this page.", "warning")
@@ -55,6 +54,8 @@ def roles_required(
                 if not record or record.role not in allowed_roles:
                     flash("You do not have permission to access this page.", "danger")
                     return redirect(url_for("web_interface.general_routes.home"), 403)
+
+                g.role = record.role
 
             return f(*args, **kwargs)
 

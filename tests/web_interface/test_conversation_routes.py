@@ -6,8 +6,10 @@ from ucr_chatbot.db.models import (
     ParticipatesIn,
     Users,
     Conversations,
+    ConversationState,
     ConsentForm,
-    Consent)
+    Consent
+    )
 from ..conftest import MockCourse
 from .. import authenticate_as
 
@@ -21,8 +23,10 @@ def  test_no_redirect_to_ula_button_when_no_assistants_added(mock_course: MockCo
 
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.student_email
-    response = client.get(f"/conversation/{conv_id}")
+    response = client.get(f"/conversations/{conv_id}")
+    assert response.status_code < 400
     assert "redirect to" not in response.text.lower()
+    assert "send" in response.text.lower()
 
 def test_not_redirectable_when_no_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
@@ -34,13 +38,12 @@ def test_not_redirectable_when_no_assistants_added(mock_course: MockCourse, app:
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.student_email
 
-    response = client.post(f"/conversation/{conv_id}/redirect")
+    response = client.patch(f"/conversations/{conv_id}", json={"state": "REDIRECTED"})
     assert response.status_code >= 400
 
     with Session(get_engine()) as sess:
         conv = sess.query(Conversations).where(Conversations.id == conv_id).first()
-        assert conv.redirected == False
-        assert conv.resolved == False
+        assert conv.state == ConversationState.CHATBOT
 
 
 def  test_exists_redirect_to_ula_button_when_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
@@ -60,10 +63,11 @@ def  test_exists_redirect_to_ula_button_when_assistants_added(mock_course: MockC
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.student_email
 
-    response = client.get(f"/conversation/{conv_id}")
+    response = client.get(f"/conversations/{conv_id}")
+    assert response.status_code < 400
     assert "redirect to" in response.text.lower()
 
-def test_redirectable_when_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
+def test_redirectable_when_assistant_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
         conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
@@ -80,13 +84,12 @@ def test_redirectable_when_assistants_added(mock_course: MockCourse, app: Flask,
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.student_email
 
-    response = client.post(f"/conversation/{conv_id}/redirect")
+    response = client.patch(f"/conversations/{conv_id}", json={"state": "REDIRECTED"})
     assert response.status_code < 400
 
     with Session(get_engine()) as sess:
         conv = sess.query(Conversations).where(Conversations.id == conv_id).first()
-        assert conv.redirected == True
-        assert conv.resolved == False
+        assert conv.state == ConversationState.REDIRECTED
 
 
 def test_conversation_redirects_to_consent_form_when_not_consented(mock_course: MockCourse, app: Flask, client: FlaskClient):
@@ -97,8 +100,8 @@ def test_conversation_redirects_to_consent_form_when_not_consented(mock_course: 
         sess.commit()
 
     authenticate_as(client, mock_course.student_email)
-    response = client.get(f"/conversation/new/{mock_course.course_id}/chat", follow_redirects=True)
-    assert response.status_code < 400
+    response = client.get(f"/conversations/new?course_id={mock_course.course_id}", follow_redirects=True)
+    assert response.status_code < 400, response.text
     assert "test consent body" in response.text.lower()
 
 
@@ -113,7 +116,7 @@ def test_conversation_visitable_when_consent_form_agreed(mock_course: MockCourse
 
     authenticate_as(client, mock_course.student_email)
 
-    response = client.get(f"/conversation/new/{mock_course.course_id}/chat", follow_redirects=True)
+    response = client.get(f"/conversations/new?course_id={mock_course.course_id}", follow_redirects=True)
 
     assert response.status_code < 400
     assert "test consent body" not in response.text.lower()

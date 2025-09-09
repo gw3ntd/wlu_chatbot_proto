@@ -46,9 +46,9 @@ def generate_conversation_summary(
         messages = session.execute(stmt).all()
 
         type_map = {
-            MessageType.STUDENT_MESSAGES: "StudentMessage",
-            MessageType.BOT_MESSAGES: "BotMessage",
-            MessageType.ASSISTANT_MESSAGES: "AssistantMessage",
+            MessageType.STUDENT_MESSAGE: "StudentMessage",
+            MessageType.BOT_MESSAGE: "BotMessage",
+            MessageType.ASSISTANT_MESSAGE: "AssistantMessage",
         }
 
         for message in messages:

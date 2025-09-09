@@ -11,8 +11,6 @@ from flask import (
 
 from flask_login import current_user, login_required  # type: ignore
 
-from typing import List
-
 
 from ucr_chatbot.db.models import (
     Session,
@@ -20,6 +18,7 @@ from ucr_chatbot.db.models import (
     Messages,
     MessageType,
     Conversations,
+    ConversationState,
     Courses,
     ParticipatesIn,
 )
@@ -36,7 +35,6 @@ def assistant_dashboard():
     user_email = current_user.email
 
     with Session(get_engine()) as session:
-        # Get all courses where the user is an assistant
         assistant_courses = (
             session.query(ParticipatesIn)
             .filter_by(email=user_email, role="assistant")
@@ -49,34 +47,16 @@ def assistant_dashboard():
 
         course_ids = [ac.course_id for ac in assistant_courses]
 
-        # Get all redirected but unresolved conversations from these courses (ongoing)
-        # Temporarily handle missing redirected column
-        try:
-            ongoing_conversations: List[Conversations] = (
-                session.query(Conversations)
-                .filter(
-                    Conversations.course_id.in_(course_ids),
-                    Conversations.redirected == True,
-                    Conversations.resolved == False,
-                )
-                .all()
+        ongoing_conversations = (
+            session.query(Conversations)
+            .where(
+                Conversations.course_id.in_(course_ids)
+                & (Conversations.state == ConversationState.REDIRECTED),
             )
-        except Exception as e:
-            # If redirected column doesn't exist, show all unresolved conversations
-            print(
-                f"Warning: redirected column not found, showing all unresolved conversations: {e}"
-            )
-            ongoing_conversations: List[Conversations] = (
-                session.query(Conversations)
-                .filter(
-                    Conversations.course_id.in_(course_ids),
-                    Conversations.resolved == False,
-                )
-                .all()
-            )
+            .all()
+        )
 
-        # Load messages for each conversation to avoid template errors
-        prompt = """Given a conversation of a messaages between a student and an AI tutor, generate a short, 1-3 sentence summary of the topic being discussed, focusing on the topic last being discussed and what the student is struggling on. 
+        prompt = """Given a conversation of a messages between a student and an AI tutor, generate a short, 1-3 sentence summary of the topic being discussed, focusing on the topic last being discussed and what the student is struggling on. 
                     Do not generate anything else, only the summary. """
         for conversation in ongoing_conversations:
             if not getattr(conversation, "summary", None):
@@ -85,22 +65,20 @@ def assistant_dashboard():
                 )
                 setattr(conversation, "summary", str(summary))
 
-        # Get all resolved conversations from these courses
         resolved_conversations = (
             session.query(Conversations)
-            .filter(
-                Conversations.course_id.in_(course_ids), Conversations.resolved == True
+            .where(
+                Conversations.course_id.in_(course_ids)
+                & (Conversations.state == ConversationState.RESOLVED)
             )
             .all()
         )
 
-        # Load messages for each resolved conversation to avoid template errors
         for conversation in resolved_conversations:
             conversation.messages = (
                 session.query(Messages).filter_by(conversation_id=conversation.id).all()
             )
 
-        # Get course names for display
         course_names = {}
         for course in session.query(Courses).filter(Courses.id.in_(course_ids)).all():
             course_names[course.id] = course.name
@@ -157,6 +135,7 @@ def assistant_conversation(conversation_id: int):
     )
 
 
+# TODO just use POST
 @bp.route("/assistant/conversation/<int:conversation_id>/send", methods=["POST"])
 @login_required
 def assistant_send_message(conversation_id: int):
@@ -194,7 +173,7 @@ def assistant_send_message(conversation_id: int):
     assistant_message = Messages(
         body=message,
         conversation_id=conversation_id,
-        type=MessageType.ASSISTANT_MESSAGES,
+        type=MessageType.ASSISTANT_MESSAGE,
         written_by=user_email,
     )
     session.add(assistant_message)

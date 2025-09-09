@@ -34,6 +34,7 @@ dependencies = [
     "argparse>=1.4.0",
     "gunicorn>=23.0.0",
     "markdown>=3.9",
+    "pydantic>=2.11.7",
 ]
 
 [tool.setuptools.packages.find]
@@ -61,7 +62,6 @@ include = [
 
 [tool.ruff.lint]
 select = [
-    "D101",
     "D102",
     "D103",
     "D105",

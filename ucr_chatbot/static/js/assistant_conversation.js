@@ -21,34 +21,30 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadConversationHistory() {
     if (!conversationId) return;
 
-    try {
-        const res = await fetch(`/conversation/${conversationId}`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({ type: "conversation" }),
-        });
-
-        if (!res.ok) {
-            throw new Error('Failed to load conversation');
+    await fetch(`/messages?conversation_id=${conversationId}`, {
+        method: "GET",
+        headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+    }).then(response => {
+        if (!response.ok) {
+            throw Error("Failed to load conversation")
         }
-
-        const data = await res.json();
+        return response.json()
+    }).then(data => {
         chatContainer.innerHTML = "";
 
         data.messages.forEach((msg) => {
-            const senderType = msg.sender === "AssistantMessage" ? "assistant" : (msg.sender === "StudentMessage" ? "user" : "bot");
+            const senderType = msg.type === "ASSISTANT_MESSAGE" ? "assistant" : (msg.type === "STUDENT_MESSAGE" ? "user" : "bot");
             appendMessage(senderType, msg.body);
         });
 
-        // Scroll to bottom to show latest messages
         chatContainer.scrollTop = chatContainer.scrollHeight;
-    } catch (error) {
+    }).catch(error => {
         console.error("Error loading conversation:", error);
         appendMessage("system", "Error loading conversation history.");
-    }
+    });
 }
 
 async function handleAssistantSend(e) {
@@ -176,29 +172,26 @@ userMessageTextarea.addEventListener('keydown', function(e) {
 // Function to check for new messages from assistants
 async function checkForNewMessages() {
   if (!conversationId) return;
-  
-  try {
-    const res = await fetch(`/conversation/${conversationId}`, {
-      method: "POST",
+    await fetch(`/messages?conversation_id=${conversationId}`, {
+      method: "GET",
       headers: { 
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify({ type: "conversation" }),
+    }).then(response => {
+        if (!response.ok) {
+            throw Error("Could not check for new messages.")
+        }
+        return response.json()
+    }).then(data => {
+        const currentMessageCount = chatContainer.children.length;
+        if (data.messages.length > currentMessageCount) {
+            loadConversationHistory();
+        }
+
+    }).catch(error => {
+        console.error("Error checking for new messages:", error);
     });
-
-    if (!res.ok) return;
-
-    const data = await res.json();
-    const currentMessageCount = chatContainer.children.length;
-    
-    // If there are new messages, reload the conversation
-    if (data.messages.length > currentMessageCount) {
-      loadConversationHistory();
-    }
-  } catch (error) {
-    console.error("Error checking for new messages:", error);
-  }
 }
 
 let messageCheckInterval;
