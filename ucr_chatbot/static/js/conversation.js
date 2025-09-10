@@ -1,6 +1,10 @@
 const chatContainer = document.getElementById("chat-container");
 const sidebarMessages = document.getElementById("sidebar-messages");
 const userMessageTextarea = document.getElementById("userMessage");
+const showLimitsButton = document.getElementById("showLimitsButton");
+const hideLimitsButton = document.getElementById("hideLimitsButton");
+const limitInformation = document.getElementById("limitInformation");
+const limitList = document.getElementById("limitList");
 const redirectButton = document.getElementById("redirectButton");
 const converter = new showdown.Converter({ simpleLineBreaks: true });
 
@@ -81,7 +85,7 @@ async function loadMessages() {
 }
 
 async function loadConversationState() {
-  fetch(`/conversations/${conversationId}`, {
+  await fetch(`/conversations/${conversationId}`, {
   method: "GET",
   headers: {
     "Content-Type": "application/json",
@@ -118,6 +122,7 @@ async function loadConversationState() {
 }
 
 function createNewConversation() {
+  hideLimits(new Event("dummy"));
   chatContainer.innerHTML = "";
   conversationId = null;
   userMessageTextarea.disabled = false;
@@ -136,6 +141,7 @@ function createNewConversation() {
 
 async function sendMessage(e) {
   e.preventDefault();
+  hideLimits(e);
   const message = userMessageTextarea.value.trim();
   if (!message) return;
 
@@ -292,6 +298,7 @@ function addSidebarMessage(label, convoId) {
     chatContainer.innerHTML = "";
     loadMessages();
     loadConversationState();
+    hideLimits(new Event("dummy"));
   });
 
   if (window.location.pathname.endsWith(convoId.toString())) {
@@ -393,3 +400,50 @@ window.addEventListener('beforeunload', function() {
     clearInterval(messageCheckInterval);
   }
 });
+
+async function showLimits(event) {
+  event.preventDefault();
+  hideLimitsButton.style.display = "inline";
+  limitInformation.style.display = "block";
+  showLimitsButton.style.display = "none";
+
+  await fetch(`/limits?course_id=${courseId}`, {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+  }).then(response => {
+    if (!response.ok) {
+      const errorTextElement = document.createElement("p");
+      errorTextElement.textContent = "Could not fetch limit information";
+      errorTextElement.style.margin = "0 2%";
+      limitInformation.appendChild(errorTextElement);
+    }
+    return response.json()
+  }).then(data => {
+    data.limits.forEach(limit => {
+      const listItem = document.createElement("ul");
+
+      seconds_to_span = new Map([
+        [60, "minute"],
+        [3600, "hour"],
+        [86_400, "day"],
+        [604_800, "week"],
+      ])
+
+      listItem.textContent = `${limit.maximum_number_of_uses - limit.uses} left for this ${seconds_to_span.get(limit.time_span_seconds) || limit.time_span_seconds + "-second span"}.`
+      limitList.appendChild(listItem);
+    })
+  }).catch(error => {
+    console.error(error);
+  })
+}
+
+function hideLimits(event) {
+  event.preventDefault();
+  hideLimitsButton.style.display = "none";
+  showLimitsButton.style.display = "inline";
+  limitInformation.style.display = "none";
+  limitList.textContent = "";
+}

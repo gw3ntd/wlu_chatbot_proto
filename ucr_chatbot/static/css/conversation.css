@@ -196,6 +196,8 @@ This is just a temporary visual fix */
   color: black;
 }
 
+#showLimitsButton,
+#hideLimitsButton,
 #redirectButton {
   background-color: #3364B7;
   padding: 0.75rem 1rem;
@@ -205,6 +207,8 @@ This is just a temporary visual fix */
   color: white;
   cursor: pointer;
 }
+#showLimitsButton:hover,
+#hideLimitsButton:hover,
 #redirectButton:hover {
   background-color: #FFC649;
   color: black;

@@ -8,6 +8,7 @@ from . import general_routes
 from . import consent_form_routes
 from . import consent_routes
 from . import message_routes
+from . import limit_routes
 from flask import Blueprint
 
 bp = Blueprint("web_interface", __name__, url_prefix="")
@@ -19,3 +20,4 @@ bp.register_blueprint(general_routes.bp, url_prefix="")
 bp.register_blueprint(consent_form_routes.bp, url_prefix="")
 bp.register_blueprint(consent_routes.bp, url_prefix="")
 bp.register_blueprint(message_routes.bp, url_prefix="")
+bp.register_blueprint(limit_routes.bp, url_prefix="")

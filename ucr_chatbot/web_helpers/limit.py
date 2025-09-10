@@ -1,3 +1,4 @@
+from typing import cast
 import datetime
 
 from sqlalchemy.orm import Session
@@ -19,14 +20,15 @@ from ucr_chatbot.db.models import (
 class LimitUsage(PydanticModel):
     """Contains information about a limmit and whether it has been reached"""
 
-    used: int
+    uses: int
     time_span_seconds: int
     maximum_number_of_uses: int
+    limit_id: int
 
     @property
     def reached(self) -> bool:
         """Returns True iff the limit has been reached"""
-        return self.used >= self.maximum_number_of_uses
+        return self.uses >= self.maximum_number_of_uses
 
 
 class LimitUsageList(list[LimitUsage]):
@@ -76,9 +78,10 @@ class LimitUsageList(list[LimitUsage]):
 
                 limit_usages.append(
                     LimitUsage(
-                        used=bot_messages.count(),
+                        uses=bot_messages.count(),
                         time_span_seconds=limit.time_span_seconds,  # type: ignore
                         maximum_number_of_uses=limit.maximum_number_of_uses,  # type: ignore
+                        limit_id=cast(int, limit.id),
                     )
                 )
 

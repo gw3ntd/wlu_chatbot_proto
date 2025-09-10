@@ -17,8 +17,14 @@
 
     <div id="main">
       <div id="chat-container"></div>
+
+      <div style="display: none; width: 100%; background-color: white; border-top: 1px solid #003DA5;" id="limitInformation">
+        <ul id="limitList"></ul>
+      </div>
       <div id="message-input">
         <form id="input-form" onsubmit="handleSend(event)">
+          <button type="button" class="fira-sans" id="showLimitsButton" onclick="showLimits(event)">Show Limits</button>
+          <button type="button" class="fira-sans" id="hideLimitsButton" onclick="hideLimits(event)" style="display: none;">Hide Limits</button>
           <textarea
             id="userMessage"
             rows="2"
