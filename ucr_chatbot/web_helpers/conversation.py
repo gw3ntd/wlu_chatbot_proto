@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Optional
 from flask import g
 from flask_login import current_user  # type: ignore
 from sqlalchemy.orm import Session
@@ -46,7 +46,7 @@ def generate_response(
     history: int = 5,
     max_tokens: int = MAX_RESPONSE_TOKENS,
     stop_sequences: list[str] | None = None,
-) -> "GenerationResponse":
+) -> Optional["GenerationResponse"]:
     """Returns a bot message for a given conversation."""
 
     if stop_sequences is None:
@@ -67,8 +67,8 @@ def generate_response(
     if conversation is None:
         raise ValueError("conversation should not be None.")
 
-    assert len(messages) > 0
-    assert messages[-1].type == MessageType.STUDENT_MESSAGE  # type: ignore
+    if len(messages) == 0 or messages[-1].type != MessageType.STUDENT_MESSAGE:  # type: ignore
+        return None
 
     course_id: int = conversation.course_id  # type: ignore
     prompt = cast(str, messages[-1].body)

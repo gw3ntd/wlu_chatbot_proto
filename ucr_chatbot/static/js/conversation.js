@@ -206,7 +206,7 @@ async function sendMessage(e) {
   });
 
   if (conversationState == conversationStates.CHATBOT) {
-    await fetch(`/conversations/${conversationId}/generate-ai-response`, {
+    await fetch(`/conversations/${conversationId}/ai-responses`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",

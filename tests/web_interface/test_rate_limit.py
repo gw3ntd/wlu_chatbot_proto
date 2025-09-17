@@ -25,15 +25,15 @@ def test_cannot_exceed_rate_limit(mock_course: MockCourse, app: Flask, client: F
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code < 400
     
-    client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code < 400
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code < 400
-    response = client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code < 400
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code >= 400
-    response = client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code >= 400
 
     with Session(get_engine()) as sess:
@@ -54,17 +54,17 @@ def test_abidding_by_rate_limit(mock_course: MockCourse, app: Flask, client: Fla
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code < 400
     
-    client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code < 400
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code < 400
-    response = client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code < 400
 
     time.sleep(2)
     response = client.post("/messages", json={"conversation_id": conv_id, "body": "test message"})
     assert response.status_code < 400
-    response = client.post(f"/conversations/{conv_id}/generate-ai-response")
+    response = client.post(f"/conversations/{conv_id}/ai-responses")
     assert response.status_code < 400
 
     with Session(get_engine()) as sess:

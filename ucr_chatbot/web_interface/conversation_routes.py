@@ -200,10 +200,10 @@ def patch_conversation(conversation_id: int):
     """Updates a conversation."""
     data = PatchConversationRequest.model_validate(request.json)
     with Session(get_engine()) as session:
+        conversation = session.get(Conversation, conversation_id)
+        if conversation is None:
+            abort(404)
         if data.state is not None:
-            conversation = session.get(Conversation, conversation_id)
-            if conversation is None:
-                abort(404)
             if not current_user_initiated_or_assists(conversation):
                 abort(403)
             match (conversation.state, data.state):
@@ -220,17 +220,17 @@ def patch_conversation(conversation_id: int):
                     conversation.state = ConversationState.RESOLVED
                 case _:
                     abort(400)
-            print(conversation.state)
-            session.commit()
+        session.commit()
+
     return "", 204
 
 
-@bp.post("/conversations/<int:conversation_id>/generate-ai-response")
+@bp.post("/conversations/<int:conversation_id>/ai-responses")
 @login_required
 @roles_required(
     ["student", "assistant", "instructor"], get_course_from_conversation_in_url
 )
-def generate_ai_response(conversation_id: int):
+def post_ai_response(conversation_id: int):
     """Generates a new ai generated Message for a conversation that responds to the historical context of the conversation."""
     with Session(get_engine()) as session:
         conv = session.get(Conversation, conversation_id)
@@ -275,6 +275,11 @@ def generate_ai_response(conversation_id: int):
 
     response = generate_response(client, conversation_id=conversation_id)
 
+    if response is None:
+        # This would likely be because the most recent message in the chat
+        # was not a student message.
+        abort(400, "Could not generate an AI Tutor response.")
+
     with Session(get_engine()) as session:
         bot_message = Message(
             body=response.text,
@@ -293,9 +298,7 @@ def generate_ai_response(conversation_id: int):
 
         session.commit()
         return jsonify(
-            PostGenerateAiResponse(
-                text=response.text, title=conversation_title
-            ).model_dump()
+            PostAiResponse(text=response.text, title=conversation_title).model_dump()
         )
 
 
@@ -321,11 +324,7 @@ class ConversationListResponse(PydanticModel):
     conversations: list[ConversationResponse]
 
 
-class PostGenerateAiRequest(PydanticModel):
-    prompt: str
-
-
-class PostGenerateAiResponse(PydanticModel):
+class PostAiResponse(PydanticModel):
     text: str
     title: str
 
