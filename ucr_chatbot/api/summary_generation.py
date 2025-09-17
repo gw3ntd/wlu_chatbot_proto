@@ -12,8 +12,8 @@ from typing import List, Optional
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Messages,
-    Conversations,
+    Message,
+    Conversation,
     MessageType,
 )
 
@@ -32,16 +32,16 @@ def generate_conversation_summary(
         total_messages: List[str] = []
 
         stmt = (
-            select(Messages.type, Messages.body)
-            .join(Conversations, Messages.conversation_id == Conversations.id)
-            .where(Conversations.id == conversation_id)
+            select(Message.type, Message.body)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.id == conversation_id)
         )
         if time_start:
-            stmt = stmt.where(Messages.timestamp > time_start)
+            stmt = stmt.where(Message.timestamp > time_start)
         if time_end:
-            stmt = stmt.where(Messages.timestamp < time_end)
+            stmt = stmt.where(Message.timestamp < time_end)
 
-        stmt = stmt.order_by(Messages.timestamp)
+        stmt = stmt.order_by(Message.timestamp)
 
         messages = session.execute(stmt).all()
 
@@ -72,40 +72,40 @@ def generate_usage_summary(
 
     with Session(get_engine()) as session:
         stmt = (
-            select(func.count(func.distinct(Messages.written_by)))
-            .join(Conversations, Messages.conversation_id == Conversations.id)
-            .where(Conversations.course_id == course_id)
+            select(func.count(func.distinct(Message.written_by)))
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.course_id == course_id)
         )
 
         if time_start:
-            stmt = stmt.where(Messages.timestamp > time_start)
+            stmt = stmt.where(Message.timestamp > time_start)
         if time_end:
-            stmt = stmt.where(Messages.timestamp < time_end)
+            stmt = stmt.where(Message.timestamp < time_end)
 
         student_count = session.execute(stmt).scalar_one()
 
         stmt = (
-            select(func.count(func.distinct(Messages.conversation_id)))
-            .join(Conversations, Messages.conversation_id == Conversations.id)
-            .where(Conversations.course_id == course_id)
+            select(func.count(func.distinct(Message.conversation_id)))
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.course_id == course_id)
         )
 
         if time_start:
-            stmt = stmt.where(Messages.timestamp > time_start)
+            stmt = stmt.where(Message.timestamp > time_start)
         if time_end:
-            stmt = stmt.where(Messages.timestamp < time_end)
+            stmt = stmt.where(Message.timestamp < time_end)
 
         conv_count = session.execute(stmt).scalar_one()
 
         stmt = (
-            select(func.distinct(Messages.conversation_id))
-            .join(Conversations, Messages.conversation_id == Conversations.id)
-            .where(Conversations.course_id == course_id)
+            select(func.distinct(Message.conversation_id))
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.course_id == course_id)
         )
         if time_start:
-            stmt = stmt.where(Messages.timestamp > time_start)
+            stmt = stmt.where(Message.timestamp > time_start)
         if time_end:
-            stmt = stmt.where(Messages.timestamp < time_end)
+            stmt = stmt.where(Message.timestamp < time_end)
 
         conversation_ids = session.execute(stmt).scalars().all()
 

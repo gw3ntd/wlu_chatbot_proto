@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from dataclasses import dataclass
 
-from ucr_chatbot.db.models import get_engine, Segments, Embeddings, Documents
+from ucr_chatbot.db.models import get_engine, Segment, Embedding, Document
 
 from ..embedding.embedding import embed_text
 
@@ -38,11 +38,11 @@ class Retriever:
 
         with Session(get_engine()) as session:
             results = (
-                session.query(Segments)
-                .join(Embeddings)
-                .join(Documents)
-                .filter(Documents.course_id == course_id)
-                .order_by(Embeddings.vector.l2_distance(prompt_embedding))
+                session.query(Segment)
+                .join(Embedding)
+                .join(Document)
+                .filter(Document.course_id == course_id)
+                .order_by(Embedding.vector.l2_distance(prompt_embedding))
                 .limit(num_segments)
                 .all()
             )

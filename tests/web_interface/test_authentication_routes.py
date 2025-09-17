@@ -2,11 +2,11 @@ from flask import Flask
 from flask.testing import FlaskClient
 import pytest
 
-from ucr_chatbot.db.models import Session, Users, get_engine
+from ucr_chatbot.db.models import Session, User, get_engine
 
 def test_login(client: FlaskClient, app: Flask):
     with Session(get_engine()) as db_session:
-        user = Users(email="test@example.com")
+        user = User(email="test@example.com")
         user.set_password("password")
         db_session.add(user)
         db_session.commit()
@@ -38,7 +38,7 @@ def oauth_required_client(oauth_required_app: Flask):
 def test_non_oauth_login_with_oauth_required(oauth_required_client: FlaskClient, app: Flask):
 
     with Session(get_engine()) as db_session:
-        user = Users(email="test@test.com")
+        user = User(email="test@test.com")
         user.set_password("password")
         db_session.add(user)
         db_session.commit()

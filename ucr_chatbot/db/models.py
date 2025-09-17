@@ -52,15 +52,15 @@ class MessageType(str, enum.Enum):
     BOT_MESSAGE = "BOT_MESSAGE"
 
 
-class Users(base, UserMixin):
+class User(base, UserMixin):
     """Represents a User and their profile information"""
 
-    __tablename__ = "Users"
+    __tablename__ = "users"
     email = Column(String, primary_key=True)
     password_hash = Column(String(255), nullable=False)
 
-    conversations = relationship("Conversations", back_populates="user", uselist=True)
-    messages = relationship("Messages", back_populates="user", uselist=True)
+    conversations = relationship("Conversation", back_populates="user", uselist=True)
+    messages = relationship("Message", back_populates="user", uselist=True)
     participates_in = relationship("ParticipatesIn", back_populates="user")
 
     def set_password(self, password: str):
@@ -97,13 +97,13 @@ class Users(base, UserMixin):
 class ParticipatesIn(base):
     """Represents the enrollment between users and courses"""
 
-    __tablename__ = "ParticipatesIn"
-    email = Column(String, ForeignKey("Users.email"), primary_key=True)
-    course_id = Column(Integer, ForeignKey("Courses.id"), primary_key=True)
+    __tablename__ = "participates_in"
+    email = Column(String, ForeignKey("users.email"), primary_key=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), primary_key=True)
     role = Column(String, nullable=False)
 
-    user = relationship("Users", back_populates="participates_in")
-    course = relationship("Courses", back_populates="participates_in")
+    user = relationship("User", back_populates="participates_in")
+    course = relationship("Course", back_populates="participates_in")
 
 
 class ConversationState(str, enum.Enum):
@@ -112,13 +112,13 @@ class ConversationState(str, enum.Enum):
     RESOLVED = "RESOLVED"
 
 
-class Conversations(base):
+class Conversation(base):
     """Represents the conversations a user can initiate"""
 
-    __tablename__ = "Conversations"
+    __tablename__ = "conversations"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    initiated_by = Column(String, ForeignKey("Users.email"), nullable=False)
-    course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
+    initiated_by = Column(String, ForeignKey("users.email"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     state: ConversationState = Column(
         Enum(ConversationState),
         nullable=False,
@@ -127,20 +127,20 @@ class Conversations(base):
     title = Column(String, nullable=True)
     summary = Column(Text, nullable=True)
 
-    course = relationship("Courses", back_populates="conversations")
-    messages = relationship("Messages", back_populates="conversation", uselist=True)
-    user = relationship("Users", back_populates="conversations")
+    course = relationship("Course", back_populates="conversations")
+    messages = relationship("Message", back_populates="conversation", uselist=True)
+    user = relationship("User", back_populates="conversations")
 
 
-class Courses(base):
+class Course(base):
     """Represents a course"""
 
-    __tablename__ = "Courses"
+    __tablename__ = "courses"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
 
-    conversations = relationship("Conversations", back_populates="course", uselist=True)
-    documents = relationship("Documents", back_populates="course", uselist=True)
+    conversations = relationship("Conversation", back_populates="course", uselist=True)
+    documents = relationship("Document", back_populates="course", uselist=True)
     participates_in = relationship("ParticipatesIn", back_populates="course")
     consent_forms = relationship("ConsentForm", back_populates="course", uselist=True)
 
@@ -150,10 +150,10 @@ class ConsentForm(base):
 
     __tablename__ = "consent_forms"
     id = Column(Integer, primary_key=True)
-    course_id = Column(Integer, ForeignKey("Courses.id"))
+    course_id = Column(Integer, ForeignKey("courses.id"))
     body = Column(Text, nullable=False)
     title = Column(Text, nullable=False)
-    course = relationship("Courses", back_populates="consent_forms")
+    course = relationship("Course", back_populates="consent_forms")
     consents = relationship(
         "Consent",
         backref="consent_form",
@@ -173,46 +173,46 @@ class Consent(base):
     consent_form_id = Column(
         Integer, ForeignKey("consent_forms.id", ondelete="CASCADE"), primary_key=True
     )
-    user_email = Column(String, ForeignKey("Users.email"), primary_key=True)
+    user_email = Column(String, ForeignKey("users.email"), primary_key=True)
 
 
-class Documents(base):
+class Document(base):
     """Represents a stored file to be references with queries"""
 
-    __tablename__ = "Documents"
+    __tablename__ = "documents"
     file_path = Column(String, primary_key=True)
-    course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 
-    course = relationship("Courses", back_populates="documents")
-    segments = relationship("Segments", back_populates="document", uselist=True)
+    course = relationship("Course", back_populates="documents")
+    segments = relationship("Segment", back_populates="document", uselist=True)
 
 
-class Segments(base):
+class Segment(base):
     """Represents a section of a document to be embedded"""
 
-    __tablename__ = "Segments"
+    __tablename__ = "segments"
     id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(String)
-    document_id = Column(String, ForeignKey("Documents.file_path"), nullable=False)
+    document_id = Column(String, ForeignKey("documents.file_path"), nullable=False)
 
-    document = relationship("Documents", back_populates="segments")
-    embeddings = relationship("Embeddings", back_populates="segment", uselist=True)
+    document = relationship("Document", back_populates="segments")
+    embeddings = relationship("Embedding", back_populates="segment", uselist=True)
 
 
-class Messages(base):
+class Message(base):
     """Represents a specific message between a user and LLM"""
 
-    __tablename__ = "Messages"
+    __tablename__ = "messages"
     id = Column(Integer, primary_key=True, autoincrement=True)
     body = Column(Text)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     type = Column(Enum(MessageType))
-    conversation_id = Column(Integer, ForeignKey("Conversations.id"), nullable=False)
-    written_by = Column(String, ForeignKey("Users.email"), nullable=False)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    written_by = Column(String, ForeignKey("users.email"), nullable=False)
 
-    conversation = relationship("Conversations", back_populates="messages")
-    user = relationship("Users", back_populates="messages")
+    conversation = relationship("Conversation", back_populates="messages")
+    user = relationship("User", back_populates="messages")
 
 
 class Limit(base):
@@ -220,20 +220,20 @@ class Limit(base):
 
     __tablename__ = "limits"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("Courses.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     maximum_number_of_uses = Column(Integer)
     time_span_seconds = Column(Integer)
 
 
-class Embeddings(base):
+class Embedding(base):
     """Represents the embedding of a segment"""
 
-    __tablename__ = "Embeddings"
+    __tablename__ = "embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
     vector = mapped_column(Vector)
-    segment_id = Column(Integer, ForeignKey("Segments.id"), nullable=False)
+    segment_id = Column(Integer, ForeignKey("segments.id"), nullable=False)
 
-    segment = relationship("Segments", back_populates="embeddings")
+    segment = relationship("Segment", back_populates="embeddings")
 
 
 class Reference(base):
@@ -241,15 +241,15 @@ class Reference(base):
 
     __tablename__ = "references"
     message_id = Column(
-        Integer, ForeignKey("Messages.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True
     )
     segment_id = Column(
-        Integer, ForeignKey("Segments.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("segments.id", ondelete="CASCADE"), primary_key=True
     )
 
 
 def add_new_user(email: str):
-    """Adds new user entry to Users table with the given parameters.
+    """Adds new user entry to users table with the given parameters.
     Must be called within a request context.
     :param email: new user's email address
     """
@@ -257,7 +257,7 @@ def add_new_user(email: str):
         try:
             alphabet = string.ascii_letters + string.digits
             password = "".join(secrets.choice(alphabet) for _ in range(10))
-            new_user = Users(
+            new_user = User(
                 email=email,
                 password_hash="",
             )
@@ -277,7 +277,7 @@ def add_user_to_course(email: str, course_id: int, role: str):
     :param course_id: The course the user will be added to.
     :param role: The role of the user in the course."""
     with Session(get_engine()) as session:
-        user = session.query(Users).filter(Users.email == email).first()
+        user = session.query(User).filter(User.email == email).first()
         if not user:
             add_new_user(email)
 
@@ -306,7 +306,7 @@ def add_students_from_list(data: pd.DataFrame, course_id: int):
     :param data: Pandas dataframe containing student information.
     :param course_id: Course the students will be added to."""
     with Session(get_engine()) as session:
-        course = session.query(Courses).filter(Courses.id == course_id).first()
+        course = session.query(Course).filter(Course.id == course_id).first()
         if course:
             for _, row in data.iterrows():
                 row: pd.Series
@@ -321,7 +321,7 @@ def add_assistants_from_list(data: pd.DataFrame, course_id: int):
     :param data: Pandas dataframe containing assistant information.
     :param course_id: Course the assistants will be added to."""
     with Session(get_engine()) as session:
-        course = session.query(Courses).filter(Courses.id == course_id).first()
+        course = session.query(Course).filter(Course.id == course_id).first()
         if course:
             for _, row in data.iterrows():
                 row: pd.Series
@@ -330,7 +330,7 @@ def add_assistants_from_list(data: pd.DataFrame, course_id: int):
 
 
 def add_new_course(name: str):
-    """Adds new course to the Courses table with the given parameters and creates a new upload folder for it.
+    """Adds new course to the Course table with the given parameters and creates a new upload folder for it.
     Must be called within a request context.
 
     :param id: id for course to be added
@@ -338,7 +338,7 @@ def add_new_course(name: str):
     """
     with Session(get_engine()) as session:
         try:
-            new_course = Courses(name=name)
+            new_course = Course(name=name)
 
             session.add(new_course)
             session.commit()
@@ -348,7 +348,7 @@ def add_new_course(name: str):
 
 
 def add_new_document(file_path: str, course_id: int):
-    """Adds new document to the Documents table with the given parameters.
+    """Adds new document to the Document table with the given parameters.
     Must be called within a request context.
 
     :param file_path: path pointing to where new document is stored.
@@ -356,7 +356,7 @@ def add_new_document(file_path: str, course_id: int):
     """
     with Session(get_engine()) as session:
         try:
-            new_document = Documents(
+            new_document = Document(
                 file_path=file_path,
                 course_id=course_id,
             )
@@ -375,7 +375,7 @@ def set_document_inactive(file_path: str):
     :param file_path: The file path of the document to be set inactive.
     """
     with Session(get_engine()) as session:
-        document = session.query(Documents).filter_by(file_path=file_path).first()
+        document = session.query(Document).filter_by(file_path=file_path).first()
         if document:
             document.is_active = False  # type: ignore
             session.commit()
@@ -388,7 +388,7 @@ def get_active_documents() -> list[PurePath]:
     :return: list of the file paths for all active documents:
     """
     with Session(get_engine()) as session:
-        active_documents = session.query(Documents).filter_by(is_active=True)
+        active_documents = session.query(Document).filter_by(is_active=True)
         file_paths: list[PurePath] = []
 
         for doc in active_documents:
@@ -398,7 +398,7 @@ def get_active_documents() -> list[PurePath]:
 
 
 def store_segment(segment_text: str, file_path: str) -> int:
-    """Creates new Segments instance and stores it into Segments table.
+    """Creates new Segment instance and stores it into Segment table.
     Must be called within a request context.
 
     :param segment_text: The segment text to be added.
@@ -406,8 +406,7 @@ def store_segment(segment_text: str, file_path: str) -> int:
     :return: An int representing the segment ID.
     """
     with Session(get_engine()) as session:
-        # document = session.query(Documents).filter_by(file_path=file_path).first()
-        new_segment = Segments(
+        new_segment = Segment(
             text=segment_text,
             document_id=file_path,
         )
@@ -420,16 +419,15 @@ def store_segment(segment_text: str, file_path: str) -> int:
 
 
 def store_embedding(embedding: Sequence[float], segment_id: int):
-    """Creates new Embeddings instance and stores it into Embeddings table.
+    """Creates new Embedding instance and stores it into Embedding table.
     Must be called within a request context.
 
     :param embedding: List of floats representing the vector embedding.
     :param segment_id: ID for the segment the vector embedding represents.
     """
     with Session(get_engine()) as session:
-        # segment = session.query(Segments).filter_by(id=segment_id).first()
         try:
-            new_embedding = Embeddings(
+            new_embedding = Embedding(
                 vector=embedding,
                 segment_id=segment_id,
             )

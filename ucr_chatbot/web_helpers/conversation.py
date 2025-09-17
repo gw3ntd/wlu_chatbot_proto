@@ -6,8 +6,8 @@ from pydantic import BaseModel as PydanticModel
 
 from ucr_chatbot.db.models import (
     get_engine,
-    Conversations,
-    Messages,
+    Conversation,
+    Message,
     MessageType,
     ConversationState,
 )
@@ -53,12 +53,12 @@ def generate_response(
         stop_sequences = []
 
     with Session(get_engine()) as session:
-        conversation = session.get(Conversations, conversation_id)
+        conversation = session.get(Conversation, conversation_id)
 
         messages = (
-            session.query(Messages)
-            .where(Messages.conversation_id == conversation_id)
-            .order_by(Messages.timestamp.desc())
+            session.query(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.timestamp.desc())
             .limit(history + 1)
         ).all()
 
@@ -108,7 +108,7 @@ class GenerationResponse(PydanticModel):
     sources: list[SegmentResponse]
 
 
-def message_to_history(message: Messages):
+def message_to_history(message: Message):
     """Converts a message to historical context for the language model."""
     sender = (
         "Student"
@@ -122,7 +122,7 @@ def message_to_history(message: Messages):
 {message.body}"""
 
 
-def current_user_initiated_or_assists(conversation: Conversations):
+def current_user_initiated_or_assists(conversation: Conversation):
     """Returns True iff a conversation was initiated by the current user or has
     been redirected to assistants and the current user is an assistant for the
     course.

@@ -15,11 +15,11 @@ from flask_login import current_user, login_required  # type: ignore
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Messages,
+    Message,
     MessageType,
-    Conversations,
+    Conversation,
     ConversationState,
-    Courses,
+    Course,
     ParticipatesIn,
 )
 from ucr_chatbot.api.summary_generation import generate_conversation_summary
@@ -48,10 +48,10 @@ def assistant_dashboard():
         course_ids = [ac.course_id for ac in assistant_courses]
 
         ongoing_conversations = (
-            session.query(Conversations)
+            session.query(Conversation)
             .where(
-                Conversations.course_id.in_(course_ids)
-                & (Conversations.state == ConversationState.REDIRECTED),
+                Conversation.course_id.in_(course_ids)
+                & (Conversation.state == ConversationState.REDIRECTED),
             )
             .all()
         )
@@ -66,21 +66,21 @@ def assistant_dashboard():
                 setattr(conversation, "summary", str(summary))
 
         resolved_conversations = (
-            session.query(Conversations)
+            session.query(Conversation)
             .where(
-                Conversations.course_id.in_(course_ids)
-                & (Conversations.state == ConversationState.RESOLVED)
+                Conversation.course_id.in_(course_ids)
+                & (Conversation.state == ConversationState.RESOLVED)
             )
             .all()
         )
 
         for conversation in resolved_conversations:
             conversation.messages = (
-                session.query(Messages).filter_by(conversation_id=conversation.id).all()
+                session.query(Message).filter_by(conversation_id=conversation.id).all()
             )
 
         course_names = {}
-        for course in session.query(Courses).filter(Courses.id.in_(course_ids)).all():
+        for course in session.query(Course).filter(Course.id.in_(course_ids)).all():
             course_names[course.id] = course.name
 
         template = render_template(
@@ -103,9 +103,7 @@ def assistant_conversation(conversation_id: int):
 
     # Check if user is an assistant for this conversation's course
     with Session(get_engine()) as session:
-        conversation = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
+        conversation = session.query(Conversation).filter_by(id=conversation_id).first()
         if not conversation:
             abort(404, description="Conversation not found")
 
@@ -123,7 +121,7 @@ def assistant_conversation(conversation_id: int):
             return redirect(url_for("web_interface.general_routes.course_selection"))
 
         # Get course name
-        course = session.query(Courses).filter_by(id=conversation.course_id).first()
+        course = session.query(Course).filter_by(id=conversation.course_id).first()
         course_name = course.name if course else "Unknown Course"
 
     return render_template(
@@ -148,9 +146,7 @@ def assistant_send_message(conversation_id: int):
 
     # Check if user is an assistant for this conversation's course
     with Session(get_engine()) as session:
-        conversation = (
-            session.query(Conversations).filter_by(id=conversation_id).first()
-        )
+        conversation = session.query(Conversation).filter_by(id=conversation_id).first()
         if not conversation:
             return jsonify({"error": "Conversation not found"}), 404
 
@@ -170,7 +166,7 @@ def assistant_send_message(conversation_id: int):
         return jsonify({"error": "Message cannot be empty"}), 400
 
     # Add assistant message to the conversation
-    assistant_message = Messages(
+    assistant_message = Message(
         body=message,
         conversation_id=conversation_id,
         type=MessageType.ASSISTANT_MESSAGE,

@@ -11,8 +11,8 @@ from ucr_chatbot.api.language_model import (
 from ucr_chatbot.db.models import (
     get_engine,
     Limit,
-    Conversations,
-    Messages,
+    Conversation,
+    Message,
     MessageType,
 )
 
@@ -55,10 +55,10 @@ class LimitUsageList(list[LimitUsage]):
             conversation_ids = [
                 c[0]
                 for c in (
-                    sess.query(Conversations.id)
+                    sess.query(Conversation.id)
                     .where(
-                        Conversations.initiated_by == email,
-                        Conversations.course_id == course_id,
+                        Conversation.initiated_by == email,
+                        Conversation.course_id == course_id,
                     )
                     .all()
                 )
@@ -70,10 +70,10 @@ class LimitUsageList(list[LimitUsage]):
                     seconds=limit.time_span_seconds  # type: ignore
                 )
 
-                bot_messages = sess.query(Messages).where(
-                    (Messages.conversation_id.in_(conversation_ids))
-                    & (Messages.type == MessageType.BOT_MESSAGE)
-                    & (Messages.timestamp > beginning_of_span)
+                bot_messages = sess.query(Message).where(
+                    (Message.conversation_id.in_(conversation_ids))
+                    & (Message.type == MessageType.BOT_MESSAGE)
+                    & (Message.timestamp > beginning_of_span)
                 )
 
                 limit_usages.append(

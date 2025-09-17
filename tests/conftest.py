@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ucr_chatbot import create_app
-from ucr_chatbot.db.models import get_engine, base, Users, ParticipatesIn, Courses
+from ucr_chatbot.db.models import get_engine, base, User, ParticipatesIn, Course
 from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.config import LLMMode, FileStorageMode
 
@@ -63,9 +63,9 @@ def mock_course(app: Flask) -> MockCourse:
             instructor_email="instructor@ucr.edu",
             student_email="student@ucr.edu",
         )
-        session.add(Courses(id = 1, name="CS009A"))
-        session.add(Users(email="instructor@ucr.edu", password_hash=""))
-        session.add(Users(email="student@ucr.edu",  password_hash=""))
+        session.add(Course(id = 1, name="CS009A"))
+        session.add(User(email="instructor@ucr.edu", password_hash=""))
+        session.add(User(email="student@ucr.edu",  password_hash=""))
         session.add(ParticipatesIn(email="instructor@ucr.edu", course_id=1, role="instructor"))
         session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
         session.commit()
@@ -80,9 +80,9 @@ def mock_course2(app: Flask) -> MockCourse:
             instructor_email="instructor2@ucr.edu",
             student_email="student2@ucr.edu",
         )
-        session.add(Courses(id = 2, name="CS009A"))
-        session.add(Users(email="instructor2@ucr.edu", password_hash=""))
-        session.add(Users(email="student2@ucr.edu",  password_hash=""))
+        session.add(Course(id = 2, name="CS009A"))
+        session.add(User(email="instructor2@ucr.edu", password_hash=""))
+        session.add(User(email="student2@ucr.edu",  password_hash=""))
         session.add(ParticipatesIn(email="instructor2@ucr.edu", course_id=2, role="instructor"))
         session.add(ParticipatesIn(email="student2@ucr.edu", course_id=2, role="student"))
         session.commit()

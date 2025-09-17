@@ -21,7 +21,7 @@ from typing import cast, Union, Any, Dict
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Users,
+    User,
 )
 from ucr_chatbot.config import app_config
 
@@ -42,7 +42,7 @@ def login():
         password = request.form["password"]
 
         with Session(get_engine()) as db_session:
-            user: Users | None = db_session.query(Users).filter_by(email=email).first()
+            user: User | None = db_session.query(User).filter_by(email=email).first()
 
         if user and check_password_hash(cast(str, user.password_hash), password):
             login_user(user)
@@ -111,7 +111,7 @@ def authorize_google():
 
     email: str = user_info["email"]
     with Session(get_engine()) as db_session:
-        user = db_session.query(Users).filter(func.lower(Users.email) == email).first()
+        user = db_session.query(User).filter(func.lower(User.email) == email).first()
         if not user:
             flash(
                 "Access denied: This account is not authorized to use this application.",

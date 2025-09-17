@@ -6,7 +6,7 @@ from flask.testing import FlaskClient
 
 from ..conftest import MockCourse
 
-from ucr_chatbot.db.models import get_engine, Session, Users, Documents
+from ucr_chatbot.db.models import get_engine, Session, User, Document
 from ucr_chatbot.api.file_storage import StorageService
 
 
@@ -115,7 +115,7 @@ def test_file_delete(client: FlaskClient, app: Flask, mock_course: MockCourse):
 
     with app.app_context():
         with Session(get_engine()) as session:
-            document = session.query(Documents).filter_by(file_path=file_path_rel).first()
+            document = session.query(Document).filter_by(file_path=file_path_rel).first()
             assert document is not None
             assert not document.is_active
 
@@ -179,7 +179,7 @@ def test_add_participant(client: FlaskClient, app: Flask, mock_course: MockCours
     assert response.status_code < 400
 
     with Session(get_engine()) as session:
-        user = session.query(Users).filter_by(email="testadd@ucr.edu").first()
+        user = session.query(User).filter_by(email="testadd@ucr.edu").first()
         assert user is not None
         for participation in user.participates_in:
             assert participation.course_id == mock_course.course_id
@@ -204,8 +204,8 @@ This is row 2 and will be skipped
     assert response.status_code < 400
 
     with Session(get_engine()) as session:
-        user1 = session.query(Users).filter_by(email="s001@ucr.edu").first()
-        user2 = session.query(Users).filter_by(email="s002@ucr.edu").first()
+        user1 = session.query(User).filter_by(email="s001@ucr.edu").first()
+        user2 = session.query(User).filter_by(email="s002@ucr.edu").first()
         assert user1 is not None
         assert user2 is not None
         for user in [user1, user2]:

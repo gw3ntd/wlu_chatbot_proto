@@ -3,9 +3,9 @@ from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
 from ucr_chatbot.db.models import (
     get_engine,
-    Conversations,
+    Conversation,
     Limit,
-    Messages,
+    Message,
     )
 from ..conftest import MockCourse
 from .. import authenticate_as
@@ -13,7 +13,7 @@ import time
 
 def test_cannot_exceed_rate_limit(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         limit = Limit(course_id=mock_course.course_id, maximum_number_of_uses=2, time_span_seconds=5)
         sess.add(limit)
@@ -37,12 +37,12 @@ def test_cannot_exceed_rate_limit(mock_course: MockCourse, app: Flask, client: F
     assert response.status_code >= 400
 
     with Session(get_engine()) as sess:
-        assert sess.query(Messages).count() == 4
+        assert sess.query(Message).count() == 4
 
 
 def test_abidding_by_rate_limit(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         limit = Limit(course_id=mock_course.course_id, maximum_number_of_uses=2, time_span_seconds=2)
         sess.add(limit)
@@ -68,4 +68,4 @@ def test_abidding_by_rate_limit(mock_course: MockCourse, app: Flask, client: Fla
     assert response.status_code < 400
 
     with Session(get_engine()) as sess:
-        assert sess.query(Messages).count() == 6
+        assert sess.query(Message).count() == 6

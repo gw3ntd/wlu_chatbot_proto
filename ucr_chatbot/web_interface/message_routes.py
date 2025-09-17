@@ -16,10 +16,10 @@ from ucr_chatbot.web_helpers.limit import LimitUsageList, TOO_MANY_REQUESTS
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Messages,
+    Message,
     MessageType,
     ConversationState,
-    Conversations,
+    Conversation,
 )
 
 
@@ -34,8 +34,8 @@ def get_course_from_conversation_in_query_parameter(_: dict[str, Any] = {}):
 
     with Session(get_engine()) as session:
         course_id = (
-            session.query(Conversations.course_id)
-            .where(Conversations.id == conversation_id)
+            session.query(Conversation.course_id)
+            .where(Conversation.id == conversation_id)
             .scalar()
         )
         return int(course_id)
@@ -51,8 +51,8 @@ def get_course_from_conversation_in_json_body(_: dict[str, Any] = {}):
 
     with Session(get_engine()) as session:
         course_id = (
-            session.query(Conversations.course_id)
-            .where(Conversations.id == conversation_id)
+            session.query(Conversation.course_id)
+            .where(Conversation.id == conversation_id)
             .scalar()
         )
         return int(course_id)
@@ -70,7 +70,7 @@ def get_messages():
     data = MessageListRequest.model_validate(request.args.to_dict())
 
     with Session(get_engine()) as session:
-        conv = session.get(Conversations, data.conversation_id)
+        conv = session.get(Conversation, data.conversation_id)
         if conv is None:
             abort(404)
 
@@ -82,9 +82,9 @@ def get_messages():
             abort(403)
 
         messages = (
-            session.query(Messages)
-            .where(Messages.conversation_id == conv.id)
-            .order_by(Messages.timestamp.asc())
+            session.query(Message)
+            .where(Message.conversation_id == conv.id)
+            .order_by(Message.timestamp.asc())
         ).all()
 
     return jsonify(
@@ -109,7 +109,7 @@ def post_message():
     data = PostMessageRequest.model_validate(request.json)
 
     with Session(get_engine()) as session:
-        conv = session.get(Conversations, data.conversation_id)
+        conv = session.get(Conversation, data.conversation_id)
         if conv is None:
             abort(404)
         if not (
@@ -131,7 +131,7 @@ def post_message():
                 TOO_MANY_REQUESTS,
                 "Could not send message because one of your rate limits for this course has been reached. Please wait until you have some usages before sending another request.",
             )
-        message = Messages(
+        message = Message(
             conversation_id=conv.id,
             body=data.body,
             written_by=current_user.email,

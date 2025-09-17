@@ -5,7 +5,7 @@ from sqlalchemy.engine import Connection
 
 from flask import Flask
 
-from ucr_chatbot.db.models import base, get_engine, Users, Courses, ParticipatesIn
+from ucr_chatbot.db.models import base, get_engine, User, Course, ParticipatesIn
 from ucr_chatbot.db.cli import main, initialize, mock
 
 
@@ -21,7 +21,7 @@ def test_initialize(app: Flask):
   base.metadata.drop_all(get_engine())
   initialize(False)
   inspector = inspect(get_engine())
-  assert inspector.has_table("Users") == True
+  assert inspector.has_table("users") == True
 
 def test_initialize_force(app: Flask):
   """Tests that database is initialized correctly with --force"""
@@ -29,13 +29,13 @@ def test_initialize_force(app: Flask):
   initialize(False)
   initialize(True)
   inspector = inspect(get_engine())
-  assert inspector.has_table("Users") == True
+  assert inspector.has_table("users") == True
 
 def test_mock(db: Connection, app: Flask):
   """Tests that mock data is added correctly to database"""
   initialize(True)
   mock(False)
-  s = select(Courses).where(Courses.id==1)
+  s = select(Course).where(Course.id==1)
   result = db.execute(s)
 
   answer = None
@@ -43,7 +43,7 @@ def test_mock(db: Connection, app: Flask):
     answer = row
   assert answer.name == 'CS010C'
 
-  s = select(Users).where(Users.email=='test001@ucr.edu')
+  s = select(User).where(User.email=='test001@ucr.edu')
   result = db.execute(s)
 
   answer = None
@@ -55,22 +55,22 @@ def test_mock(db: Connection, app: Flask):
 def test_create_user(app: Flask):
   main(shlex.split("create user test001@ucr.edu test"))
   with Session(get_engine()) as sess:
-    users = sess.query(Users).all()
+    users = sess.query(User).all()
     assert len(users) == 1
     assert users[0].email == "test001@ucr.edu"
 
 def test_create_course(app: Flask):
   main(shlex.split("create course \"Calculus 2\""))
   with Session(get_engine()) as sess:
-    courses = sess.query(Courses).all()
+    courses = sess.query(Course).all()
     assert len(courses) == 1
     assert courses[0].name == "Calculus 2"
 
 def test_create_participates_in(app: Flask):
   with Session(get_engine()) as sess:
-    user = Users(email="test009@ucr.edu")
+    user = User(email="test009@ucr.edu")
     user.set_password("test")
-    course = Courses(name="Calculus 3")
+    course = Course(name="Calculus 3")
     sess.add(user)
     sess.add(course)
     sess.commit()

@@ -28,9 +28,9 @@ from ucr_chatbot.decorators import roles_required
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Courses,
+    Course,
     ParticipatesIn,
-    Documents,
+    Document,
     add_new_document,
     store_segment,
     store_embedding,
@@ -39,7 +39,7 @@ from ucr_chatbot.db.models import (
     add_user_to_course,
     add_students_from_list,
     add_assistants_from_list,
-    Users,
+    User,
 )
 from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.api.summary_generation import generate_usage_summary
@@ -52,7 +52,7 @@ bp = Blueprint("instructor_routes", __name__)
 def course_from_document_in_url(kwargs: dict[str, Any]) -> Optional[int]:
     """Gets the course_id from the file_path in the url."""
     with Session(get_engine()) as sess:
-        doc = sess.get(Documents, kwargs["file_path"])
+        doc = sess.get(Document, kwargs["file_path"])
         if not doc:
             return None
         return cast(int, doc.course_id)
@@ -88,7 +88,7 @@ def course_documents(course_id: int):
     """
     email = current_user.email
     with Session(get_engine()) as session:
-        user = session.query(Users).filter_by(email=email).first()
+        user = session.query(User).filter_by(email=email).first()
     if user is None:
         abort(404, description="User not found")
     error_msg = ""
@@ -110,7 +110,7 @@ def course_documents(course_id: int):
         file_extension = file_path.suffix[1:]
 
         with Session(get_engine()) as session:
-            if session.query(Documents).filter_by(
+            if session.query(Document).filter_by(
                 file_path=str(file_path)
             ).first() or storage_service.file_exists(file_path):
                 flash(
@@ -170,7 +170,7 @@ def course_documents(course_id: int):
     body = error_msg + (docs_html or "No documents uploaded yet.")
 
     with Session(get_engine()) as sess:
-        course = sess.get(Courses, course_id)
+        course = sess.get(Course, course_id)
         if course is None:
             abort(404)
         return render_template("documents.html", body=body, course=course)
@@ -207,7 +207,7 @@ def delete_document(file_path: str):
     storage_service = get_storage_service()
 
     with Session(get_engine()) as session:
-        document = session.query(Documents).filter_by(file_path=file_path).first()
+        document = session.query(Document).filter_by(file_path=file_path).first()
         if document is None:
             abort(404, description="Document not found")
 
@@ -250,7 +250,7 @@ def download_file(file_path: str):
     """
     email = current_user.email
     with Session(get_engine()) as session:
-        document = session.query(Documents).filter_by(file_path=file_path).first()
+        document = session.query(Document).filter_by(file_path=file_path).first()
         if document is None:
             abort(404)
 
@@ -360,7 +360,7 @@ def generate_summary(course_id: int):
     end_date = conv_date(end_date)
 
     with Session(get_engine()) as session:
-        stmt = select(Courses.name).where(Courses.id == course_id)
+        stmt = select(Course.name).where(Course.id == course_id)
 
         course_name = session.execute(stmt).scalar_one()
 

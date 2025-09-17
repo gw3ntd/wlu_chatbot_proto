@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from ucr_chatbot.db.models import (
     get_engine,
     ParticipatesIn,
-    Users,
-    Conversations,
+    User,
+    Conversation,
     ConversationState,
     ConsentForm,
     Consent
@@ -16,7 +16,7 @@ from .. import authenticate_as
 
 def  test_no_redirect_to_ula_button_when_no_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         sess.commit()
         conv_id = conv.id
@@ -30,7 +30,7 @@ def  test_no_redirect_to_ula_button_when_no_assistants_added(mock_course: MockCo
 
 def test_not_redirectable_when_no_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         sess.commit()
         conv_id = conv.id
@@ -42,19 +42,19 @@ def test_not_redirectable_when_no_assistants_added(mock_course: MockCourse, app:
     assert response.status_code >= 400
 
     with Session(get_engine()) as sess:
-        conv = sess.query(Conversations).where(Conversations.id == conv_id).first()
+        conv = sess.query(Conversation).where(Conversation.id == conv_id).first()
         assert conv.state == ConversationState.CHATBOT
 
 
 def  test_exists_redirect_to_ula_button_when_assistants_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         sess.commit()
         conv_id = conv.id
 
     with Session(get_engine()) as sess:
-        assistant = Users(email="assistant@ucr.edu", password_hash="")
+        assistant = User(email="assistant@ucr.edu", password_hash="")
         p_in = ParticipatesIn(email=assistant.email, course_id=mock_course.course_id, role="assistant")
         sess.add(p_in)
         sess.add(assistant)
@@ -69,12 +69,12 @@ def  test_exists_redirect_to_ula_button_when_assistants_added(mock_course: MockC
 
 def test_redirectable_when_assistant_added(mock_course: MockCourse, app: Flask, client: FlaskClient):
     with Session(get_engine()) as sess:
-        conv = Conversations(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
+        conv = Conversation(course_id = mock_course.course_id, initiated_by=mock_course.student_email)
         sess.add(conv)
         sess.commit()
         conv_id = conv.id
 
-        assistant = Users(email="assistant@ucr.edu", password_hash="")
+        assistant = User(email="assistant@ucr.edu", password_hash="")
         p_in = ParticipatesIn(email=assistant.email, course_id=mock_course.course_id, role="assistant")
         sess.add(p_in)
         sess.add(assistant)
@@ -88,7 +88,7 @@ def test_redirectable_when_assistant_added(mock_course: MockCourse, app: Flask, 
     assert response.status_code < 400
 
     with Session(get_engine()) as sess:
-        conv = sess.query(Conversations).where(Conversations.id == conv_id).first()
+        conv = sess.query(Conversation).where(Conversation.id == conv_id).first()
         assert conv.state == ConversationState.REDIRECTED
 
 

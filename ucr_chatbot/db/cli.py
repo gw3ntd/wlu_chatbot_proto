@@ -10,8 +10,8 @@ from sqlalchemy import inspect, text
 from ucr_chatbot.db.models import (
     get_engine,
     base,
-    Courses,
-    Users,
+    Course,
+    User,
     add_new_course,
     add_new_user,
     add_user_to_course,
@@ -107,7 +107,7 @@ def main(arg_list: list[str] | None = None):
         match args.entity_type:
             case "course":
                 with Session(get_engine()) as sess:
-                    course = Courses(name=args.name)
+                    course = Course(name=args.name)
                     sess.add(course)
                     sess.commit()
                     print(
@@ -115,7 +115,7 @@ def main(arg_list: list[str] | None = None):
                     )
             case "user":
                 with Session(get_engine()) as sess:
-                    user = Users(email=args.email)
+                    user = User(email=args.email)
                     user.set_password(args.password)
                     sess.add(user)
                     sess.commit()
@@ -175,7 +175,7 @@ def initialize(force: bool):
     :param force: If True, clears existing tables and creates empty tables.
     """
     create_vector_extension()
-    if not inspect(get_engine()).has_table("Users"):
+    if not inspect(get_engine()).has_table("users"):
         base.metadata.create_all(get_engine())
         print("Database initialized.")
     elif force:
@@ -188,18 +188,18 @@ def initialize(force: bool):
 
 def mock(force: bool):
     """Adds mock courses and users with varying roles to the database.
-    Only adds mock data if the Users and Courses tables are empty.
+    Only adds mock data if the users and Course tables are empty.
     """
     create_vector_extension()
 
-    if not inspect(get_engine()).has_table("Users"):
+    if not inspect(get_engine()).has_table("users"):
         base.metadata.create_all(get_engine())
     elif force:
         initialize(True)
 
     with Session(get_engine()) as session:
-        courses_empty = not session.query(session.query(Courses).exists()).scalar()
-        users_empty = not session.query(session.query(Users).exists()).scalar()
+        courses_empty = not session.query(session.query(Course).exists()).scalar()
+        users_empty = not session.query(session.query(User).exists()).scalar()
 
         if courses_empty and users_empty:
             add_new_course("CS010C")  # course ID 1

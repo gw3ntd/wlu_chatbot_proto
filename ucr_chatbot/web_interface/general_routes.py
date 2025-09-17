@@ -14,7 +14,7 @@ from flask_login import current_user, login_required  # type: ignore
 from ucr_chatbot.db.models import (
     Session,
     get_engine,
-    Courses,
+    Course,
     ParticipatesIn,
 )
 from ucr_chatbot.config import app_config
@@ -42,8 +42,8 @@ def course_selection():
     user_email = current_user.email
     with Session(get_engine()) as session:
         stmt = (
-            select(Courses, ParticipatesIn.role)
-            .join(ParticipatesIn, Courses.id == ParticipatesIn.course_id)
+            select(Course, ParticipatesIn.role)
+            .join(ParticipatesIn, Course.id == ParticipatesIn.course_id)
             .where(ParticipatesIn.email == user_email)
         )
 

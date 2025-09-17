@@ -26,9 +26,9 @@ from ucr_chatbot.db.models import (
     Session,
     get_engine,
     ConversationState,
-    Conversations,
+    Conversation,
     ParticipatesIn,
-    Messages,
+    Message,
     MessageType,
     Reference,
 )
@@ -58,7 +58,7 @@ def get_course_from_json_body(_: dict[str, Any]):
 def get_course_from_conversation_in_url(kwargs: dict[str, Any]):
     """Gets the course id from the conversation_id in the url."""
     with Session(get_engine()) as session:
-        conversation = session.get(Conversations, int(kwargs["conversation_id"]))
+        conversation = session.get(Conversation, int(kwargs["conversation_id"]))
         if conversation is None:
             return None
         return int(conversation.course_id)  # type: ignore
@@ -109,7 +109,7 @@ def post_conversation():
         ), TOO_MANY_REQUESTS
 
     with Session(get_engine()) as session:
-        new_conv = Conversations(
+        new_conv = Conversation(
             course_id=data.course_id, initiated_by=current_user.email, title=data.title
         )
         session.add(new_conv)
@@ -129,12 +129,12 @@ def get_conversations():
     course_id = get_course_from_query_parameter()
     with Session(get_engine()) as session:
         conversations = (
-            session.query(Conversations)
+            session.query(Conversation)
             .where(
-                Conversations.initiated_by == current_user.email,
-                Conversations.course_id == course_id,
+                Conversation.initiated_by == current_user.email,
+                Conversation.course_id == course_id,
             )
-            .order_by(Conversations.id.desc())
+            .order_by(Conversation.id.desc())
             .all()
         )
 
@@ -153,7 +153,7 @@ def get_conversations():
 def get_conversation(conversation_id: int):
     """Respnds with either a JSON or HTML representation of a conversation."""
     with Session(get_engine()) as session:
-        conv = session.get(Conversations, conversation_id)
+        conv = session.get(Conversation, conversation_id)
         if conv is None:
             abort(404)
 
@@ -201,7 +201,7 @@ def patch_conversation(conversation_id: int):
     data = PatchConversationRequest.model_validate(request.json)
     with Session(get_engine()) as session:
         if data.state is not None:
-            conversation = session.get(Conversations, conversation_id)
+            conversation = session.get(Conversation, conversation_id)
             if conversation is None:
                 abort(404)
             if not current_user_initiated_or_assists(conversation):
@@ -233,7 +233,7 @@ def patch_conversation(conversation_id: int):
 def generate_ai_response(conversation_id: int):
     """Generates a new ai generated Message for a conversation that responds to the historical context of the conversation."""
     with Session(get_engine()) as session:
-        conv = session.get(Conversations, conversation_id)
+        conv = session.get(Conversation, conversation_id)
         if conv is None:
             abort(404)
         if conv.initiated_by != current_user.email:
@@ -251,8 +251,8 @@ def generate_ai_response(conversation_id: int):
             ), TOO_MANY_REQUESTS
 
         number_of_messages = (
-            session.query(Messages)
-            .where(Messages.conversation_id == conversation_id)
+            session.query(Message)
+            .where(Message.conversation_id == conversation_id)
             .count()
         )
 
@@ -263,8 +263,8 @@ def generate_ai_response(conversation_id: int):
             )
         elif number_of_messages == 1:
             first_message = (
-                session.query(Messages)
-                .where(Messages.conversation_id == conversation_id)
+                session.query(Message)
+                .where(Message.conversation_id == conversation_id)
                 .one()
             )
             title = generate_title(client, cast(str, first_message.body))
@@ -276,7 +276,7 @@ def generate_ai_response(conversation_id: int):
     response = generate_response(client, conversation_id=conversation_id)
 
     with Session(get_engine()) as session:
-        bot_message = Messages(
+        bot_message = Message(
             body=response.text,
             type=MessageType.BOT_MESSAGE,
             written_by=current_user.email,
