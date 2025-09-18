@@ -1,28 +1,32 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Consent Form | ScottGPT {% endblock
+%} {% block css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/markdown.css') }}"
+>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/consent_form.css') }}"
+>
 
-{% block title %}Consent Form | ScottGPT {% endblock %}
-
-{% block css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/markdown.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/consent_form.css') }}">
-
-{% endblock %}
-
-
-
-{% block body %}
-
+{% endblock %} {% block body %}
 
 <div class="consent-form-body">
-    <div class="markdown-body">
-        {{ consent_form.body_as_html() | safe }}
-        <form method=post action="{{ url_for('web_interface.consent_routes.post_consent', next=request.args.get('next')) }}" enctype=multipart/form-data>
-            <input type=hidden name=consent_form_id value={{consent_form.id}}>
-            <input type=submit value="Consent to all of the above and continue to the AI Tutor." style="margin-bottom: 20%;">
-        </form>
-    </div>
-    
+  <div class="markdown-body">
+    {{ consent_form.body_as_html() | safe }}
+    <form
+      method="post"
+      action="{{ url_for('web_interface.consent_routes.post_consent', next=request.args.get('next')) }}"
+      enctype="multipart/form-data"
+    >
+      <input type="hidden" name="consent_form_id" value="{{consent_form.id}}">
+      <input
+        type="submit"
+        value="Consent to all of the above and continue to the AI Tutor."
+        style="margin-bottom: 20%"
+      >
+    </form>
+  </div>
 </div>
-
 
 {% endblock %}

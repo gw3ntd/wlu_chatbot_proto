@@ -1,99 +1,114 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard | ScottGPT{% endblock %}
-
-{% block css %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/assistant_dashboard.css') }}">
-{% endblock %}
-
-{% block body %}
+{% extends "base.html" %} {% block title %}Dashboard | ScottGPT{% endblock %} {%
+block css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/assistant_dashboard.css') }}"
+>
+{% endblock %} {% block body %}
 <div class="dashboard-container">
-    <!-- Ongoing Conversations Section -->
-    <h2>🔄 Ongoing Conversations</h2>
-    
-    {% if ongoing_conversations %}
-        <p>You have {{ ongoing_conversations|length }} ongoing conversation(s) to handle:</p>
-        
-        {% for conversation in ongoing_conversations %}
-        <div class="conversation-card">
-            <div class="conversation-header">
-                <div class="conversation-title">
-                    Conversation #{{ conversation.id }}
-                </div>
-                <span class="course-badge">{{ course_names[conversation.course_id] }}</span>
-            </div>
-            
-            <div class="conversation-meta">
-                <strong>Student:</strong> {{ conversation.initiated_by }}<br>
-                <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
-                <strong>Started:</strong> {{ conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if conversation.messages and conversation.messages|length > 0 else 'Unknown' }}
-            </div>
-            
-            <div class="student-info">
-                <strong>Conversation Summary:</strong><br>
+  <!-- Ongoing Conversations Section -->
+  <h2>🔄 Ongoing Conversations</h2>
 
-                {{ conversation.summary }}
-            </div>
-            
-            <a href="{{ url_for('web_interface.assistant_routes.assistant_conversation', conversation_id=conversation.id) }}" 
-                class="btn btn-primary">
-                Handle Conversation
-            </a>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <h3>🎉 All Caught Up!</h3>
-            <p>There are no ongoing conversations at the moment.</p>
-            <p>Check back later for new student requests.</p>
-        </div>
-    {% endif %}
-    
-    <!-- Resolved Conversations Section -->
-    <h2 style="margin-top: 40px;">✅ Resolved Conversations</h2>
-    
-    {% if resolved_conversations %}
-        <p>You have {{ resolved_conversations|length }} resolved conversation(s):</p>
-        
-        {% for conversation in resolved_conversations %}
-        <div class="conversation-card" style="opacity: 0.7; background-color: #f8f9fa;">
-            <div class="conversation-header">
-                <div class="conversation-title">
-                    Conversation #{{ conversation.id }}
-                </div>
-                <span class="course-badge" style="background-color: #28a745;">Resolved</span>
-            </div>
-            
-            <div class="conversation-meta">
-                <strong>Student:</strong> {{ conversation.initiated_by }}<br>
-                <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
-                <strong>Started:</strong> {{ conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if conversation.messages and conversation.messages|length > 0 else 'Unknown' }}
-            </div>
-            
-            <div class="student-info">
-                <strong>Conversation Summary:</strong><br>
-                {{ conversation.summary }}
-            </div>
-            
-            <span class="btn" style="background-color: #6c757d; cursor: default;">
-                Resolved
-            </span>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <h3>📝 No Resolved Conversations</h3>
-            <p>You haven't resolved any conversations yet.</p>
-            <p>Start helping students to see resolved conversations here!</p>
-        </div>
-    {% endif %}
-    
-    <div style="margin-top: 30px; text-align: center;">
-        <a href="{{ url_for('web_interface.general_routes.course_selection') }}" class="btn btn-primary">
-            Back to Course Selection
-        </a>
+  {% if ongoing_conversations %}
+  <p>
+    You have {{ ongoing_conversations|length }} ongoing conversation(s) to
+    handle:
+  </p>
+
+  {% for conversation in ongoing_conversations %}
+  <div class="conversation-card">
+    <div class="conversation-header">
+      <div class="conversation-title">
+        Conversation #{{ conversation.id }}
+      </div>
+      <span class="course-badge"
+      >{{ course_names[conversation.course_id] }}</span>
     </div>
-</div>
-{% endblock %}
 
-{% block scripts %}{% endblock %}
+    <div class="conversation-meta">
+      <strong>Student:</strong> {{ conversation.initiated_by }}<br>
+      <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
+      <strong>Started:</strong> {{
+      conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if
+      conversation.messages and conversation.messages|length > 0 else 'Unknown'
+      }}
+    </div>
+
+    <div class="student-info">
+      <strong>Conversation Summary:</strong>
+      <br>
+
+      {{ conversation.summary }}
+    </div>
+
+    <a
+      href="{{ url_for('web_interface.assistant_routes.assistant_conversation', conversation_id=conversation.id) }}"
+      class="btn btn-primary"
+    >
+      Handle Conversation
+    </a>
+  </div>
+  {% endfor %} {% else %}
+  <div class="empty-state">
+    <h3>🎉 All Caught Up!</h3>
+    <p>There are no ongoing conversations at the moment.</p>
+    <p>Check back later for new student requests.</p>
+  </div>
+  {% endif %}
+
+  <!-- Resolved Conversations Section -->
+  <h2 style="margin-top: 40px">✅ Resolved Conversations</h2>
+
+  {% if resolved_conversations %}
+  <p>You have {{ resolved_conversations|length }} resolved conversation(s):</p>
+
+  {% for conversation in resolved_conversations %}
+  <div
+    class="conversation-card"
+    style="opacity: 0.7; background-color: #f8f9fa"
+  >
+    <div class="conversation-header">
+      <div class="conversation-title">
+        Conversation #{{ conversation.id }}
+      </div>
+      <span class="course-badge" style="background-color: #28a745"
+      >Resolved</span>
+    </div>
+
+    <div class="conversation-meta">
+      <strong>Student:</strong> {{ conversation.initiated_by }}<br>
+      <strong>Course:</strong> {{ course_names[conversation.course_id] }}<br>
+      <strong>Started:</strong> {{
+      conversation.messages[0].timestamp.strftime('%Y-%m-%d %H:%M') if
+      conversation.messages and conversation.messages|length > 0 else 'Unknown'
+      }}
+    </div>
+
+    <div class="student-info">
+      <strong>Conversation Summary:</strong>
+      <br>
+      {{ conversation.summary }}
+    </div>
+
+    <span class="btn" style="background-color: #6c757d; cursor: default">
+      Resolved
+    </span>
+  </div>
+  {% endfor %} {% else %}
+  <div class="empty-state">
+    <h3>📝 No Resolved Conversations</h3>
+    <p>You haven't resolved any conversations yet.</p>
+    <p>Start helping students to see resolved conversations here!</p>
+  </div>
+  {% endif %}
+
+  <div style="margin-top: 30px; text-align: center">
+    <a
+      href="{{ url_for('web_interface.general_routes.course_selection') }}"
+      class="btn btn-primary"
+    >
+      Back to Course Selection
+    </a>
+  </div>
+</div>
+{% endblock %} {% block scripts %}{% endblock %}

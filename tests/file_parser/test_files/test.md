@@ -11,10 +11,10 @@ Welcome to my Markdown file! Here's a simple demo of Markdown syntax.
 
 ## Formatting
 
-You can *italicize* text, **bold** it, or even ***do both***.
+You can _italicize_ text, **bold** it, or even _**do both**_.
 
 > Markdown supports blockquotes.
-> 
+>
 > Like this one!
 
 ## Code
@@ -28,3 +28,4 @@ def greet(name):
     return f"Hello, {name}!"
 
 print(greet("Markdown"))
+```

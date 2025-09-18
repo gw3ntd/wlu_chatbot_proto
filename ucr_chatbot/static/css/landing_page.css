@@ -1,21 +1,21 @@
 section h1 {
-    font-family: "Fira Sans";
-    font-weight: bold;
-    font-size: 1.25rem;
-    color: white;
-    padding: 12px 12px;
-    border-radius: 6px;
-    margin-top: 20px;
-    margin-bottom: 12px;
-    margin-right: 20px;
-    box-shadow: 6px 6px 0px #FFB81C; 
-    background-image: 
-        linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
-        url("/static/images/background.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed; 
+  font-family: "Fira Sans";
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: white;
+  padding: 12px 12px;
+  border-radius: 6px;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  margin-right: 20px;
+  box-shadow: 6px 6px 0px #ffb81c;
+  background-image:
+    linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
+    url("/static/images/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 section ul {
@@ -27,33 +27,33 @@ section ul {
 .card {
   background: white;
   border-radius: 8px;
-  padding-top: 20px; 
+  padding-top: 20px;
   padding-bottom: 20px;
   padding-left: 20px;
   padding-right: 20px;
   margin-bottom: 10px;
-  box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   transition: box-shadow 0.3s ease;
   border-left: 5px solid transparent;
-  color: #003DA5;
+  color: #003da5;
   cursor: url("/static/images/select-cursor.png") 0 0, pointer;
 }
 .card:hover {
-  box-shadow: 8px 8px 16px rgba(0,0,0,0.15);
-  border-left: 5px solid #003DA5;
+  box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
+  border-left: 5px solid #003da5;
 }
 .card::after {
   content: "";
-  position: absolute;    
+  position: absolute;
   bottom: 10px;
-  right: 10px;  
-  width: 40px;   
-  height: 40px;  
-  background-image: url('/static/images/scottypaws.png');
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background-image: url("/static/images/scottypaws.png");
   background-repeat: no-repeat;
   background-size: contain;
-  opacity: 0.15; 
+  opacity: 0.15;
   z-index: 0;
 }
 

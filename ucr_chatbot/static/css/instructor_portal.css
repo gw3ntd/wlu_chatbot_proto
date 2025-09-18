@@ -2,48 +2,48 @@
 /* To use Icons8 graphics for free, you must include a link to Icons8 wherever you use the icons in the website. */
 
 section h1 {
-    font-family: "Fira Sans";
-    font-weight: bold;
-    font-size: 1.25rem;
-    color: white;
-    padding: 12px 12px;
-    border-radius: 6px;
-    margin-top: 20px;
-    margin-bottom: 12px;
-    box-shadow: 6px 6px 0px #FFB81C; 
-    background-image: 
-        linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
-        url("/static/images/background.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed; 
+  font-family: "Fira Sans";
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: white;
+  padding: 12px 12px;
+  border-radius: 6px;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  box-shadow: 6px 6px 0px #ffb81c;
+  background-image:
+    linear-gradient(rgba(0, 61, 165, 0.8), rgba(0, 61, 165, 0.8)),
+    url("/static/images/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .card {
   background: white;
   border-radius: 8px;
-  padding-top: 12px; 
+  padding-top: 12px;
   padding-bottom: 20px;
   padding-left: 20px;
   padding-right: 20px;
   margin-bottom: 30px;
-  box-shadow: 4px 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   transition: box-shadow 0.3s ease;
 }
 .card:hover {
-  box-shadow: 8px 8px 16px rgba(0,0,0,0.15);
+  box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
 }
 .card h3 {
-    font-family: "Fira Sans";
-    font-style: italic;
-    color: #003DA5
+  font-family: "Fira Sans";
+  font-style: italic;
+  color: #003da5;
 }
 .card input[type="submit"],
 .card button {
-  background-color: #FFB81C;  
-  color: black;                 
+  background-color: #ffb81c;
+  color: black;
   font-family: "Fira Sans", sans-serif;
   font-size: 14px;
   padding: 6px 12px;
@@ -60,53 +60,53 @@ section h1 {
 }
 .card input[type="submit"]:hover,
 .card button:hover {
-  background-color: #003DA5; 
+  background-color: #003da5;
   color: white;
 }
 .card textarea,
 .card input[type="text"] {
-  width: 100%;             
-  max-width: 400px;        
-  padding: 8px 12px;       
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
   font-family: "Fira Sans", sans-serif;
   font-size: 16px;
-  border: 2px solid #003DA5; 
+  border: 2px solid #003da5;
   border-radius: 6px;
-  box-sizing: border-box;   
-  margin-bottom: 12px;      
+  box-sizing: border-box;
+  margin-bottom: 12px;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .card textarea,
 .card input[type="text"]:focus {
-  border-color: #FFB81C;     
-  outline: none;           
-  box-shadow: 0 0 5px #FFB81C;
+  border-color: #ffb81c;
+  outline: none;
+  box-shadow: 0 0 5px #ffb81c;
 }
 .card::after {
   content: "";
-  position: absolute;    
+  position: absolute;
   bottom: 10px;
-  right: 10px;  
-  width: 40px;   
-  height: 40px;  
-  background-image: url('/static/images/scottypaws.png');
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background-image: url("/static/images/scottypaws.png");
   background-repeat: no-repeat;
   background-size: contain;
-  opacity: 0.15; 
+  opacity: 0.15;
   z-index: 0;
 }
 
 .form-row {
-  display: flex;       
-  flex-wrap: wrap;      
+  display: flex;
+  flex-wrap: wrap;
 }
 .form-group {
-  flex: 1;            
+  flex: 1;
 }
 .form-group label {
   display: block;
   font-weight: 550;
-  color: #003DA5
+  color: #003da5;
 }
 .form-group input {
   width: 100%;
@@ -119,7 +119,7 @@ section h1 {
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .form-group input:focus,
-.form-group input:hover{
-  border-color: #FFB81C;
+.form-group input:hover {
+  border-color: #ffb81c;
   outline: none;
 }

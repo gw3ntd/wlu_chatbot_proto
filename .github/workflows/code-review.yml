@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'Pull Request Number'
+        description: "Pull Request Number"
         required: true
         type: number
 
@@ -25,7 +25,7 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg17
         env:
-          POSTGRES_DB: ${{ env.DB_NAME }} 
+          POSTGRES_DB: ${{ env.DB_NAME }}
           POSTGRES_USER: ${{ env.DB_USER }}
           POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
@@ -37,53 +37,53 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-    - name: Install uv
-      run: |
-        pip install uv
+      - name: Install uv
+        run: |
+          pip install uv
 
-    - name: Install apt dependencies (netcat, postgresql-client)
-      run: |
+      - name: Install apt dependencies (netcat, postgresql-client)
+        run: |
           sudo apt-get update
           sudo apt-get install -y netcat-traditional # Use netcat-traditional for nc command
           sudo apt-get install -y netcat-traditional postgresql-client
 
-    - name: Wait for PostgreSQL to be ready
-      run: |
-        echo "Waiting for PostgreSQL to start..."
-        for i in $(seq 1 10); do
-          if nc -zv localhost 5432; then
-            echo "PostgreSQL is up and running!"
-            break
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          echo "Waiting for PostgreSQL to start..."
+          for i in $(seq 1 10); do
+            if nc -zv localhost 5432; then
+              echo "PostgreSQL is up and running!"
+              break
+            fi
+            echo "Still waiting... ($i/10)"
+            sleep 5
+          done
+          if ! nc -zv localhost 5432; then
+            echo "PostgreSQL did not start in time."
+            exit 1
           fi
-          echo "Still waiting... ($i/10)"
-          sleep 5
-        done
-        if ! nc -zv localhost 5432; then
-          echo "PostgreSQL did not start in time."
-          exit 1
-        fi
 
-    - name: Install pgvector extension
-      run: |
-        psql -h ${{ env.DB_URL }} -p 5432 -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -c "CREATE EXTENSION vector;"
-      env:
-        PGPASSWORD: ${{ env.DB_PASSWORD }}
+      - name: Install pgvector extension
+        run: |
+          psql -h ${{ env.DB_URL }} -p 5432 -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -c "CREATE EXTENSION vector;"
+        env:
+          PGPASSWORD: ${{ env.DB_PASSWORD }}
 
-    - name: Run code review script
-      run: |
-        python review_code.py
-      env:
-        DB_USER: ${{ env.DB_USER }}
-        DB_PASSWORD: ${{ env.DB_PASSWORD }}
-        DB_URL: ${{ env.DB_URL }}
-        DB_NAME: ${{ env.DB_NAME }}
-        LLM_MODE: testing
-        REQUIRE_OAUTH: false
+      - name: Run code review script
+        run: |
+          python review_code.py
+        env:
+          DB_USER: ${{ env.DB_USER }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_URL: ${{ env.DB_URL }}
+          DB_NAME: ${{ env.DB_NAME }}
+          LLM_MODE: testing
+          REQUIRE_OAUTH: false

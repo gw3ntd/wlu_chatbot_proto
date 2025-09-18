@@ -1,54 +1,65 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Chat | ScottGPT{% endblock %} {%
+block css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/assistant_conversation.css') }}"
+>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/conversation.css') }}"
+>
+{% endblock %} {% block body %}
+<div class="assistant-header">
+  <h3>🤖 Assistant Mode - You are now helping this student</h3>
+</div>
 
-{% block title %}Chat | ScottGPT{% endblock %}
+<div>
+  <a
+    href="{{ url_for('web_interface.assistant_routes.assistant_dashboard') }}"
+    class="back-button"
+  >
+    ← Back to Dashboard
+  </a>
 
-{% block css %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/assistant_conversation.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/conversation.css') }}">
-{% endblock %}
+  <div class="student-info">
+    <h4>Student Information</h4>
+    <p><strong>Student:</strong> {{ student_email }}</p>
+    <p><strong>Course:</strong> {{ course_name }}</p>
+    <p><strong>Conversation ID:</strong> #{{ conversation_id }}</p>
+  </div>
 
-{% block body %}
-    <div class="assistant-header">
-        <h3>🤖 Assistant Mode - You are now helping this student</h3>
+  <div id="main-layout">
+    <div id="sidebar" class="oswald">
+      <h2>CONVERSATION HISTORY</h2>
+      <div id="sidebar-messages"></div>
     </div>
-    
-    <div>
-        <a href="{{ url_for('web_interface.assistant_routes.assistant_dashboard') }}" class="back-button">
-            ← Back to Dashboard
-        </a>
-        
-        <div class="student-info">
-            <h4>Student Information</h4>
-            <p><strong>Student:</strong> {{ student_email }}</p>
-            <p><strong>Course:</strong> {{ course_name }}</p>
-            <p><strong>Conversation ID:</strong> #{{ conversation_id }}</p>
-        </div>
-        
-        <div id="main-layout">
-            <div id="sidebar" class="oswald">
-                <h2>CONVERSATION HISTORY</h2>
-                <div id="sidebar-messages"></div>
-            </div>
 
-            <div id="main">
-                <div id="chat-container"></div>
-                <div id="message-input">
-                    <form id="input-form" onsubmit="handleAssistantSend(event)">
-                        <textarea
-                            id="userMessage"
-                            rows="2"
-                            class="fira-sans"
-                            placeholder="Type your response as the assistant..."
-                        ></textarea>
-                        <button type="submit" id="sendButton" class="fira-sans">Send as Assistant</button>
-                        <button type="button" id="resolveButton" class="resolve-button" onclick="resolveConversation()">Mark as Resolved</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <div id="main">
+      <div id="chat-container"></div>
+      <div id="message-input">
+        <form id="input-form" onsubmit="handleAssistantSend(event)">
+          <textarea
+            id="userMessage"
+            rows="2"
+            class="fira-sans"
+            placeholder="Type your response as the assistant..."
+          ></textarea>
+          <button type="submit" id="sendButton" class="fira-sans">
+            Send as Assistant
+          </button>
+          <button
+            type="button"
+            id="resolveButton"
+            class="resolve-button"
+            onclick="resolveConversation()"
+          >
+            Mark as Resolved
+          </button>
+        </form>
+      </div>
     </div>
-{% endblock %}
-
-{% block scripts %}
-  <script src="{{ url_for('static', filename='js/assistant_conversation.js') }}"></script>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/assistant_conversation.js') }}"></script>
 {% endblock %}

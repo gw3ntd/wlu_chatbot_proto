@@ -1,10 +1,10 @@
 body {
   margin: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 1)),
-    url("/static/images/background.jpg");                
-  background-size: cover;      
-  background-position: center; 
+    url("/static/images/background.jpg");
+  background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
 }
 
@@ -24,24 +24,24 @@ h1 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 h1 span {
-  color: #FFB81C;
+  color: #ffb81c;
   font-weight: 550;
 }
 
 .divider-line {
-  border: none;    
-  height: 1px;       
+  border: none;
+  height: 1px;
   background-color: white;
-  width: 350px;      
-  margin: 10px auto;    
+  width: 350px;
+  margin: 10px auto;
 }
 
 .welcome-row {
   display: flex;
-  align-items: center;      
-  justify-content: center; 
-  gap: 15px;               
-  margin-bottom: 20px; 
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .login-container {
@@ -69,30 +69,30 @@ h1 span {
 }
 .input-field:focus,
 .input-field:hover {
-  border-color: #FFB81C;
+  border-color: #ffb81c;
 }
 
 form label {
   display: block;
-  width: 250px;    
+  width: 250px;
   text-align: left;
   margin-bottom: 5px;
   font-weight: 500;
   font-size: 1.25rem;
-  color: #FFB81C;     
+  color: #ffb81c;
   font-family: "Oswald", sans-serif;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .bot-pfp {
   height: 100px;
-  width: auto;     
+  width: auto;
   margin-bottom: 15px;
   filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
 }
 .ucr-logo {
   height: 80px;
-  width: auto;     
+  width: auto;
   filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
 }
 
@@ -107,26 +107,26 @@ form label {
   transition: background-color 0.3s ease, color 0.3s ease;
   box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.25);
   margin: 10px 0;
-  width: 250px; 
+  width: 250px;
   display: block;
   text-align: center;
 }
 .btn-login {
-  background-color: #FFC649;
+  background-color: #ffc649;
   color: #000;
 }
 .btn-login:hover,
 .btn-login:focus {
-  background-color: #FFD477;
+  background-color: #ffd477;
   outline: none;
 }
 
 .login-google {
-  background-color: #3364B7; 
+  background-color: #3364b7;
   color: white;
 }
 .login-google:hover,
 .login-google:focus {
-  background-color: #668BC9; 
+  background-color: #668bc9;
   outline: none;
 }

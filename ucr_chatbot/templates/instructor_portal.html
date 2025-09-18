@@ -3,7 +3,7 @@
 {% block title %}Upload Documents | ScottGPT{% endblock %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/instructor_portal.css') }}">
 {% endblock %}
 
 {% block body %}
@@ -11,15 +11,26 @@
         
         <h1>Files</h1>
         <div class="card">
-            <form method=post enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
+            <form method=post action="{{ url_for("web_interface.document_routes.post_document")}}" enctype=multipart/form-data id="uploadForm" onsubmit="disableUploadButton()">
                 <input type=file name=file required>
+                <input type=hidden name="course_id" value="{{course.id}}" required>
                 <input type=submit id="uploadButton" value=Upload>
             </form>
         </div>
 
-        <body>
-            <p>{{body | safe}}</p>
-        </body>
+        <div id="documentList">
+            <ul style="margin-bottom:4px;">
+
+                {% for document in documents %}
+                <li>
+                    <a href="{{url_for("web_interface.document_routes.get_document", file_path=document.file_path)}}">{{document.filename}}</a>
+                    <button delete-object="{{url_for("web_interface.document_routes.delete_document", file_path=document.file_path)}}">Delete</button>
+                </li>
+                {% else %}
+                <li>No documents uploaded.</li>
+                {% endfor %}
+            </ul>
+        </div>
 
 
         <h1>Consent Forms</h1>
@@ -32,7 +43,7 @@
                     <li>
                         {{consent_form.title}}
                         <a href="{{ url_for('web_interface.consent_form_routes.get_consent_form', consent_form_id=consent_form.id) }}" class="model-link">(view)</a> 
-                        <a href="{{ url_for('web_interface.consent_form_routes.delete_consent_form', consent_form_id=consent_form.id) }}" class="model-link delete-link">(remove)</a>
+                        <a class="model-link" delete-object="{{ url_for('web_interface.consent_form_routes.delete_consent_form', consent_form_id=consent_form.id) }}">(remove)</a>
                     </li>
                 {% endfor %}
             </ul>
@@ -62,22 +73,24 @@
         <h1>Students</h1>
         <div class="card">
             <h3>Add Students from CSV</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_from_csv', course_id=course.id) }}" enctype=multipart/form-data>
+            <form participates-ins-form>
                 <input type=file name="file">
+                <input type="hidden" name="role" value="student">
+                <input type="hidden" name="course_id" value="{{course.id}}">
                 <input type=submit value="Add">
             </form>
         </div>
 
         <div class="card">
             <h3>Add Student Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course.id) }}" enctype=multipart/form-data>
+            <form method="post" action="{{ url_for('web_interface.participates_in_routes.post_participates_in') }}">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Student Email:</label>
                         <input type="text" id="email" name="email">
                     </div>
                 </div>
-                
+                <input type="hidden" name="course_id" value="{{course.id}}">
                 <input type="hidden" name="role" value="student">
                 <input type=submit value=Add>
             </form>
@@ -85,23 +98,24 @@
 
        
         <div class="card">
-            <h3>Remove Student Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course.id) }}" enctype=multipart/form-data>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="email">Student Email:</label>
-                        <input type="text" id="email" name="email">
-                    </div>
-                </div>
-                
-                <input type="hidden" name="role" value="student">
-                <input type=submit value=Remove>
-            </form>
+            <h3>Students Enrolled</h3>
+            <ul style="list-style: none; max-height: 200px; overflow-y: auto;">
+                {% for student in students %}
+                <li>
+                    <span>{{ student.email }}</span>
+                    <button delete-object="{{ url_for('web_interface.participates_in_routes.delete_participates_in', course_id=course.id, email=student.email) }}" style="display:inline;">
+                        Remove
+                    </button>
+                </li>
+                {% else %}
+                <li>No students enrolled.</li>
+                {% endfor %}
+            </ul>
         </div>
 
         <h1>Usage Summary</h1>
         <div class="card">
-            <form action="{{ url_for('web_interface.instructor_routes.generate_summary', course_id=course.id) }}" method="post">
+            <form action="{{ url_for('web_interface.instructor_portal.post_summary', course_id=course.id) }}" method="post">
 
                 <label for="start_date">Start Date:</label>
                 <input type="date" id="start_date" name="start_date"  />
@@ -116,66 +130,47 @@
         <h1>Assistants</h1>
         <div class="card">
             <h3>Add Assistant Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_participant', course_id=course.id) }}" enctype=multipart/form-data>
+            <form method="post" action="{{ url_for('web_interface.participates_in_routes.post_participates_in') }}">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="email">ULA Email:</label>
+                        <label for="email">Assistant Email:</label>
                         <input type="text" id="email" name="email">
                     </div>
                 </div>
-
+                <input type="hidden" name="course_id" value="{{course.id}}">
                 <input type="hidden" name="role" value="assistant">
                 <input type=submit value=Add>
             </form>
         </div>
 
         <div class="card">
-            <h3>Remove Assistant Manually</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.remove_participant', course_id=course.id) }}" enctype=multipart/form-data>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="email">Student Email:</label>
-                        <input type="text" id="email" name="email">
-                    </div>
-                </div>
-                
-                <input type="hidden" name="role" value="assistant">
-                <input type=submit value=Remove>
-            </form>
+            <h3>Assistants</h3>
+            <ul style="list-style: none; max-height: 200px; overflow-y: auto;">
+                {% for assistant in assistants %}
+                <li>
+                    <span>{{ assistant.email }}</span>
+                    <button delete-object="{{ url_for('web_interface.participates_in_routes.delete_participates_in', course_id=course.id, email=assistant.email) }}" style="display:inline;">
+                        Remove
+                    </button>
+                </li>
+                {% else %}
+                <li>No assistants have been added to this course.</li>
+                {% endfor %}
+            </ul>
         </div>
 
         <div class="card">
-        <h3>Add Assistants from CSV</h3>
-            <form method=post action="{{ url_for('web_interface.instructor_routes.add_assistant_from_csv', course_id=course.id) }}" enctype=multipart/form-data>
-                <input type=file name="file">
-                <input type=submit value="Add">
-            </form>
-        </div>
+            <h3>Add Assistants from CSV</h3>
+                <form participates-ins-form>
+                    <input type=file name="file">
+                    <input type="hidden" name="role" value="assistant">
+                    <input type="hidden" name="course_id" value="{{course.id}}">
+                    <input type=submit value="Add">
+                </form>
+            </div>
     </section>
 {% endblock %}
 
 {% block scripts %}
-    <script>
-    function disableUploadButton(){
-        const button = document.getElementById('uploadButton');
-        button.disabled = true;
-        button.value = "Uploading...";
-    }
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const forms = document.querySelectorAll('form');
-            forms.forEach(form => {
-                form.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    if (event.target.tagName === 'INPUT') {
-                        event.preventDefault();
-                    }
-                }
-                });
-            });
-        });
-    </script>
-
+  <script src="{{ url_for('static', filename='js/instructor_portal.js') }}"></script>
 {% endblock %}

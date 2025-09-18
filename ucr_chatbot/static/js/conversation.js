@@ -21,102 +21,113 @@ const conversationStatesUnsafe = {
   "RESOLVED": 1,
   "REDIRECTED": 2,
   "CHATBOT": 3,
-}
+};
 
 const conversationStates = new Proxy(conversationStatesUnsafe, {
   get(target, prop, receiver) {
     if (!(prop in target)) {
-      throw new Error(`Invalid conversation state: "${prop}". Valid states are: ${Object.keys(target).join(', ')}`);
+      throw new Error(
+        `Invalid conversation state: "${prop}". Valid states are: ${
+          Object.keys(target).join(", ")
+        }`,
+      );
     }
 
     return Reflect.get(target, prop, receiver);
-  }
+  },
 });
 
-let conversationState = conversationStates[document.body.dataset.conversationState];
+let conversationState =
+  conversationStates[document.body.dataset.conversationState];
 
 async function loadSidebar() {
   fetch(`/conversations?course_id=${courseId}`, {
     method: "GET",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json"
+      "Accept": "application/json",
     },
-  }).then(async response => {
+  }).then(async (response) => {
     if (!response.ok) {
-      throw Error("Could not fetch past conversations.")
+      throw Error("Could not fetch past conversations.");
     }
     const data = await response.json();
     sidebarMessages.innerHTML = "";
 
-    data.conversations.reverse().forEach(c => {
+    data.conversations.reverse().forEach((c) => {
       addSidebarMessage(c.title, c.id);
     });
-  }).catch(error => {
+  }).catch((error) => {
     appendMessage("system", error.message);
-  });  
+  });
 }
 
 async function loadMessages() {
   if (!conversationId) {
-    throw Error("conversationId is not set.")
-  };
+    throw Error("conversationId is not set.");
+  }
 
   fetch(`/messages?conversation_id=${conversationId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json"
+      "Accept": "application/json",
     },
-  }).then(response => {
+  }).then((response) => {
     if (!response.ok) {
       console.log(response);
       throw Error("Could not fetch messages for the conversation.");
     }
     return response.json();
-  }).then(data => {
+  }).then((data) => {
     chatContainer.innerHTML = "";
     data.messages.forEach((msg) => {
-      appendMessage(msg.type === "ASSISTANT_MESSAGE" ? "assistant" : (msg.type === "STUDENT_MESSAGE" ? "user" : "bot"), msg.body);
+      appendMessage(
+        msg.type === "ASSISTANT_MESSAGE"
+          ? "assistant"
+          : (msg.type === "STUDENT_MESSAGE" ? "user" : "bot"),
+        msg.body,
+      );
     });
-  }).catch(error => {
+  }).catch((error) => {
     appendMessage("system", error.message);
   });
 }
 
 async function loadConversationState() {
   await fetch(`/conversations/${conversationId}`, {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-  }}).then(response => {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+  }).then((response) => {
     if (!response.ok) {
-      throw Error("Could not load redirection data.")
+      throw Error("Could not load redirection data.");
     }
     return response.json();
-  }).then(conversation => {
+  }).then((conversation) => {
     switch (conversationStates[conversation.state]) {
-    case conversationStates.CHATBOT:
-      conversationState = conversationStates.CHATBOT;
-      redirectButton.textContent = "Redirect to ULA";
-      redirectButton.disabled = false;
-      userMessageTextarea.disabled = false;
-      break;
-    case conversationStates.REDIRECTED:
-      conversationState = conversationStates.REDIRECTED;
-      redirectButton.textContent = "Mark as Resolved";
-      redirectButton.disabled = false;
-      userMessageTextarea.disabled = false;
-      break;
-    case conversationStates.RESOLVED:
-      conversationState = conversationStates.RESOLVED;
-      redirectButton.textContent = "Resolved";
-      redirectButton.disabled = true;
-      userMessageTextarea.disabled = true;
-      break;
-    default:
-      throw Error(`Invalid conversation state: '${conversation.state}'`)
+      case conversationStates.CHATBOT:
+        conversationState = conversationStates.CHATBOT;
+        redirectButton.textContent = "Redirect to ULA";
+        redirectButton.disabled = false;
+        userMessageTextarea.disabled = false;
+        break;
+      case conversationStates.REDIRECTED:
+        conversationState = conversationStates.REDIRECTED;
+        redirectButton.textContent = "Mark as Resolved";
+        redirectButton.disabled = false;
+        userMessageTextarea.disabled = false;
+        break;
+      case conversationStates.RESOLVED:
+        conversationState = conversationStates.RESOLVED;
+        redirectButton.textContent = "Resolved";
+        redirectButton.disabled = true;
+        userMessageTextarea.disabled = true;
+        break;
+      default:
+        throw Error(`Invalid conversation state: '${conversation.state}'`);
     }
   });
 }
@@ -127,12 +138,16 @@ function createNewConversation() {
   conversationId = null;
   userMessageTextarea.disabled = false;
 
-  document.querySelectorAll(".conversation-item").forEach(el => {
+  document.querySelectorAll(".conversation-item").forEach((el) => {
     el.classList.remove("active");
   });
-  
-  window.history.replaceState({}, "", `/conversations/new?course_id=${courseId}`);
-  
+
+  window.history.replaceState(
+    {},
+    "",
+    `/conversations/new?course_id=${courseId}`,
+  );
+
   redirectButton.textContent = "Redirect to ULA";
   redirectButton.disabled = false;
   conversationState = conversationStates.CHATBOT;
@@ -151,25 +166,28 @@ async function sendMessage(e) {
   if (conversationId === null) {
     let created = await fetch(`/conversations`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
       },
       body: JSON.stringify({ course_id: courseId, title: "Conversation" }),
-    }).then( async response => {
+    }).then(async (response) => {
       if (!response.ok) {
-        throw Error((await response.json()).error || "Could not open new conversation: trouble connecting to server");
+        throw Error(
+          (await response.json()).error ||
+            "Could not open new conversation: trouble connecting to server",
+        );
       }
       return response.json();
-    }).then(data => {
+    }).then((data) => {
       conversationId = data.conversation_id;
 
       window.history.replaceState({}, "", `/conversations/${conversationId}`);
       addSidebarMessage("Conversation", conversationId);
       return true;
-    }).catch(error => {
-     appendMessage("system", error.message);
-     return false;
+    }).catch((error) => {
+      appendMessage("system", error.message);
+      return false;
     });
 
     if (!created) {
@@ -178,10 +196,14 @@ async function sendMessage(e) {
   }
   let thinkingInterval;
   let thinkingMessageElement;
-  const conversationItemElement = document.querySelector(`[data-convo-id="${conversationId}"]`);
+  const conversationItemElement = document.querySelector(
+    `[data-convo-id="${conversationId}"]`,
+  );
   if (conversationState == conversationStates.CHATBOT) {
-    thinkingMessageElement = appendMessage('bot', "Thinking...")
-    let thinkMessageContentElement = thinkingMessageElement.querySelector(".message")
+    thinkingMessageElement = appendMessage("bot", "Thinking...");
+    let thinkMessageContentElement = thinkingMessageElement.querySelector(
+      ".message",
+    );
     let dots = 3;
     thinkingInterval = setInterval(() => {
       dots = (dots % 3) + 1;
@@ -189,45 +211,46 @@ async function sendMessage(e) {
     }, 400);
     userMessageTextarea.disabled = true;
   }
-  
+
   await fetch("/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Accept": "applicaiton/json"
+      "Accept": "applicaiton/json",
     },
-    body: JSON.stringify({body: message, conversation_id: conversationId})
-  }).then(async response => {
+    body: JSON.stringify({ body: message, conversation_id: conversationId }),
+  }).then(async (response) => {
     if (!response.ok) {
-      throw Error((await response.json()).error || "Could not send message.")
+      throw Error((await response.json()).error || "Could not send message.");
     }
-  }).catch(error => {
+  }).catch((error) => {
     appendMessage("system", error.message);
   });
 
   if (conversationState == conversationStates.CHATBOT) {
     await fetch(`/conversations/${conversationId}/ai-responses`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
       },
-      body: JSON.stringify({prompt: message}),
-    }).then(async response => {
-
+      body: JSON.stringify({ prompt: message }),
+    }).then(async (response) => {
       if (!response.ok) {
-        throw Error((await response.json()).error || "Could not get AI Tutor response.");
+        throw Error(
+          (await response.json()).error || "Could not get AI Tutor response.",
+        );
       }
 
-      return response.json()
-    }).then(async data => {
-        appendMessage("bot", data.text);
-        conversationItemElement.textContent = data.title;
-    }).catch(error => {
+      return response.json();
+    }).then(async (data) => {
+      appendMessage("bot", data.text);
+      conversationItemElement.textContent = data.title;
+    }).catch((error) => {
       appendMessage("system", error.message);
     }).finally(() => {
-        clearInterval(thinkingInterval);
-        thinkingMessageElement.remove();
+      clearInterval(thinkingInterval);
+      thinkingMessageElement.remove();
     });
   }
   userMessageTextarea.disabled = false;
@@ -240,7 +263,7 @@ function appendMessage(sender, text) {
   if (sender) {
     messageWrapper.classList.add(sender);
   }
-  
+
   if (sender === "user" || sender === "bot" || sender === "assistant") {
     const pfp = document.createElement("img");
     pfp.classList.add("pfp");
@@ -268,7 +291,7 @@ function appendMessage(sender, text) {
   const html = converter.makeHtml(text);
   messageDiv.innerHTML = html;
 
-  messageDiv.querySelectorAll('pre code').forEach((block) => {
+  messageDiv.querySelectorAll("pre code").forEach((block) => {
     hljs.highlightElement(block);
   });
 
@@ -279,7 +302,6 @@ function appendMessage(sender, text) {
   return messageWrapper;
 }
 
-
 function addSidebarMessage(label, convoId) {
   if (document.querySelector(`[data-convo-id="${convoId}"]`)) return;
 
@@ -289,7 +311,7 @@ function addSidebarMessage(label, convoId) {
   item.dataset.convoId = convoId;
 
   item.addEventListener("click", () => {
-    document.querySelectorAll(".conversation-item").forEach(el => {
+    document.querySelectorAll(".conversation-item").forEach((el) => {
       el.classList.remove("active");
     });
     item.classList.add("active");
@@ -310,7 +332,6 @@ function addSidebarMessage(label, convoId) {
 
 loadSidebar();
 
-
 if (conversationId !== null) {
   loadMessages();
   loadConversationState();
@@ -323,11 +344,13 @@ userMessageTextarea.addEventListener("keydown", (event) => {
   }
 });
 
-
 // redirect conversation to assistant or mark as resolved
 redirectButton.addEventListener("click", async () => {
   if (!conversationId) {
-    appendMessage("system", "There must be at least one message in the conversation before it can be redirected to an Assistant.");
+    appendMessage(
+      "system",
+      "There must be at least one message in the conversation before it can be redirected to an Assistant.",
+    );
     return;
   }
   switch (conversationState) {
@@ -339,13 +362,16 @@ redirectButton.addEventListener("click", async () => {
           Accept: "application/json",
         },
         body: JSON.stringify({ state: "REDIRECTED" }),
-      }).then( async response => {
+      }).then(async (response) => {
         if (!response.ok) throw Error("Could not redirect conversation.");
         redirectButton.textContent = "Mark as Resolved";
         conversationState = conversationStates.REDIRECTED;
-        appendMessage("system", "Your conversation is now visible to assistants and the AI chat bot is disabled for this conversation.");
-      }).catch( error => {
-        appendMessage("system", error.message)
+        appendMessage(
+          "system",
+          "Your conversation is now visible to assistants and the AI chat bot is disabled for this conversation.",
+        );
+      }).catch((error) => {
+        appendMessage("system", error.message);
       });
       break;
     case conversationStates.REDIRECTED:
@@ -356,14 +382,14 @@ redirectButton.addEventListener("click", async () => {
           Accept: "application/json",
         },
         body: JSON.stringify({ state: "RESOLVED" }),
-      }).then( async response => {
+      }).then(async (response) => {
         if (!response.ok) throw Error("Could not resolve conversation.");
         redirectButton.textContent = "Resolved";
         conversationState = conversationStates.RESOLVED;
         userMessageTextarea.disabled = true;
         appendMessage("system", "Your conversation is now resolved.");
-      }).catch( error => {
-        appendMessage("system", error.message)
+      }).catch((error) => {
+        appendMessage("system", error.message);
       });
     case conversationStates.RESOLVED:
       break;
@@ -373,29 +399,29 @@ redirectButton.addEventListener("click", async () => {
 async function checkForNewMessages() {
   if (conversationState != conversationStates.REDIRECTED) return;
   if (!conversationId) return;
-    response = await fetch(`/messages?conversation_id=${conversationId}`, {
-      method: "GET",
-      headers: { 
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-    });
+  response = await fetch(`/messages?conversation_id=${conversationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+  });
 
-    if (!response.ok) return;
+  if (!response.ok) return;
 
-    await response.json().then(data => {
-      const currentMessageCount = chatContainer.children.length;
-      if (data.messages.length > currentMessageCount) {
-        loadMessages();
-      }
-    }).catch(error => {
-      console.error("Error checking for new messages:", error);
-    });
+  await response.json().then((data) => {
+    const currentMessageCount = chatContainer.children.length;
+    if (data.messages.length > currentMessageCount) {
+      loadMessages();
+    }
+  }).catch((error) => {
+    console.error("Error checking for new messages:", error);
+  });
 }
 
 let messageCheckInterval = setInterval(checkForNewMessages, 5000);
 
-window.addEventListener('beforeunload', function() {
+window.addEventListener("beforeunload", function () {
   if (messageCheckInterval) {
     clearInterval(messageCheckInterval);
   }
@@ -409,20 +435,20 @@ async function showLimits(event) {
 
   await fetch(`/limits?course_id=${courseId}`, {
     method: "GET",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json"
+      "Accept": "application/json",
     },
-  }).then(response => {
+  }).then((response) => {
     if (!response.ok) {
       const errorTextElement = document.createElement("p");
       errorTextElement.textContent = "Could not fetch limit information";
       errorTextElement.style.margin = "0 2%";
       limitInformation.appendChild(errorTextElement);
     }
-    return response.json()
-  }).then(data => {
-    data.limits.forEach(limit => {
+    return response.json();
+  }).then((data) => {
+    data.limits.forEach((limit) => {
       const listItem = document.createElement("ul");
 
       seconds_to_span = new Map([
@@ -430,14 +456,19 @@ async function showLimits(event) {
         [3600, "hour"],
         [86_400, "day"],
         [604_800, "week"],
-      ])
+      ]);
 
-      listItem.textContent = `${limit.maximum_number_of_uses - limit.uses} left for this ${seconds_to_span.get(limit.time_span_seconds) || limit.time_span_seconds + "-second span"}.`
+      listItem.textContent = `${
+        limit.maximum_number_of_uses - limit.uses
+      } left for this ${
+        seconds_to_span.get(limit.time_span_seconds) ||
+        limit.time_span_seconds + "-second span"
+      }.`;
       limitList.appendChild(listItem);
-    })
-  }).catch(error => {
+    });
+  }).catch((error) => {
     console.error(error);
-  })
+  });
 }
 
 function hideLimits(event) {

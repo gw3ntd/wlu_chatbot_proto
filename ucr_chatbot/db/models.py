@@ -15,7 +15,6 @@ import enum
 from pgvector.sqlalchemy import Vector  # type: ignore
 from datetime import datetime, timezone
 from sqlalchemy.exc import SQLAlchemyError
-import pandas as pd
 from typing import cast
 import secrets
 import string
@@ -187,6 +186,11 @@ class Document(base):
     course = relationship("Course", back_populates="documents")
     segments = relationship("Segment", back_populates="document", uselist=True)
 
+    @property
+    def filename(self) -> str:
+        """The filename portion of the file path."""
+        return PurePath(self.file_path).name  # type: ignore
+
 
 class Segment(base):
     """Represents a section of a document to be embedded"""
@@ -297,36 +301,6 @@ def add_user_to_course(email: str, course_id: int, role: str):
             session.add(new_participation)
             session.commit()
             print("User added to course.")
-
-
-def add_students_from_list(data: pd.DataFrame, course_id: int):
-    """Adds students to course from a passed in list.
-    Must be called within a request context.
-
-    :param data: Pandas dataframe containing student information.
-    :param course_id: Course the students will be added to."""
-    with Session(get_engine()) as session:
-        course = session.query(Course).filter(Course.id == course_id).first()
-        if course:
-            for _, row in data.iterrows():
-                row: pd.Series
-                email = str(row["SIS User ID"]) + "@ucr.edu"
-                add_user_to_course(email, course_id, "student")
-
-
-def add_assistants_from_list(data: pd.DataFrame, course_id: int):
-    """Adds assistants to course from a passed in list.
-    Must be called within a request context.
-
-    :param data: Pandas dataframe containing assistant information.
-    :param course_id: Course the assistants will be added to."""
-    with Session(get_engine()) as session:
-        course = session.query(Course).filter(Course.id == course_id).first()
-        if course:
-            for _, row in data.iterrows():
-                row: pd.Series
-                email = str(row["SIS User ID"]) + "@ucr.edu"
-                add_user_to_course(email, course_id, "assistant")
 
 
 def add_new_course(name: str):

@@ -1,23 +1,23 @@
 .consent-form-body {
-    margin: 0 25%;
-    margin-top: 2%;
+  margin: 0 25%;
+  margin-top: 2%;
 }
 
 form {
-    margin: 0 auto;
-    text-align: center;
+  margin: 0 auto;
+  text-align: center;
 }
 
 form input {
-    color: black;
-    background-color: #FFB81C;
-    border-radius: 3px;
-    border-width: 0px;
-    padding: 4px 32px;
-    transition: background-color 0.5s ease;
+  color: black;
+  background-color: #ffb81c;
+  border-radius: 3px;
+  border-width: 0px;
+  padding: 4px 32px;
+  transition: background-color 0.5s ease;
 }
 
 form input:hover {
-    color: white;
-    background-color: #003DA5;
-  }
+  color: white;
+  background-color: #003da5;
+}
