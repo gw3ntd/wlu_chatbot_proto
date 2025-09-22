@@ -17,9 +17,10 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
 from ucr_chatbot.decorators import roles_required
-from ucr_chatbot.db.models import Session, get_engine, Document, Segment
+from ucr_chatbot.db.models import Session, get_engine, Document, Segment, Embedding
 from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.api.file_parsing import parse_file, FileParsingError
+from ucr_chatbot.api.embedding import embed_text
 
 bp = Blueprint("document_routes", __name__)
 
@@ -95,7 +96,10 @@ def post_document():
             )
         )
         for seg in segments:
-            session.add(Segment(text=seg, document_id=str(file_path)))
+            segment = Segment(text=seg, document_id=str(file_path))
+            session.add(segment)
+            session.flush()
+            session.add(Embedding(vector=embed_text(seg), segment_id=segment.id))
         session.commit()
 
     file_data.seek(0)
