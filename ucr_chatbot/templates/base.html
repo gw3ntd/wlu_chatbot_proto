@@ -58,12 +58,15 @@
     %}
   >
     <header>
-      <h1>Scott<span><b>GPT</b></span></h1>
+      <a style="all: unset; cursor: pointer;" href="{{ url_for('web_interface.general_routes.course_selection')}}">
+        <h1>Scott<span><b>GPT</b></span></h1>
+      </a>
+
       <img
-        src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}"
-        alt="UCR Logo"
-        class="ucr-logo"
-      >
+      src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}"
+      alt="UCR Logo"
+      class="ucr-logo">
+      
     </header>
 
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
