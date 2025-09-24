@@ -52,14 +52,16 @@ def generate_conversation_summary(
         }
 
         for message in messages:
-            total_messages.append(f"{type_map.get(message.type)}: {message.body}")
+            total_messages.append(f"# {type_map.get(message.type)}\n {message.body}")
 
         total_messages_txt = "\n".join(total_messages)
 
         prompt = prompt + total_messages_txt
-        response = get_language_model_client().get_response(prompt)
+        response = get_language_model_client().get_response(
+            [{"role": "user", "parts": [{"text": prompt}]}]
+        )
 
-        return response
+        return response.get_text()
 
 
 def generate_usage_summary(
@@ -121,7 +123,7 @@ def generate_usage_summary(
 
     prompt = f"""These are all of the messages that students have been having with a AI chatbot for help with a computer science course. 
                 Generate a report for this course's instructor summarising students\' interactions with the chatbot, highlighting common questions and students\' strengths and weaknesses
-                Here are the all student chatbot messages {total_messages_txt}
+                Here are the all student chatbot messages \n{total_messages_txt}
                 Do not include any information of chatbot performance, or include recommendations for the professor
                 Do not focus too much on specific/invidual interactions between a student and the chatbot. 
                 Focus more higher level, what topics are being discussed and with what frequency, which topics are students struggling at, how are they struggling.
@@ -129,7 +131,9 @@ def generate_usage_summary(
                 Also include a section for specific topics where students needed help and required talking to a human assistant.
                 """
 
-    response = get_language_model_client().get_response(prompt)
+    response = get_language_model_client().get_response(
+        [{"role": "user", "parts": [{"text": prompt}]}]
+    )
 
     if time_start and time_end:
         title = f"## {course_name} Chatbot Interaction Report ({time_start.date()} - {time_end.date()})\n\n"
@@ -145,7 +149,7 @@ def generate_usage_summary(
         + "\nTotal Conversations: "
         + str(conv_count)
         + "\n\n"
-        + response
+        + response.get_text()
     )
 
     return summary

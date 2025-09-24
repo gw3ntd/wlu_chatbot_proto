@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-
+from dataclasses import dataclass
+import typing as t
 
 import google.generativeai as genai
 import ollama
@@ -9,11 +10,31 @@ from flask import g
 from ucr_chatbot.config import LLMMode, app_config
 
 
+class PartDict(t.TypedDict, total=True):
+    text: str
+
+
+class ContentDict(t.TypedDict, total=True):
+    role: t.Literal["user", "model"]
+    parts: list[PartDict]
+
+
+@dataclass
+class ModelResponse:
+    content: ContentDict
+
+    def get_text(self) -> str:
+        """The text body of this response."""
+        return "\n".join([p["text"] for p in self.content["parts"]])
+
+
 class LanguageModelClient(ABC):
     """An abstract base class for language model clients."""
 
     @abstractmethod
-    def get_response(self, prompt: str, max_tokens: int = 3000) -> str:
+    def get_response(
+        self, contents: list[ContentDict], max_tokens: int = 3000
+    ) -> ModelResponse:
         """Gets a single, complete response from the language model.
 
         :param prompt: The prompt to feed into the language model.
@@ -31,12 +52,18 @@ class TestingClient(LanguageModelClient):
     to it and returns formatted responses showing what was received.
     """
 
-    def get_response(self, prompt: str, max_tokens: int = 3000) -> str: # noqa: D102
+    def get_response(  # noqa: D102
+        self, contents: list[ContentDict], max_tokens: int = 3000
+    ) -> ModelResponse:
         response_parts = [
-            f"You passed in arguments: prompt='{prompt}', max_tokens={max_tokens}"
+            f"You passed in arguments: contents='{contents}', max_tokens={max_tokens}"
         ]
 
-        return " | ".join(response_parts)
+        return ModelResponse(
+            content=ContentDict(
+                role="model", parts=[{"text": " | ".join(response_parts)}]
+            )
+        )
 
 
 class Gemini(LanguageModelClient):
@@ -49,13 +76,17 @@ class Gemini(LanguageModelClient):
         self.model = genai.GenerativeModel(model_name="gemini-2.0-flash")  # type: ignore
         self.temp = 1.0
 
-    def get_response(self, prompt: str, max_tokens: int = 3000) -> str: # noqa: D102
+    def get_response(  # noqa: D102
+        self, contents: list[ContentDict], max_tokens: int = 3000
+    ) -> ModelResponse:
         config = {
             "temperature": self.temp,
             "max_output_tokens": max_tokens,
         }
-        response = self.model.generate_content(prompt, generation_config=config)  # type: ignore
-        return response.text
+        response = self.model.generate_content(contents, generation_config=config)  # type: ignore
+        return ModelResponse(
+            content=ContentDict(role="model", parts=[{"text": response.text}])
+        )
 
 
 class Ollama(LanguageModelClient):
@@ -76,15 +107,36 @@ class Ollama(LanguageModelClient):
                 f"Could not connect to Ollama at {host}. Please ensure Ollama is running."
             )
 
-    def get_response(self, prompt: str, max_tokens: int = 3000) -> str: # noqa: D102
+    def get_response(  # noqa: D102
+        self, contents: list[ContentDict], max_tokens: int = 3000
+    ) -> ModelResponse:
         options = {
             "temperature": self.temp,
             "num_predict": max_tokens,
         }
-        response = self.client.generate(
-            model=self.model, prompt=prompt, stream=False, options=options
+
+        response = self.client.chat(  # type: ignore[reportUnknownMemberType]
+            model=self.model,
+            messages=list(map(self._convert_to_ollama_message, contents)),
+            options=options,
+            stream=False,
         )
-        return response.get("response", "")
+        return ModelResponse(
+            content=ContentDict(
+                role="model", parts=[{"text": response.message.content or ""}]
+            )
+        )
+
+    def _convert_to_ollama_message(self, content: ContentDict) -> ollama.Message:
+        match content["role"]:
+            case "user":
+                role = "user"
+            case "model":
+                role = "assistant"
+
+        assert len(content["parts"]) == 1
+
+        return ollama.Message(role=role, content=content["parts"][0]["text"])
 
 
 def get_language_model_client() -> LanguageModelClient:

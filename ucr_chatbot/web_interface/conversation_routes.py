@@ -309,9 +309,11 @@ def generate_title(client: LanguageModelClient, message: str):
     :param message: the first message in a new conversation to be used to generate the title
     """
     prompt = f"With a user's first message in a AI chatbot conversation, {message}, generate a 30 character max title for this conversation. Do not actually answer the queestion, just sumarize it in 30 characters max. Do not generate anything else, only the 30 character max title"
-    response = client.get_response(prompt[:600], max_tokens=30)[0:30]
+    response = client.get_response(
+        [{"role": "user", "parts": [{"text": prompt}]}], max_tokens=30
+    )
 
-    return response
+    return response.get_text()[:30]
 
 
 class ConversationResponse(PydanticModel):

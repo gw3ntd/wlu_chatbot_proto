@@ -11,22 +11,19 @@ from ucr_chatbot.db.models import (
     MessageType,
     ConversationState,
 )
-from ucr_chatbot.api.language_model import LanguageModelClient
+from ucr_chatbot.api.language_model import LanguageModelClient, ContentDict
 from ucr_chatbot.api.context_retrieval import retriever
 
 SYSTEM_PROMPT = """# Main directive
 You are a helpful student tutor for a university computer science course. You must assist students in their learning by answering question in a didactically useful way. You should only answer questions if you are certain that you know the correct answer.
-You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer. The conversation history for the last 10 messages is also provided. 
+You will be given context that may or may not be useful for answering the student's question followed by the question. Again, only answer the question if you are certain that you have a correct answer.
 Never explicitly say that you got information from the context or the references/numbers they come from, or tell students to reference document numbers. Only answer the students questions as if the information is coming from you.
-Your main priority is being a tutor, and instead of giving direct answers most of the time, focus on teaching students and leading them to the answer themselves.
+Your main priority is being a tutor, so answer pointed and direct questions but ask clarifying questions when a student asks a vague question. Lead to the student toward the correct answer in such cases.
 
-If the context is not relevant, or if it is not a follow up question, then you should tell the student, "I cannot find any relevant course materials to help answer your question."
+If the context is not relevant, and if it is not a follow up question, then you should tell the student, "I cannot find any relevant course materials to help answer your question."
 
 ## Context
 {context}
-
-## History
-{history}
 
 ## Question
 {question}
@@ -78,25 +75,19 @@ def generate_response(
         map(lambda s: f"Reference number: {s.id}, text: {s.text}", segments)
     )
 
-    previous_messages = "\n".join(map(message_to_history, messages[:-1]))
-    # request_character_count = len(context + prompt)
+    messages = list(map(message_to_history, messages[:-1]))
 
-    # if request_character_count > MAX_CHARACTERS_PER_REQUEST:
-    #     raise ValueError(f"Prompt and context are together too long: together they have {request_character_count} characters, but there must be fewer than {MAX_CHARACTERS_PER_REQUEST}")
+    prompt_with_context = SYSTEM_PROMPT.format(context=context, question=prompt)
 
-    prompt_with_context = SYSTEM_PROMPT.format(
-        context=context,
-        question=prompt,
-        history=previous_messages,  # [-MAX_CHARACTERS_PER_REQUEST + request_character_count:],
-    )
-
-    response_text = client.get_response(
-        prompt=prompt_with_context, max_tokens=max_tokens
+    response = client.get_response(
+        contents=messages
+        + [ContentDict(role="user", parts=[{"text": prompt_with_context}])],
+        max_tokens=max_tokens,
     )
 
     sources = [SegmentResponse(segment_id=s.id) for s in segments]
 
-    return GenerationResponse(text=response_text, sources=sources)
+    return GenerationResponse(text=response.get_text(), sources=sources)
 
 
 class SegmentResponse(PydanticModel):
@@ -108,18 +99,20 @@ class GenerationResponse(PydanticModel):
     sources: list[SegmentResponse]
 
 
-def message_to_history(message: Message):
+def message_to_history(message: Message) -> ContentDict:
     """Converts a message to historical context for the language model."""
-    sender = (
-        "Student"
-        if message.type == MessageType.STUDENT_MESSAGE  # type: ignore
-        else (
-            "Bot" if message.type == MessageType.BOT_MESSAGE else "Human Assistant"  # type: ignore
-        )
-    )
 
-    return f"""### {sender}
-{message.body}"""
+    match message.type:
+        case MessageType.STUDENT_MESSAGE:
+            role = "user"
+        case MessageType.BOT_MESSAGE:
+            role = "model"
+        case t:
+            raise ValueError(
+                f"Invalid message type '{t}' encountered when generating language model response. Only student and bot messages are allowed."
+            )
+
+    return {"role": role, "parts": [{"text": str(message.body)}]}
 
 
 def current_user_initiated_or_assists(conversation: Conversation):
