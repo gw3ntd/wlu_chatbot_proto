@@ -37,7 +37,7 @@ section ul {
   transition: box-shadow 0.3s ease;
   border-left: 5px solid transparent;
   color: #003da5;
-  cursor: url("/static/images/select-cursor.png") 0 0, pointer;
+  /* cursor: url("/static/images/select-cursor.png") 0 0, pointer; */
 }
 .card:hover {
   box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
