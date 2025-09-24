@@ -13,7 +13,7 @@ class RetrievedSegment:
 
     id: int
     text: str
-    document_id: str
+    document_name: str
 
 
 class Retriever:
@@ -38,7 +38,7 @@ class Retriever:
 
         with Session(get_engine()) as session:
             results = (
-                session.query(Segment)
+                session.query(Segment, Document.name)
                 .join(Embedding)
                 .join(Document)
                 .filter(Document.course_id == course_id)
@@ -51,9 +51,9 @@ class Retriever:
                 RetrievedSegment(
                     id=segment.id,  # type: ignore
                     text=segment.text,  # type: ignore
-                    document_id=segment.document_id,  # type: ignore
+                    document_name=name,  # type: ignore
                 )
-                for segment in results
+                for segment, name in results
             ]
 
         return retrieved_segments

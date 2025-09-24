@@ -37,13 +37,17 @@ def test_file_upload(client: FlaskClient, mock_course: MockCourse, storage_servi
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.instructor_email
 
-    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.txt"), "course_id": mock_course.course_id} 
+    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.txt"), "course_id": mock_course.course_id, "name": "uploaded file"} 
     response = client.post(f"/documents", data=data, content_type="multipart/form-data", follow_redirects=True, headers={"Referer": f"/courses/{mock_course.course_id}/instructor-portal"})
 
     assert response.status_code < 400
-    assert b"test_file.txt" in response.data
+    assert b"uploaded file" in response.data
 
-    file_path = Path("1",  "test_file.txt")
+    folder_path = Path("1")
+
+    assert len(storage_service.list_directory(folder_path)) == 1
+
+    file_path = storage_service.list_directory(folder_path)[0]
 
     with storage_service.get_file(file_path) as f:
         assert f.read() == b"Test file for CS009A"
@@ -52,15 +56,15 @@ def test_invalid_file_extension_does_not_upload(client: FlaskClient, mock_course
     with client.session_transaction() as session:
         session["_user_id"] = mock_course.instructor_email
 
-    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.ext"), "course_id": mock_course.course_id} 
+    data = {"file": (io.BytesIO(b"Test file for CS009A"), "test_file.ext"), "course_id": mock_course.course_id, "name": "uploaded file"} 
     response = client.post(f"/documents", data=data, content_type="multipart/form-data", follow_redirects=True, headers={"Referer": f"/courses/{mock_course.course_id}/instructor-portal"})
 
     assert response.status_code >= 400
-    assert b"test_file.ext" not in response.data
+    assert b"uploaded file" not in response.data
 
-    file_path = Path("1",  "test_file.ext")
+    file_path = Path("1")
 
-    assert not storage_service.file_exists(file_path)
+    assert len(storage_service.list_directory(file_path)) == 0
 
 
 def test_generate_summary(client: FlaskClient, mock_course: MockCourse):

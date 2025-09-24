@@ -8,8 +8,9 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     Enum,
-    Boolean,
+    UniqueConstraint,
 )
+
 from sqlalchemy.orm import declarative_base, mapped_column, relationship, Session
 import enum
 from pgvector.sqlalchemy import Vector  # type: ignore
@@ -19,7 +20,6 @@ from typing import cast
 import secrets
 import string
 from pathlib import PurePath
-from typing import Sequence
 
 
 from flask_login import UserMixin  # type: ignore
@@ -179,17 +179,29 @@ class Document(base):
     """Represents a stored file to be references with queries"""
 
     __tablename__ = "documents"
-    file_path = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    file_hash = Column(String(64), nullable=False)
+    file_extension = Column(String, nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
+    name = Column(String, nullable=False)
 
+    __table_args__ = (
+        UniqueConstraint("file_hash", "course_id", name="_customer_location_uc"),
+    )
     course = relationship("Course", back_populates="documents")
-    segments = relationship("Segment", back_populates="document", uselist=True)
+    segments = relationship(
+        "Segment", back_populates="document", uselist=True, cascade="all, delete-orphan"
+    )
 
     @property
-    def filename(self) -> str:
-        """The filename portion of the file path."""
-        return PurePath(self.file_path).name  # type: ignore
+    def full_file_path(self) -> PurePath:
+        """The location at which this document is stored."""
+        return PurePath(str(self.course_id), f"{self.file_hash}")
+
+    @property
+    def name_with_extension(self) -> str:
+        """The name of this file with its file extension"""
+        return f"{self.name}.{self.file_extension}"
 
 
 class Segment(base):
@@ -198,10 +210,17 @@ class Segment(base):
     __tablename__ = "segments"
     id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(String)
-    document_id = Column(String, ForeignKey("documents.file_path"), nullable=False)
+    document_id = Column(
+        Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
+    )
 
     document = relationship("Document", back_populates="segments")
-    embeddings = relationship("Embedding", back_populates="segment", uselist=True)
+    embeddings = relationship(
+        "Embedding",
+        back_populates="segment",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
 
 
 class Message(base):
@@ -212,7 +231,9 @@ class Message(base):
     body = Column(Text)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     type = Column(Enum(MessageType))
-    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
     written_by = Column(String, ForeignKey("users.email"), nullable=False)
 
     conversation = relationship("Conversation", back_populates="messages")
@@ -235,7 +256,9 @@ class Embedding(base):
     __tablename__ = "embeddings"
     id = Column(Integer, primary_key=True, autoincrement=True)
     vector = mapped_column(Vector)
-    segment_id = Column(Integer, ForeignKey("segments.id"), nullable=False)
+    segment_id = Column(
+        Integer, ForeignKey("segments.id", ondelete="CASCADE"), nullable=False
+    )
 
     segment = relationship("Segment", back_populates="embeddings")
 
@@ -317,95 +340,5 @@ def add_new_course(name: str):
             session.add(new_course)
             session.commit()
 
-        except SQLAlchemyError:
-            session.rollback()
-
-
-def add_new_document(file_path: str, course_id: int):
-    """Adds new document to the Document table with the given parameters.
-    Must be called within a request context.
-
-    :param file_path: path pointing to where new document is stored.
-    :param course_id: id for course document was uploaded to.
-    """
-    with Session(get_engine()) as session:
-        try:
-            new_document = Document(
-                file_path=file_path,
-                course_id=course_id,
-            )
-            session.add(new_document)
-            session.commit()
-            print("Document added.")
-        except SQLAlchemyError:
-            session.rollback()
-            print("Document not added.")
-
-
-def set_document_inactive(file_path: str):
-    """Sets the is_active column of a document entry to false.
-    Must be called within a request context.
-
-    :param file_path: The file path of the document to be set inactive.
-    """
-    with Session(get_engine()) as session:
-        document = session.query(Document).filter_by(file_path=file_path).first()
-        if document:
-            document.is_active = False  # type: ignore
-            session.commit()
-
-
-def get_active_documents() -> list[PurePath]:
-    """Returns list of the file paths for all active documents in the database.
-    Must be called within a request context.
-
-    :return: list of the file paths for all active documents:
-    """
-    with Session(get_engine()) as session:
-        active_documents = session.query(Document).filter_by(is_active=True)
-        file_paths: list[PurePath] = []
-
-        for doc in active_documents:
-            file_paths.append(PurePath(getattr(doc, "file_path")))
-
-        return file_paths
-
-
-def store_segment(segment_text: str, file_path: str) -> int:
-    """Creates new Segment instance and stores it into Segment table.
-    Must be called within a request context.
-
-    :param segment_text: The segment text to be added.
-    :param file_path: The file path of the document the segment was parsed from.
-    :return: An int representing the segment ID.
-    """
-    with Session(get_engine()) as session:
-        new_segment = Segment(
-            text=segment_text,
-            document_id=file_path,
-        )
-        session.add(new_segment)
-        session.flush()
-        segment_id = int(getattr(new_segment, "id"))
-        session.commit()
-
-        return segment_id
-
-
-def store_embedding(embedding: Sequence[float], segment_id: int):
-    """Creates new Embedding instance and stores it into Embedding table.
-    Must be called within a request context.
-
-    :param embedding: List of floats representing the vector embedding.
-    :param segment_id: ID for the segment the vector embedding represents.
-    """
-    with Session(get_engine()) as session:
-        try:
-            new_embedding = Embedding(
-                vector=embedding,
-                segment_id=segment_id,
-            )
-            session.add(new_embedding)
-            session.commit()
         except SQLAlchemyError:
             session.rollback()

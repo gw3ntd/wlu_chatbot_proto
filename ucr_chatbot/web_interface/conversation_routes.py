@@ -21,6 +21,7 @@ from ucr_chatbot.web_helpers.limit import (
 from ucr_chatbot.web_helpers.conversation import (
     current_user_initiated_or_assists,
     generate_response,
+    SegmentResponse,
 )
 from ucr_chatbot.db.models import (
     Session,
@@ -274,7 +275,6 @@ def post_ai_response(conversation_id: int):
         conversation_title = str(conv.title)
 
     response = generate_response(client, conversation_id=conversation_id)
-
     if response is None:
         # This would likely be because the most recent message in the chat
         # was not a student message.
@@ -298,7 +298,9 @@ def post_ai_response(conversation_id: int):
 
         session.commit()
         return jsonify(
-            PostAiResponse(text=response.text, title=conversation_title).model_dump()
+            PostAiResponse(
+                text=response.text, title=conversation_title, sources=response.sources
+            ).model_dump()
         )
 
 
@@ -329,6 +331,7 @@ class ConversationListResponse(PydanticModel):
 class PostAiResponse(PydanticModel):
     text: str
     title: str
+    sources: list[SegmentResponse]
 
 
 class PostConversationRequest(PydanticModel):

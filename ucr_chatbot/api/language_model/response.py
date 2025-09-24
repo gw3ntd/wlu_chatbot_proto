@@ -92,7 +92,9 @@ class Gemini(LanguageModelClient):
 class Ollama(LanguageModelClient):
     """A class representation for a local Ollama API."""
 
-    def __init__(self, model: str = "gemma:2b", host: str = "http://localhost:11434"):
+    def __init__(
+        self, model: str = "llama3.2:3B", host: str = "http://localhost:11434"
+    ):
         """Initializes the Ollama client with the specified model and host.
         :param model: The name of the Ollama model to use.
         :param host: The host URL for the Ollama API.

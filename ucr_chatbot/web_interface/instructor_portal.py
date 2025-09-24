@@ -52,11 +52,7 @@ def instructor_portal(course_id: int):
         if course is None:
             abort(404)
 
-        documents = (
-            sess.query(Document)
-            .where(Document.course_id == course_id, Document.is_active == True)
-            .all()
-        )
+        documents = sess.query(Document).where(Document.course_id == course_id).all()
         students = (
             sess.query(User)
             .join(ParticipatesIn)
