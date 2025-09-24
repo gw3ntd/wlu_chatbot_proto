@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import pytest
 from flask import Flask
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ucr_chatbot import create_app
@@ -12,15 +13,35 @@ from ucr_chatbot.db.models import get_engine, base, User, ParticipatesIn, Course
 from ucr_chatbot.api.file_storage import get_storage_service
 from ucr_chatbot.config import LLMMode, FileStorageMode
 
-@pytest.fixture(scope="function")
-def app():
-    app = create_app({
+
+TEST_APP_CONFIG = {
         "TESTING": True,
         "FILE_STORAGE_MODE": FileStorageMode.LOCAL,
         "FILE_STORAGE_PATH": "test_storage",
         "REQUIRE_OAUTH": False,
         "LLM_MODE": LLMMode.TESTING
-    })
+    }
+
+@pytest.fixture(scope="session", autouse=True)
+def check_empty_db():
+    """
+    Checks if the database is empty before running any tests.
+    """
+
+    with create_app(TEST_APP_CONFIG).app_context():
+
+        engine = get_engine()
+        inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+        if table_names:
+            pytest.exit(
+                f"Test database is not empty. The following tables were found: {', '.join(table_names)}. "
+                "Please drop the tables before running tests."
+            )
+
+@pytest.fixture(scope="function")
+def app():
+    app = create_app(TEST_APP_CONFIG)
     app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
 
     with app.app_context():
