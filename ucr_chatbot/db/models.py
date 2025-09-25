@@ -58,9 +58,23 @@ class User(base, UserMixin):
     email = Column(String, primary_key=True)
     password_hash = Column(String(255), nullable=False)
 
-    conversations = relationship("Conversation", back_populates="user", uselist=True)
-    messages = relationship("Message", back_populates="user", uselist=True)
-    participates_in = relationship("ParticipatesIn", back_populates="user")
+    conversations = relationship(
+        "Conversation",
+        back_populates="user",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+    messages = relationship(
+        "Message",
+        back_populates="user",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+    participates_in = relationship(
+        "ParticipatesIn",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def set_password(self, password: str):
         """Takes a plain text password and uses generate_password_hash
@@ -97,8 +111,12 @@ class ParticipatesIn(base):
     """Represents the enrollment between users and courses"""
 
     __tablename__ = "participates_in"
-    email = Column(String, ForeignKey("users.email"), primary_key=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), primary_key=True)
+    email = Column(
+        String, ForeignKey("users.email", ondelete="CASCADE"), primary_key=True
+    )
+    course_id = Column(
+        Integer, ForeignKey("courses.id", ondelete="CASCADE"), primary_key=True
+    )
     role = Column(String, nullable=False)
 
     user = relationship("User", back_populates="participates_in")
@@ -116,8 +134,12 @@ class Conversation(base):
 
     __tablename__ = "conversations"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    initiated_by = Column(String, ForeignKey("users.email"), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    initiated_by = Column(
+        String, ForeignKey("users.email", ondelete="CASCADE"), nullable=False
+    )
+    course_id = Column(
+        Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+    )
     state: ConversationState = Column(
         Enum(ConversationState),
         nullable=False,
@@ -127,7 +149,12 @@ class Conversation(base):
     summary = Column(Text, nullable=True)
 
     course = relationship("Course", back_populates="conversations")
-    messages = relationship("Message", back_populates="conversation", uselist=True)
+    messages = relationship(
+        "Message",
+        back_populates="conversation",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
     user = relationship("User", back_populates="conversations")
 
 
@@ -138,10 +165,27 @@ class Course(base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
 
-    conversations = relationship("Conversation", back_populates="course", uselist=True)
-    documents = relationship("Document", back_populates="course", uselist=True)
-    participates_in = relationship("ParticipatesIn", back_populates="course")
-    consent_forms = relationship("ConsentForm", back_populates="course", uselist=True)
+    conversations = relationship(
+        "Conversation",
+        back_populates="course",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+    documents = relationship(
+        "Document", back_populates="course", uselist=True, cascade="all, delete-orphan"
+    )
+    participates_in = relationship(
+        "ParticipatesIn", back_populates="course", cascade="all, delete-orphan"
+    )
+    consent_forms = relationship(
+        "ConsentForm",
+        back_populates="course",
+        uselist=True,
+        cascade="all, delete-orphan",
+    )
+    limits = relationship(
+        "Limit", back_populates="course", uselist=True, cascade="all, delete-orphan"
+    )
 
 
 class ConsentForm(base):
@@ -149,7 +193,7 @@ class ConsentForm(base):
 
     __tablename__ = "consent_forms"
     id = Column(Integer, primary_key=True)
-    course_id = Column(Integer, ForeignKey("courses.id"))
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"))
     body = Column(Text, nullable=False)
     title = Column(Text, nullable=False)
     course = relationship("Course", back_populates="consent_forms")
@@ -182,7 +226,9 @@ class Document(base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     file_hash = Column(String(64), nullable=False)
     file_extension = Column(String, nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    course_id = Column(
+        Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+    )
     name = Column(String, nullable=False)
 
     __table_args__ = (
@@ -234,7 +280,9 @@ class Message(base):
     conversation_id = Column(
         Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
     )
-    written_by = Column(String, ForeignKey("users.email"), nullable=False)
+    written_by = Column(
+        String, ForeignKey("users.email", ondelete="CASCADE"), nullable=False
+    )
 
     conversation = relationship("Conversation", back_populates="messages")
     user = relationship("User", back_populates="messages")
@@ -245,9 +293,13 @@ class Limit(base):
 
     __tablename__ = "limits"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    course_id = Column(
+        Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+    )
     maximum_number_of_uses = Column(Integer)
     time_span_seconds = Column(Integer)
+
+    course = relationship("Course", back_populates="limits")
 
 
 class Embedding(base):
