@@ -92,6 +92,7 @@ This is just a temporary visual fix */
   flex-direction: row-reverse;
   align-self: flex-end;
 }
+.message-wrapper.bot-thinking,
 .message-wrapper.bot {
   flex-direction: row;
   align-self: flex-start;
@@ -115,6 +116,7 @@ This is just a temporary visual fix */
   background-color: #ffb81c;
   color: black;
 }
+.message.bot-thinking,
 .message.bot {
   background-color: #003da5;
   color: white;

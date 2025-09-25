@@ -21,7 +21,6 @@ from ucr_chatbot.web_helpers.limit import (
 from ucr_chatbot.web_helpers.conversation import (
     current_user_initiated_or_assists,
     generate_response,
-    SegmentResponse,
 )
 from ucr_chatbot.db.models import (
     Session,
@@ -299,7 +298,9 @@ def post_ai_response(conversation_id: int):
         session.commit()
         return jsonify(
             PostAiResponse(
-                text=response.text, title=conversation_title, sources=response.sources
+                text=response.text,
+                title=conversation_title,
+                message_id=cast(int, bot_message.id),
             ).model_dump()
         )
 
@@ -331,7 +332,7 @@ class ConversationListResponse(PydanticModel):
 class PostAiResponse(PydanticModel):
     text: str
     title: str
-    sources: list[SegmentResponse]
+    message_id: int
 
 
 class PostConversationRequest(PydanticModel):

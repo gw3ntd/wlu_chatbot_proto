@@ -20,6 +20,9 @@ from ucr_chatbot.db.models import (
     MessageType,
     ConversationState,
     Conversation,
+    Segment,
+    Document,
+    Reference,
 )
 
 
@@ -58,6 +61,21 @@ def get_course_from_conversation_in_json_body(_: dict[str, Any] = {}):
         return int(course_id)
 
 
+def get_course_from_message_in_url(kwargs: dict[str, Any]):
+    """"""
+
+    message_id = int(kwargs["message_id"])
+    with Session(get_engine()) as session:
+        course_id = (
+            session.query(Conversation.course_id)
+            .join(Message, Conversation.id == Message.conversation_id)
+            .where(Message.id == message_id)
+            .scalar()
+        )
+
+    return course_id
+
+
 @bp.get("/messages")
 @login_required
 @roles_required(
@@ -90,7 +108,11 @@ def get_messages():
     return jsonify(
         MessageListResponse(
             messages=[
-                MessageResponse(type=MessageType(m.type), body=str(m.body))
+                MessageResponse(
+                    type=MessageType(m.type),
+                    body=str(m.body),
+                    message_id=cast(int, m.id),
+                )
                 for m in messages
             ]
         ).model_dump()
@@ -153,6 +175,49 @@ def post_message():
     return ""
 
 
+@bp.get("/messages/<int:message_id>/sources")
+@login_required
+@roles_required(
+    ["student", "assistant", "instructor"],
+    get_course_from_message_in_url,
+)
+@consent_required(get_course_from_message_in_url)
+def get_message_sources(message_id: int):
+    """Responds with the sources referenced by a message."""
+
+    with Session(get_engine()) as session:
+        message = session.get(Message, message_id)
+        if not message:
+            abort(404)
+        if message.written_by != current_user.email:
+            abort(403)
+
+        source_results = cast(
+            list[tuple[str, str]],
+            session.query(Segment.text, Document.name)
+            .join(Reference, Segment.id == Reference.segment_id)
+            .join(Document, Segment.document_id == Document.id)
+            .where(Reference.message_id == message_id)
+            .all(),
+        )
+
+        sources = [
+            Source(text=segment_text, document_name=document_name)
+            for segment_text, document_name in source_results
+        ]
+
+    return jsonify(GetMessageSourcesResponse(sources=sources).model_dump())
+
+
+class Source(PydanticModel):
+    document_name: str
+    text: str
+
+
+class GetMessageSourcesResponse(PydanticModel):
+    sources: list[Source]
+
+
 class PostMessageRequest(PydanticModel):
     conversation_id: int
     body: str
@@ -165,6 +230,7 @@ class MessageListRequest(PydanticModel):
 class MessageResponse(PydanticModel):
     type: MessageType
     body: str
+    message_id: int
 
 
 class MessageListResponse(PydanticModel):

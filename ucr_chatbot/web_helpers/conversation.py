@@ -85,14 +85,13 @@ def generate_response(
         max_tokens=max_tokens,
     )
 
-    sources = [SegmentResponse(segment_id=s.id, text=s.text) for s in segments]
+    sources = [SegmentResponse(segment_id=s.id) for s in segments]
 
     return GenerationResponse(text=response.get_text(), sources=sources)
 
 
 class SegmentResponse(PydanticModel):
     segment_id: int
-    text: str
 
 
 class GenerationResponse(PydanticModel):

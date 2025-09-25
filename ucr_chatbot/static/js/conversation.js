@@ -87,6 +87,7 @@ async function loadMessages() {
           ? "assistant"
           : (msg.type === "STUDENT_MESSAGE" ? "user" : "bot"),
         msg.body,
+        msg.message_id,
       );
     });
   }).catch((error) => {
@@ -200,7 +201,7 @@ async function sendMessage(e) {
     `[data-convo-id="${conversationId}"]`,
   );
   if (conversationState == conversationStates.CHATBOT) {
-    thinkingMessageElement = appendMessage("bot", "Thinking...");
+    thinkingMessageElement = appendMessage("bot-thinking", "Thinking...");
     let thinkMessageContentElement = thinkingMessageElement.querySelector(
       ".message",
     );
@@ -244,10 +245,11 @@ async function sendMessage(e) {
 
       return response.json();
     }).then(async (data) => {
-      appendMessage("bot", data.text);
+      appendMessage("bot", data.text, data.message_id);
       conversationItemElement.textContent = data.title;
     }).catch((error) => {
-      appendMessage("system", error.message);
+      console.error(error);
+      appendMessage("system", "Could not fetch a response from the AI Tutor.");
     }).finally(() => {
       clearInterval(thinkingInterval);
       thinkingMessageElement.remove();
@@ -256,22 +258,26 @@ async function sendMessage(e) {
   userMessageTextarea.disabled = false;
   userMessageTextarea.focus();
 }
-
-function appendMessage(sender, text) {
+/**
+ * @param {string} sender
+ * @param {string} text
+ * @param {number | null} message_id
+ *  */ 
+function appendMessage(sender, text, message_id=null) {
   const messageWrapper = document.createElement("div");
   messageWrapper.classList.add("message-wrapper");
   if (sender) {
     messageWrapper.classList.add(sender);
   }
 
-  if (sender === "user" || sender === "bot" || sender === "assistant") {
+  if (sender === "user" || sender === "bot" || sender === "assistant" || sender === "bot-thinking") {
     const pfp = document.createElement("img");
     pfp.classList.add("pfp");
 
     if (sender === "user") {
       pfp.src = "/static/images/PFPs/User_PFP.png";
       pfp.alt = "User";
-    } else if (sender === "bot") {
+    } else if (sender === "bot" || sender === "bot-thinking") {
       pfp.src = "/static/images/PFPs/Bot_PFP.png";
       pfp.alt = "Bot";
     } else if (sender === "assistant") {
@@ -295,11 +301,92 @@ function appendMessage(sender, text) {
     hljs.highlightElement(block);
   });
 
+  if (sender == "bot") {
+    const showSourcesButton = document.createElement("button");
+    showSourcesButton.display = "block";
+    showSourcesButton.textContent = "Show Sources";
+    showSourcesButton.style.float="right";
+    showSourcesButton.style.backgroundColor="#3364b7";
+    showSourcesButton.style.fontFamily='"Fira Sans", sans-serif'
+    showSourcesButton.style.color='white';
+    showSourcesButton.style.border='none';
+    showSourcesButton.style.cursor='pointer';
+    showSourcesButton.style.padding='12px';
+    showSourcesButton.style.borderRadius='6px';
+    
+
+    const sourcesDiv = document.createElement("div");
+
+    if (message_id === null) {
+      console.error("message_id is null");
+    } else {
+
+      sourcesDiv.setAttribute("sources-for", message_id)
+      showSourcesButton.onclick = function() {showSources(sourcesDiv, showSourcesButton)};
+      messageDiv.appendChild(showSourcesButton);
+      messageDiv.appendChild(sourcesDiv);
+    }
+  }
+
   messageWrapper.appendChild(messageDiv);
 
   chatContainer.appendChild(messageWrapper);
   chatContainer.scrollTop = chatContainer.scrollHeight;
   return messageWrapper;
+}
+
+/**
+ * @param {HTMLDivElement} sourcesDiv
+ * @param {HTMLButtonElement} showSourcesButton
+ */
+async function showSources(sourcesDiv, showSourcesButton) {
+  showSourcesButton.textContent = "Loading Sources...";
+
+  const messageId = Number(sourcesDiv.getAttribute("sources-for"));
+
+
+  await fetch(`/messages/${messageId}/sources`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "applicaiton/json"
+    },
+  }).then(response => {
+    if (!response.ok) {
+      throw Error("Could not fetch sources");
+    }
+    return response.json();
+  }).then(data => {
+    if (data.sources.length === 0) {
+      sourcesDiv.innerHTML = "<h3>No sources were used for this response.</h3>";
+    } else {
+      sourcesDiv.innerHTML = "";
+      data.sources.forEach(source => {
+        const sourcesList = document.createElement("ul");
+        sourcesList.style.listStyleType = "circle";
+        const li = document.createElement("li");
+        li.innerHTML = `<h3>Source: ${source.document_name}</h3>${source.text}`;
+        sourcesList.appendChild(li);
+        sourcesDiv.appendChild(sourcesList);
+      });
+    }
+    
+    sourcesDiv.appendChild(showSourcesButton);
+  }).catch(error => {
+    console.log(error);
+    const li = document.createElement("li");
+    li.textContent = "Error: Could not load sources.";
+  });
+
+  showSourcesButton.textContent = "Hide Sources";
+
+  const oldOnClick = showSourcesButton.onclick;
+  showSourcesButton.onclick = function() {
+    sourcesDiv.innerHTML = "";
+    showSourcesButton.textContent = "Show Sources";
+    sourcesDiv.appendChild(showSourcesButton);
+    showSourcesButton.onclick = oldOnClick;
+  };
 }
 
 function addSidebarMessage(label, convoId) {
