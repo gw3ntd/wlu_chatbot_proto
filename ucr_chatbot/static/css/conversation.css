@@ -10,7 +10,7 @@ This is just a temporary visual fix */
 #sidebar {
   width: 260px;
   background-color: #fff;
-  border-right: 1px solid #003da5;
+  border-right: 1px solid #000000;
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
@@ -19,18 +19,18 @@ This is just a temporary visual fix */
 #sidebar h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #003da5;
+  color: #000000;
   font-weight: 500;
 }
 
 .new-conversation-btn {
-  background-color: #003da5;
+  background-color: #000000;
   color: white;
   border: none;
   border-radius: 6px;
   padding: 0.75rem 1rem;
-  font-family: "Fira Sans";
-  font-weight: 500;
+  font-family: "Montserrat";
+  font-weight: 200;
   font-size: 0.95rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -38,11 +38,11 @@ This is just a temporary visual fix */
   width: 100%;
 }
 .new-conversation-btn:hover {
-  background-color: #ffb81c;
+  background-color: #ffce34;
   color: black;
 }
 .new-conversation-btn.active {
-  background-color: #ffb81c;
+  background-color: #ffce34;
   font-weight: bold;
 }
 
@@ -53,14 +53,14 @@ This is just a temporary visual fix */
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  font-family: "Fira Sans";
+  font-family: "Montserrat";
   font-size: 0.95rem;
 }
 .conversation-item:hover {
-  background-color: #ffb81c;
+  background-color: #ffce34;
 }
 .conversation-item.active {
-  background-color: #ffb81c;
+  background-color: #ffce34;
   font-weight: 600;
 }
 
@@ -113,12 +113,12 @@ This is just a temporary visual fix */
   max-width: 600px;
 }
 .message.user {
-  background-color: #ffb81c;
+  background-color: #ffce34;
   color: black;
 }
 .message.bot-thinking,
 .message.bot {
-  background-color: #003da5;
+  background-color: #000000;
   color: white;
 }
 .message.assistant {
@@ -150,7 +150,7 @@ This is just a temporary visual fix */
 .system {
   align-self: center;
   background-color: #ccd8ed;
-  color: #003da5;
+  color: #000000;
   font-style: italic;
   text-align: center;
   max-width: 500px;
@@ -160,7 +160,7 @@ This is just a temporary visual fix */
 /* MESSAGE INPUT */
 #message-input {
   padding: 1rem;
-  border-top: 1px solid #003da5;
+  border-top: 1px solid #000000;
   background-color: #fff;
 }
 
@@ -176,11 +176,11 @@ This is just a temporary visual fix */
   padding: 0.75rem;
   font-size: 1rem;
   border-radius: 6px;
-  border: 1px solid #003da5;
+  border: 1px solid #000000;
 }
 #input-form textarea:focus {
-  outline: 1px solid #ffb81c;
-  border: 1px solid #ffb81c;
+  outline: 1px solid #ffce34;
+  border: 1px solid #ffce34;
 }
 
 #sendButton {
@@ -188,19 +188,19 @@ This is just a temporary visual fix */
   font-size: 1rem;
   border-radius: 6px;
   border: none;
-  background-color: #003da5;
+  background-color: #000000;
   color: white;
   cursor: pointer;
 }
 #sendButton:hover {
-  background-color: #ffb81c;
+  background-color: #ffce34;
   color: black;
 }
 
 #showLimitsButton,
 #hideLimitsButton,
 #redirectButton {
-  background-color: #3364b7;
+  background-color: #3b3f46;
   padding: 0.75rem 1rem;
   font-size: 1rem;
   border-radius: 6px;
@@ -211,6 +211,6 @@ This is just a temporary visual fix */
 #showLimitsButton:hover,
 #hideLimitsButton:hover,
 #redirectButton:hover {
-  background-color: #ffc649;
+  background-color: #ffce34;
   color: black;
 }

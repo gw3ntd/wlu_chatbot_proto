@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}Chat | ScottGPT{% endblock %} {%
+{% extends "base.html" %} {% block title %}Chat | TopperTutor{% endblock %} {%
 block css %}
 <link
   rel="stylesheet"
@@ -10,7 +10,7 @@ block css %}
 >
 {% endblock %} {% block body %}
 <div id="main-layout">
-  <div id="sidebar" class="oswald">
+  <div id="sidebar" class="montserrat">
     <h2>CONVERSATIONS</h2>
     <button
       id="new-conversation-btn"
@@ -26,7 +26,7 @@ block css %}
     <div id="chat-container"></div>
 
     <div
-      style="display: none; width: 100%; background-color: white; border-top: 1px solid #003da5"
+      style="display: none; width: 100%; background-color: white; border-top: 1px solid #000000"
       id="limitInformation"
     >
       <ul id="limitList"></ul>
@@ -35,7 +35,7 @@ block css %}
       <form id="input-form" onsubmit="sendMessage(event)">
         <button
           type="button"
-          class="fira-sans"
+          class="montserrat"
           id="showLimitsButton"
           onclick="showLimits(event)"
         >
@@ -43,7 +43,7 @@ block css %}
         </button>
         <button
           type="button"
-          class="fira-sans"
+          class="montserrat"
           id="hideLimitsButton"
           onclick="hideLimits(event)"
           style="display: none"
@@ -53,13 +53,13 @@ block css %}
         <textarea
           id="userMessage"
           rows="2"
-          class="fira-sans"
+          class="montserrat"
           placeholder="Type your message..."
         ></textarea>
-        <button type="submit" id="sendButton" class="fira-sans">Send</button>
+        <button type="submit" id="sendButton" class="montserrat">Send</button>
 
         {% if redirectable %}
-        <button type="button" id="redirectButton" class="fira-sans">
+        <button type="button" id="redirectButton" class="montserrat">
           {% if conversation_state == "CHATBOT" %} Redirect to ULA {% elif
           conversation_state == "REDIRECTED" %} Mark as Resolved {% else %}
           Resolved {% endif %}

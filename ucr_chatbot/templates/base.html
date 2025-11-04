@@ -6,10 +6,10 @@
 
     <link
       rel="icon"
-      href="{{ url_for('static', filename='images/PFPs/Bot_PFP.png') }}"
+      href="{{ url_for('static', filename='images/PFPs/Topper_PFP.webp') }}"
       type="image/png"
     >
-    <title>{% block title %}ScottGPT{% endblock %}</title>
+    <title>{% block title %}TopperTutor{% endblock %}</title>
 
     <link
       rel="stylesheet"
@@ -19,6 +19,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
     <link
       href="https://fonts.googleapis.com/css2?family=Fira+Sans&family=Oswald:wght@200..700&display=swap"
       rel="stylesheet"
@@ -59,11 +60,11 @@
   >
     <header>
       <a style="all: unset; cursor: pointer;" href="{{ url_for('web_interface.general_routes.course_selection')}}">
-        <h1>Scott<span><b>GPT</b></span></h1>
+        <h1>Topper<span><b>Tutor</b></span></h1>
       </a>
 
       <img
-      src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}"
+      src="{{ url_for('static', filename='images/wlu_logo.png') }}"
       alt="UCR Logo"
       class="ucr-logo">
       

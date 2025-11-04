@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}Chat | ScottGPT{% endblock %} {%
+{% extends "base.html" %} {% block title %}Chat | TopperTutor{% endblock %} {%
 block css %}
 <link
   rel="stylesheet"
@@ -29,7 +29,7 @@ block css %}
   </div>
 
   <div id="main-layout">
-    <div id="sidebar" class="oswald">
+    <div id="sidebar" class="montserrat">
       <h2>CONVERSATION HISTORY</h2>
       <div id="sidebar-messages"></div>
     </div>
@@ -41,10 +41,10 @@ block css %}
           <textarea
             id="userMessage"
             rows="2"
-            class="fira-sans"
+            class="montserrat"
             placeholder="Type your response as the assistant..."
           ></textarea>
-          <button type="submit" id="sendButton" class="fira-sans">
+          <button type="submit" id="sendButton" class="montserrat">
             Send as Assistant
           </button>
           <button

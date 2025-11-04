@@ -10,7 +10,7 @@ form {
 
 form input {
   color: black;
-  background-color: #ffb81c;
+  background-color: #ffce34;
   border-radius: 3px;
   border-width: 0px;
   padding: 4px 32px;
@@ -19,5 +19,5 @@ form input {
 
 form input:hover {
   color: white;
-  background-color: #003da5;
+  background-color: #000000;
 }

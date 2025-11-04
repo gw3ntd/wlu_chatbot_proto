@@ -275,10 +275,10 @@ function appendMessage(sender, text, message_id=null) {
     pfp.classList.add("pfp");
 
     if (sender === "user") {
-      pfp.src = "/static/images/PFPs/User_PFP.png";
+      pfp.src = "/static/images/PFPs/logo_PFP.png";
       pfp.alt = "User";
     } else if (sender === "bot" || sender === "bot-thinking") {
-      pfp.src = "/static/images/PFPs/Bot_PFP.png";
+      pfp.src = "/static/images/PFPs/Topper_PFP.webp";
       pfp.alt = "Bot";
     } else if (sender === "assistant") {
       pfp.src = "/static/images/PFPs/Assistant_PFP.png";
@@ -306,8 +306,8 @@ function appendMessage(sender, text, message_id=null) {
     showSourcesButton.display = "block";
     showSourcesButton.textContent = "Show Sources";
     showSourcesButton.style.float="right";
-    showSourcesButton.style.backgroundColor="#3364b7";
-    showSourcesButton.style.fontFamily='"Fira Sans", sans-serif'
+    showSourcesButton.style.backgroundColor="#0000";
+    showSourcesButton.style.fontFamily='"Montserrat", sans-serif'
     showSourcesButton.style.color='white';
     showSourcesButton.style.border='none';
     showSourcesButton.style.cursor='pointer';

@@ -5,33 +5,25 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:5000"
+    env_file:
+      - .env
     environment:
-      DB_NAME: db_name
-      DB_USER: db_user
-      DB_PASSWORD: db_password
-      DB_URL: db:5432
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      LLM_MODE: ${LLM_MODE}
-      OLLAMA_URL: ${OLLAMA_URL}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH}
+      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/app/files}
     depends_on:
       db:
         condition: service_healthy
     command: uv run ucr_chatbot quickstart
+
   db:
     image: pgvector/pgvector:pg17
     environment:
-      POSTGRES_DB: db_name
-      POSTGRES_USER: db_user
-      PGUSER: db_user
-      PGDATABASE: db_name
-      POSTGRES_PASSWORD: db_password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD", "pg_isready"]
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5

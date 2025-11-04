@@ -15,7 +15,7 @@ input[type="submit"]:hover {
 
 body {
   margin: 0;
-  font-family: "Fira Sans", sans-serif;
+  font-family: "Montserrat", sans-serif;
   height: 100vh;
   background-color: #f7f7f8;
   color: #333;
@@ -29,7 +29,7 @@ body {
 }
 
 /* FONTS */
-.oswald {
+/* .oswald {
   font-family: "Oswald", sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
@@ -39,6 +39,13 @@ body {
   font-family: "Fira Sans", sans-serif;
   font-weight: 400;
   font-style: normal;
+/*}
+
+*/
+.montserrat {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 100;
+  font-style: normal;
 }
 
 /* HEADER */
@@ -47,31 +54,31 @@ header {
   align-items: center;
   justify-content: space-between;
   background-image: 
-    linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 0.7)),
-    url("/static/images/header.avif");
+    linear-gradient(rgb(0, 0, 0), rgba(0, 0, 0, 0.7)),
+    url("/static/images/header.webp");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   color: white;
   padding: 1.5rem 1.5rem;
-  border-bottom: 6px #FFB81C solid;
+  border-bottom: 6px #ffce34 solid;
 }
 header h1 {
   margin: 0;
-  font-family: "Oswald", sans-serif;
-  font-weight: 500;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 200;
 }
 header img {
   height: 50px;
 }
 h1 span {
-  color: #FFB81C; 
+  color: #ffce34; 
 }
 
 /* LOGOUT BUTTON */
 .logout-button {
   color: black;
-  background-color: #FFB81C;
+  background-color: #ffce34;
   border-radius: 6px;
   padding: 10px 14px;
   text-decoration: none;
@@ -83,7 +90,7 @@ h1 span {
 }
 .logout-button:hover {
   color: white;
-  background-color: #003DA5;
+  background-color: #2c2d2f;
 }
 
 /* FLASH MESSAGES */

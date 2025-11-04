@@ -1,15 +1,15 @@
-{% extends "base.html" %} {% block title %}Login | ScottGPT{% endblock %} {%
+{% extends "base.html" %} {% block title %}Login | TopperTutor{% endblock %} {%
 block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %} {% block body %}
 <div class="login-container">
   <img
     class="ucr-logo"
-    src="{{ url_for('static', filename='images/UC_Riverside_Horiz_BluBG.png') }}"
+    src="{{ url_for('static', filename='images/wlu_logo.png') }}"
     alt="UCR Logo"
   >
 
-  <h1>Welcome to <span>ScottGPT!</span></h1>
+  <h1>Welcome to <span>TopperTutor!</span></h1>
   {% if require_oauth %}
   <input
     type="button"

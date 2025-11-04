@@ -1,8 +1,8 @@
 body {
   margin: 0;
   background-image:
-    linear-gradient(rgba(0, 61, 165, 0.7), rgba(0, 61, 165, 1)),
-    url("/static/images/background.jpg");
+    linear-gradient(rgba(0, 0, 0, 0.594), rgb(175, 56, 13, 0.5)),
+    url("/static/images/campus.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -14,7 +14,7 @@ header,
 }
 
 h1 {
-  font-family: "Oswald", sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 400;
   font-size: 4.5rem;
   color: white;
@@ -24,7 +24,7 @@ h1 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 h1 span {
-  color: #ffb81c;
+  color: #ffce34;
   font-weight: 550;
 }
 
@@ -55,7 +55,7 @@ h1 span {
 }
 
 .input-field {
-  font-family: "Fira Sans";
+  font-family: "Montserrat";
   display: block;
   width: 250px;
   padding: 10px;
@@ -69,7 +69,7 @@ h1 span {
 }
 .input-field:focus,
 .input-field:hover {
-  border-color: #ffb81c;
+  border-color: #ffce34;
 }
 
 form label {
@@ -79,8 +79,8 @@ form label {
   margin-bottom: 5px;
   font-weight: 500;
   font-size: 1.25rem;
-  color: #ffb81c;
-  font-family: "Oswald", sans-serif;
+  color: #ffce34;
+  font-family: "Montserrat", sans-serif;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -97,7 +97,7 @@ form label {
 }
 
 .btn {
-  font-family: "Oswald";
+  font-family: "Montserrat";
   font-weight: 400;
   font-size: 1.25rem;
   padding: 10px 15px;
@@ -112,21 +112,21 @@ form label {
   text-align: center;
 }
 .btn-login {
-  background-color: #ffc649;
+  background-color: #ffce34;
   color: #000;
 }
 .btn-login:hover,
 .btn-login:focus {
-  background-color: #ffd477;
+  background-color: #ffce34;
   outline: none;
 }
 
 .login-google {
-  background-color: #3364b7;
+  background-color: #2e2d2d81;
   color: white;
 }
 .login-google:hover,
 .login-google:focus {
-  background-color: #668bc9;
+  background-color: #000000;
   outline: none;
 }
