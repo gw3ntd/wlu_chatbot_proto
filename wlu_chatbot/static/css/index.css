@@ -1,0 +1,132 @@
+body {
+  margin: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.594), rgb(175, 56, 13, 0.5)),
+    url("/static/images/campus.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+header,
+.logout-button {
+  display: none !important;
+}
+
+h1 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 4.5rem;
+  color: white;
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+h1 span {
+  color: #ffce34;
+  font-weight: 550;
+}
+
+.divider-line {
+  border: none;
+  height: 1px;
+  background-color: white;
+  width: 350px;
+  margin: 10px auto;
+}
+
+.welcome-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  padding-top: 10vh;
+  text-align: center;
+}
+
+.input-field {
+  font-family: "Montserrat";
+  display: block;
+  width: 250px;
+  padding: 10px;
+  margin: 10px 0 25px 0;
+  font-size: 1rem;
+  border: 4px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.2);
+}
+.input-field:focus,
+.input-field:hover {
+  border-color: #ffce34;
+}
+
+form label {
+  display: block;
+  width: 250px;
+  text-align: left;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: 1.25rem;
+  color: #ffce34;
+  font-family: "Montserrat", sans-serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.bot-pfp {
+  height: 100px;
+  width: auto;
+  margin-bottom: 15px;
+  filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
+}
+.wlu-logo {
+  height: 80px;
+  width: auto;
+  filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+.btn {
+  font-family: "Montserrat";
+  font-weight: 400;
+  font-size: 1.25rem;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.25);
+  margin: 10px 0;
+  width: 250px;
+  display: block;
+  text-align: center;
+}
+.btn-login {
+  background-color: #ffce34;
+  color: #000;
+}
+.btn-login:hover,
+.btn-login:focus {
+  background-color: #ffce34;
+  outline: none;
+}
+
+.login-google {
+  background-color: #2e2d2d81;
+  color: white;
+}
+.login-google:hover,
+.login-google:focus {
+  background-color: #000000;
+  outline: none;
+}

@@ -5,8 +5,8 @@ from sqlalchemy.engine import Connection
 
 from flask import Flask
 
-from ucr_chatbot.db.models import base, get_engine, User, Course, ParticipatesIn
-from ucr_chatbot.db.cli import main, initialize, mock
+from wlu_chatbot.db.models import base, get_engine, User, Course, ParticipatesIn
+from wlu_chatbot.db.cli import main, initialize, mock
 
 
 def test_main(capsys, app: Flask):
@@ -43,21 +43,21 @@ def test_mock(db: Connection, app: Flask):
     answer = row
   assert answer.name == 'CS010C'
 
-  s = select(User).where(User.email=='test001@ucr.edu')
+  s = select(User).where(User.email=='test001@westliberty.edu')
   result = db.execute(s)
 
   answer = None
   for row in result:
     answer = row
-  assert answer.email == 'test001@ucr.edu'
+  assert answer.email == 'test001@westliberty.edu'
 
 
 def test_create_user(app: Flask):
-  main(shlex.split("create user test001@ucr.edu test"))
+  main(shlex.split("create user test001@westliberty.edu test"))
   with Session(get_engine()) as sess:
     users = sess.query(User).all()
     assert len(users) == 1
-    assert users[0].email == "test001@ucr.edu"
+    assert users[0].email == "test001@westliberty.edu"
 
 def test_create_course(app: Flask):
   main(shlex.split("create course \"Calculus 2\""))
@@ -68,7 +68,7 @@ def test_create_course(app: Flask):
 
 def test_create_participates_in(app: Flask):
   with Session(get_engine()) as sess:
-    user = User(email="test009@ucr.edu")
+    user = User(email="test009@westliberty.edu")
     user.set_password("test")
     course = Course(name="Calculus 3")
     sess.add(user)
@@ -76,9 +76,9 @@ def test_create_participates_in(app: Flask):
     sess.commit()
     course_id = course.id
 
-  main(shlex.split(f"create participates_in test009@ucr.edu {course_id} assistant"))
+  main(shlex.split(f"create participates_in test009@westliberty.edu {course_id} assistant"))
   with Session(get_engine()) as sess:
     part_ins = sess.query(ParticipatesIn).where().all()
     assert len(part_ins) == 1
     assert part_ins[0].course_id == course_id
-    assert part_ins[0].email == "test009@ucr.edu"
+    assert part_ins[0].email == "test009@westliberty.edu"

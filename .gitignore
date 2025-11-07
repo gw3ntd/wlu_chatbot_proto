@@ -20,8 +20,8 @@ docs/
 .env
 
 .DS_Store
-ucr_chatbot/.DS_Store
-ucr_chatbot/web_interface/.DS_Store
+wlu_chatbot/.DS_Store
+wlu_chatbot/web_interface/.DS_Store
 tests/.DS_Store
 
 

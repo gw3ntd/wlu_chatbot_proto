@@ -42,7 +42,7 @@ If you have created a client, please refer to step 5.
   - Audience
   - Contact Information
   - Finish
-- App information: name you app, maybe ucr-chatbot-proto, and put in a good
+- App information: name you app, maybe wlu-chatbot-proto, and put in a good
   email for you
 - Audience: click external
 - Contact information: put a good email for you, again

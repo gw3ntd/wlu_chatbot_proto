@@ -1317,7 +1317,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ucr-chatbot"
+name = "wlu-chatbot"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

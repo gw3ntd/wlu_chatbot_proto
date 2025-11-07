@@ -1,7 +1,7 @@
 from flask import Flask
 from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
-from ucr_chatbot.db.models import (
+from wlu_chatbot.db.models import (
     get_engine,
     ParticipatesIn,
     User,
@@ -54,7 +54,7 @@ def  test_exists_redirect_to_ula_button_when_assistants_added(mock_course: MockC
         conv_id = conv.id
 
     with Session(get_engine()) as sess:
-        assistant = User(email="assistant@ucr.edu", password_hash="")
+        assistant = User(email="assistant@westliberty.edu", password_hash="")
         p_in = ParticipatesIn(email=assistant.email, course_id=mock_course.course_id, role="assistant")
         sess.add(p_in)
         sess.add(assistant)
@@ -74,7 +74,7 @@ def test_redirectable_when_assistant_added(mock_course: MockCourse, app: Flask, 
         sess.commit()
         conv_id = conv.id
 
-        assistant = User(email="assistant@ucr.edu", password_hash="")
+        assistant = User(email="assistant@westliberty.edu", password_hash="")
         p_in = ParticipatesIn(email=assistant.email, course_id=mock_course.course_id, role="assistant")
         sess.add(p_in)
         sess.add(assistant)

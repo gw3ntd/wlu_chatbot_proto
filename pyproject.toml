@@ -1,5 +1,5 @@
 [project]
-name = "ucr_chatbot"
+name = "wlu_chatbot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -36,7 +36,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = [
-    "ucr_chatbot*"
+    "wlu_chatbot*"
 ]
 
 [tool.pytest.ini_options]
@@ -44,17 +44,17 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["ucr_chatbot"]
+source = ["wlu_chatbot"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
 include = [
-    "ucr_chatbot",
+    "wlu_chatbot",
 ]
 
 [tool.ruff]
 include = [
-    "ucr_chatbot/**.py"
+    "wlu_chatbot/**.py"
 ]
 
 [tool.ruff.lint]
