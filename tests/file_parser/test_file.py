@@ -1,4 +1,4 @@
-from ucr_chatbot.api.file_parsing import parse_file
+from wlu_chatbot.api.file_parsing import parse_file
 import os
 
 # def test_md():

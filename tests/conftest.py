@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from ucr_chatbot import create_app
-from ucr_chatbot.db.models import get_engine, base, User, ParticipatesIn, Course
-from ucr_chatbot.api.file_storage import get_storage_service
-from ucr_chatbot.config import LLMMode, FileStorageMode
+from wlu_chatbot import create_app
+from wlu_chatbot.db.models import get_engine, base, User, ParticipatesIn, Course
+from wlu_chatbot.api.file_storage import get_storage_service
+from wlu_chatbot.config import LLMMode, FileStorageMode
 
 
 TEST_APP_CONFIG = {
@@ -42,7 +42,7 @@ def check_empty_db():
 @pytest.fixture(scope="function")
 def app():
     app = create_app(TEST_APP_CONFIG)
-    app.template_folder = str(Path(__file__).resolve().parent.parent / 'ucr_chatbot' / 'templates')
+    app.template_folder = str(Path(__file__).resolve().parent.parent / 'wlu_chatbot' / 'templates')
 
     with app.app_context():
         base.metadata.create_all(get_engine())
@@ -81,14 +81,14 @@ def mock_course(app: Flask) -> MockCourse:
     with Session(get_engine()) as session:
         mock_course = MockCourse(
             course_id=1,
-            instructor_email="instructor@ucr.edu",
-            student_email="student@ucr.edu",
+            instructor_email="instructor@westliberty.edu",
+            student_email="student@westliberty.edu",
         )
         session.add(Course(id = 1, name="CS009A"))
-        session.add(User(email="instructor@ucr.edu", password_hash=""))
-        session.add(User(email="student@ucr.edu",  password_hash=""))
-        session.add(ParticipatesIn(email="instructor@ucr.edu", course_id=1, role="instructor"))
-        session.add(ParticipatesIn(email="student@ucr.edu", course_id=1, role="student"))
+        session.add(User(email="instructor@westliberty.edu", password_hash=""))
+        session.add(User(email="student@westliberty.edu",  password_hash=""))
+        session.add(ParticipatesIn(email="instructor@westliberty.edu", course_id=1, role="instructor"))
+        session.add(ParticipatesIn(email="student@westliberty.edu", course_id=1, role="student"))
         session.commit()
     return mock_course
 
@@ -98,13 +98,13 @@ def mock_course2(app: Flask) -> MockCourse:
     with Session(get_engine()) as session:
         mock_course = MockCourse(
             course_id=2,
-            instructor_email="instructor2@ucr.edu",
-            student_email="student2@ucr.edu",
+            instructor_email="instructor2@westliberty.edu",
+            student_email="student2@westliberty.edu",
         )
         session.add(Course(id = 2, name="CS009A"))
-        session.add(User(email="instructor2@ucr.edu", password_hash=""))
-        session.add(User(email="student2@ucr.edu",  password_hash=""))
-        session.add(ParticipatesIn(email="instructor2@ucr.edu", course_id=2, role="instructor"))
-        session.add(ParticipatesIn(email="student2@ucr.edu", course_id=2, role="student"))
+        session.add(User(email="instructor2@westliberty.edu", password_hash=""))
+        session.add(User(email="student2@westliberty.edu",  password_hash=""))
+        session.add(ParticipatesIn(email="instructor2@westliberty.edu", course_id=2, role="instructor"))
+        session.add(ParticipatesIn(email="student2@westliberty.edu", course_id=2, role="student"))
         session.commit()
     return mock_course

@@ -12,7 +12,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uv run ucr_chatbot quickstart
+    command: uv run wlu_chatbot quickstart
 
   db:
     image: pgvector/pgvector:pg17

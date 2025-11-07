@@ -1,7 +1,7 @@
 from flask import Flask
 from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
-from ucr_chatbot.db.models import (
+from wlu_chatbot.db.models import (
     get_engine,
     Conversation,
     Message,

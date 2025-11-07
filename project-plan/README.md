@@ -176,7 +176,7 @@ Django. Flask provides all of the needed functions for setting up routing,
 managing HTML with templates, and serving static files.
 
 Our campus uses Google authentication for campus-wide accounts, including
-emails. We want to use UCR email accounts as credentials to access the chatbot,
+emails. We want to use WLU email accounts as credentials to access the chatbot,
 so we should look into integrating a
 [Google login into our Flask application](https://realpython.com/flask-google-login/).
 

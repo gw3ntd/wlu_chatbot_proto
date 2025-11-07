@@ -1,4 +1,4 @@
-from ucr_chatbot.api.embedding.embedding import embed_text
+from wlu_chatbot.api.embedding.embedding import embed_text
 
 def test_embed_text_success(app):
     """

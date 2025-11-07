@@ -5,8 +5,8 @@ from flask.testing import FlaskClient
 
 from ..conftest import MockCourse
 
-from ucr_chatbot.db.models import get_engine, Session, User
-from ucr_chatbot.api.file_storage import StorageService
+from wlu_chatbot.db.models import get_engine, Session, User
+from wlu_chatbot.api.file_storage import StorageService
 
 
 def test_course_selection_ok_response(client: FlaskClient):
@@ -20,12 +20,12 @@ def test_add_participant(client: FlaskClient, mock_course: MockCourse):
     with client.session_transaction() as sess:
         sess["_user_id"] = mock_course.instructor_email
 
-    data = {"email": "testadd@ucr.edu", "course_id": mock_course.course_id, "role": "student"}
+    data = {"email": "testadd@westliberty.edu", "course_id": mock_course.course_id, "role": "student"}
     response = client.post(f"/participates_ins", data=data)
     assert response.status_code < 400
 
     with Session(get_engine()) as session:
-        user = session.query(User).filter_by(email="testadd@ucr.edu").first()
+        user = session.query(User).filter_by(email="testadd@westliberty.edu").first()
         assert user is not None
         for participation in user.participates_in:
             assert participation.course_id == mock_course.course_id

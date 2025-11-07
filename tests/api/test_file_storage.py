@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from ucr_chatbot.api.file_storage import LocalStorage, StorageService
+from wlu_chatbot.api.file_storage import LocalStorage, StorageService
 
 @pytest.fixture(scope="function")
 def local_storage_service():

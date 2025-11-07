@@ -2,7 +2,7 @@ from flask import Flask
 from flask.testing import FlaskClient
 import pytest
 
-from ucr_chatbot.db.models import Session, User, get_engine
+from wlu_chatbot.db.models import Session, User, get_engine
 
 def test_login(client: FlaskClient, app: Flask):
     with Session(get_engine()) as db_session:

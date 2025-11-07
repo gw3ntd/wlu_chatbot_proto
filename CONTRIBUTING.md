@@ -110,7 +110,7 @@ code is being tested.
 Refer to the pytest documentation to learn how to write tests. It is not hard.
 
 Our tests are all stored in the `tests/` directory. The folder structure should
-mirror that of ucr_chatbot, with corresponding names for each file where
+mirror that of wlu_chatbot, with corresponding names for each file where
 applicable.
 
 Note that 100% coverage does not mean that the code is without error, only that

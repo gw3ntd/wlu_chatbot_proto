@@ -13,4 +13,4 @@ COPY . .
 RUN uv sync
 RUN uv pip install .
 
-CMD ["uv", "run", "ucr_chatbot", "quickstart"]
+CMD ["uv", "run", "wlu_chatbot", "quickstart"]
