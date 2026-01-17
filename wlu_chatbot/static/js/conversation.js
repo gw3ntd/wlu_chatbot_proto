@@ -111,19 +111,19 @@ async function loadConversationState() {
     switch (conversationStates[conversation.state]) {
       case conversationStates.CHATBOT:
         conversationState = conversationStates.CHATBOT;
-        redirectButton.textContent = "Redirect to ULA";
+        redirectButton.textContent = "Upload Image";
         redirectButton.disabled = false;
         userMessageTextarea.disabled = false;
         break;
       case conversationStates.REDIRECTED:
         conversationState = conversationStates.REDIRECTED;
-        redirectButton.textContent = "Mark as Resolved";
+        redirectButton.textContent = "Upload Image";
         redirectButton.disabled = false;
         userMessageTextarea.disabled = false;
         break;
       case conversationStates.RESOLVED:
         conversationState = conversationStates.RESOLVED;
-        redirectButton.textContent = "Resolved";
+        redirectButton.textContent = "Upload Image";
         redirectButton.disabled = true;
         userMessageTextarea.disabled = true;
         break;
@@ -149,7 +149,7 @@ function createNewConversation() {
     `/conversations/new?course_id=${courseId}`,
   );
 
-  redirectButton.textContent = "Redirect to ULA";
+  redirectButton.textContent = "Upload Image";
   redirectButton.disabled = false;
   conversationState = conversationStates.CHATBOT;
   appendMessage("system", "New conversation started. Type your message below.");
