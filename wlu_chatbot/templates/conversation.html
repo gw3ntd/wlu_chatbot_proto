@@ -58,13 +58,10 @@ block css %}
         ></textarea>
         <button type="submit" id="sendButton" class="montserrat">Send</button>
 
-        {% if redirectable %}
-        <button type="button" id="redirectButton" class="montserrat">
-          {% if conversation_state == "CHATBOT" %} Upload Image {% elif
-          conversation_state == "REDIRECTED" %} Upload Image {% else %}
-          Upload Image {% endif %}
+        <button type="button" id="redirectButton" class="montserrat" value="Upload Image">
+          Upload Image
         </button>
-        {% endif %}
+
       </form>
     </div>
   </div>
