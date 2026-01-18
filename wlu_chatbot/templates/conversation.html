@@ -58,9 +58,29 @@ block css %}
         ></textarea>
         <button type="submit" id="sendButton" class="montserrat">Send</button>
 
-        <button type="button" id="redirectButton" class="montserrat" value="Upload Image">
+        <button type="button" id="redirectButton" class="montserrat" onclick="openPopup()">
           Upload Image
         </button>
+
+        <div class="popup" id="popup">
+            <h2>Scan Document</h2>
+            <p>Upload a picture of your math problem using the "Upload Image" button. Then, the text of the image will appear in the text box below, and you can copy the text for your next question. Make sure to check for any mistakes made while scanning your image. </p>
+
+            <button type="Upload" class="btn">
+                Upload Image
+            </button>
+
+            <button type="button" onclick="copyText()">
+                Copy Text
+            </button>
+
+            <textarea id="textToCopyButton" rows="4" cols="50" readonly>
+This is a test
+            </textarea>
+
+            <button type="button" onclick="closePopup()">
+                Close
+            </button>
 
       </form>
     </div>
