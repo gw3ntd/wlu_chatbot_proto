@@ -64,6 +64,71 @@ This is just a temporary visual fix */
   font-weight: 600;
 }
 
+.popup{
+    width: 500px;
+    height: 600px;
+    background: rgb(255, 255, 255);
+    border-radius: 6px;
+    border: #000000;
+    border-width: 3cap;
+    position:absolute;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
+    top: 0%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.1);
+    text-align: center;
+    padding: 40px 30px 30px;
+    color: #000000;
+    visibility: hidden;
+    transition: transform 0.4s, top 0.4s;
+}
+
+.open-popup{
+    visibility: visible;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup h2{
+    font-size: 38px;
+    font-weight: 500;
+    font-family: "Montserrat";
+    margin: 30px 0 10px;
+}
+
+.popup button{
+    width: 50%;
+    margin-top: 30px;
+    font-family: "Montserrat";
+    padding: 10px 10px;
+    background: #3c3c3c;
+    color: #fff;
+    border: 0;
+    outline: none;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2)
+}
+
+.popup button:hover {
+  background-color: #ffce34;
+  color: black;
+}
+
+#textToCopyButton {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: "Montserrat";
+    background-color: #ffd0348c;
+    color: #333;
+    resize: none; /* Prevents resizing */
+    outline: none; /* Removes blue outline on focus */
+}
+
 /* MAIN CHAT AREA */
 #main {
   flex-grow: 1;

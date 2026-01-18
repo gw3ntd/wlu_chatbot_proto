@@ -111,20 +111,20 @@ async function loadConversationState() {
     switch (conversationStates[conversation.state]) {
       case conversationStates.CHATBOT:
         conversationState = conversationStates.CHATBOT;
-        redirectButton.textContent = "Upload Image";
-        redirectButton.disabled = false;
+        // redirectButton.textContent = "Upload Image";
+        // redirectButton.disabled = false;
         userMessageTextarea.disabled = false;
         break;
       case conversationStates.REDIRECTED:
         conversationState = conversationStates.REDIRECTED;
-        redirectButton.textContent = "Upload Image";
-        redirectButton.disabled = false;
+        // redirectButton.textContent = "Upload Image";
+        // redirectButton.disabled = false;
         userMessageTextarea.disabled = false;
         break;
       case conversationStates.RESOLVED:
         conversationState = conversationStates.RESOLVED;
-        redirectButton.textContent = "Upload Image";
-        redirectButton.disabled = true;
+        // redirectButton.textContent = "Upload Image";
+        // redirectButton.disabled = true;
         userMessageTextarea.disabled = true;
         break;
       default:
@@ -149,10 +149,33 @@ function createNewConversation() {
     `/conversations/new?course_id=${courseId}`,
   );
 
-  redirectButton.textContent = "Upload Image";
-  redirectButton.disabled = false;
+  // redirectButton.textContent = "Upload Image";
+  // redirectButton.disabled = false;
   conversationState = conversationStates.CHATBOT;
   appendMessage("system", "New conversation started. Type your message below.");
+}
+
+// new stuff
+
+let popup = document.getElementById("popup");
+
+function openPopup(){
+  popup.classList.add("open-popup");
+}
+
+function closePopup(){
+    popup.classList.remove("open-popup");
+}
+
+function copyText() {
+  var copyText = document.getElementById("textToCopyButton");
+
+  copyText.select();
+  copyText.setSelectionRange(0, 99999);
+
+  navigator.clipboard.writeText(copyText.value);
+
+  alert("Copied the text: " + copyText.value.substring(0, 20) + "...");
 }
 
 async function sendMessage(e) {
@@ -433,85 +456,7 @@ userMessageTextarea.addEventListener("keydown", (event) => {
 
 // redirect conversation to assistant or mark as resolved
 redirectButton.addEventListener("click", async () => {
-  if (!conversationId) {
-    appendMessage(
-      "system",
-      "There must be at least one message in the conversation before it can be redirected to an Assistant.",
-    );
-    return;
-  }
-  switch (conversationState) {
-    case conversationStates.CHATBOT:
-      fetch(`/conversations/${conversationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ state: "REDIRECTED" }),
-      }).then(async (response) => {
-        if (!response.ok) throw Error("Could not redirect conversation.");
-        redirectButton.textContent = "Mark as Resolved";
-        conversationState = conversationStates.REDIRECTED;
-        appendMessage(
-          "system",
-          "Your conversation is now visible to assistants and the AI chat bot is disabled for this conversation.",
-        );
-      }).catch((error) => {
-        appendMessage("system", error.message);
-      });
-      break;
-    case conversationStates.REDIRECTED:
-      fetch(`/conversations/${conversationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ state: "RESOLVED" }),
-      }).then(async (response) => {
-        if (!response.ok) throw Error("Could not resolve conversation.");
-        redirectButton.textContent = "Resolved";
-        conversationState = conversationStates.RESOLVED;
-        userMessageTextarea.disabled = true;
-        appendMessage("system", "Your conversation is now resolved.");
-      }).catch((error) => {
-        appendMessage("system", error.message);
-      });
-    case conversationStates.RESOLVED:
-      break;
-  }
-});
 
-async function checkForNewMessages() {
-  if (conversationState != conversationStates.REDIRECTED) return;
-  if (!conversationId) return;
-  response = await fetch(`/messages?conversation_id=${conversationId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    },
-  });
-
-  if (!response.ok) return;
-
-  await response.json().then((data) => {
-    const currentMessageCount = chatContainer.children.length;
-    if (data.messages.length > currentMessageCount) {
-      loadMessages();
-    }
-  }).catch((error) => {
-    console.error("Error checking for new messages:", error);
-  });
-}
-
-let messageCheckInterval = setInterval(checkForNewMessages, 5000);
-
-window.addEventListener("beforeunload", function () {
-  if (messageCheckInterval) {
-    clearInterval(messageCheckInterval);
-  }
 });
 
 async function showLimits(event) {
