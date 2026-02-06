@@ -116,6 +116,10 @@ This is just a temporary visual fix */
   color: black;
 }
 
+.hidden {
+	display: none;
+}
+
 #textToCopyButton {
     width: 100%;
     padding: 10px;

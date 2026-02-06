@@ -178,6 +178,23 @@ function copyText() {
   alert("Copied the text: " + copyText.value.substring(0, 20) + "...");
 }
 
+function uploadFile() {
+    document.getElementById('fileInput').click();
+}
+
+window.addEventListener('load', function() {
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+                    
+        reader.onload = function(e) {
+            document.getElementById('textToCopyButton').value = e.target.result;
+        };
+                    
+        reader.readAsText(file);
+    });
+});
+
 async function sendMessage(e) {
   e.preventDefault();
   hideLimits(e);
