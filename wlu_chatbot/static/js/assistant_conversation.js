@@ -1,3 +1,5 @@
+/** Old functionality
+
 const chatContainer = document.getElementById("chat-container");
 const sidebarMessages = document.getElementById("sidebar-messages");
 const userMessageTextarea = document.getElementById("userMessage");
@@ -214,3 +216,5 @@ window.addEventListener("beforeunload", function () {
     clearInterval(messageCheckInterval);
   }
 });
+
+*/

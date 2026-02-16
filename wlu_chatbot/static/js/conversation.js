@@ -294,10 +294,10 @@ async function sendMessage(e) {
       clearInterval(thinkingInterval);
       thinkingMessageElement.remove();
     });
-  }
+  } 
   userMessageTextarea.disabled = false;
   userMessageTextarea.focus();
-}
+} 
 /**
  * @param {string} sender
  * @param {string} text
