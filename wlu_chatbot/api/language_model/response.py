@@ -73,7 +73,7 @@ class Gemini(LanguageModelClient):
         if not key:
             raise ValueError("A Gemini API key is required for production mode.")
         genai.configure(api_key=key)  # type: ignore
-        self.model = genai.GenerativeModel(model_name="gemini-2.0-flash")  # type: ignore
+        self.model = genai.GenerativeModel(model_name="gemini-3-flash-preview")  # type: ignore
         self.temp = 1.0
 
     def get_response(  # noqa: D102
