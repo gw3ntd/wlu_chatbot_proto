@@ -84,8 +84,12 @@ class Gemini(LanguageModelClient):
             "max_output_tokens": max_tokens,
         }
         response = self.model.generate_content(contents, generation_config=config)  # type: ignore
+        try:
+            text = response.text
+        except ValueError:
+            text = ""
         return ModelResponse(
-            content=ContentDict(role="model", parts=[{"text": response.text}])
+            content=ContentDict(role="model", parts=[{"text": text}])
         )
 
 
