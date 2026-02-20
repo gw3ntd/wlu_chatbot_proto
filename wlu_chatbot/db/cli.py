@@ -367,21 +367,21 @@ def mock(force: bool):
         users_empty = not session.query(session.query(User).exists()).scalar()
 
         if courses_empty and users_empty:
-            add_new_course("CS010C")  # course ID 1
-            add_new_course("CS061")  # course ID 2
-            add_new_course("CS0111")  # course ID 3
-            add_new_user("test001@westliberty.edu")
-            add_new_user("test002@westliberty.edu")
-            add_new_user("test003@westliberty.edu")
-            add_user_to_course("test001@westliberty.edu", 1, "instructor")
-            add_user_to_course("test001@westliberty.edu", 2, "instructor")
-            add_user_to_course("test001@westliberty.edu", 3, "instructor")
-            add_user_to_course("test002@westliberty.edu", 1, "student")
-            add_user_to_course("test002@westliberty.edu", 2, "student")
-            add_user_to_course("test002@westliberty.edu", 3, "student")
-            add_user_to_course("test003@westliberty.edu", 1, "assistant")
-            add_user_to_course("test003@westliberty.edu", 2, "assistant")
-            add_user_to_course("test003@westliberty.edu", 3, "assistant")
+            add_new_course("MATH160-1")  # course ID 1
+            add_new_course("MATH160-2")  # course ID 2
+            add_new_course("MATH160-3")  # course ID 3
+            add_new_user("ghorzempa@westliberty.edu")
+            add_new_user("ghorzempa@westliberty.edu")
+            add_new_user("ghorzempa@westliberty.edu")
+            add_user_to_course("ghorzempa@westliberty.edu", 1, "instructor")
+            add_user_to_course("ghorzempa@westliberty.edu", 2, "instructor")
+            add_user_to_course("ghorzempa@westliberty.edu", 3, "instructor")
+            add_user_to_course("ghorzempa@westliberty.edu", 1, "student")
+            add_user_to_course("ghorzempa@westliberty.edu", 2, "student")
+            add_user_to_course("ghorzempa@westliberty.edu", 3, "student")
+            # add_user_to_course("test003@westliberty.edu", 1, "assistant")
+            # add_user_to_course("test003@westliberty.edu", 2, "assistant")
+            # add_user_to_course("test003@westliberty.edu", 3, "assistant")
             print("Mock data added to database.")
         else:
             print("Mock data not added, database already has data.")
