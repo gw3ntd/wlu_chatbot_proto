@@ -1,16 +1,14 @@
-"""Initialize and runs the WLU Chatbot application.
-
-This script initializes the database and launches the application with mock data.
-"""
-
 import os
+from wlu_chatbot import create_app
 from wlu_chatbot.db.cli import main as db_cli
 
 
 def main():
-    """Initialize and run the WLU Chatbot application with mock data."""
-    db_args = ["mock"]
-    db_cli(db_args)
+    app = create_app()
+    
+    with app.app_context():
+        db_args = ["mock"]
+        db_cli(db_args)
 
     gunicorn_command = "uv run gunicorn 'wlu_chatbot:create_app()' --bind 0.0.0.0:5000"
     print(f"Starting Gunicorn: {gunicorn_command}")
