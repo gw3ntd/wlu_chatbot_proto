@@ -1,67 +1,30 @@
 # AI Tutor
 
-**Objective**: Implement an LLM based AI tutor and the web interface for
-interacting with it. The interface will enable students to elevate their
-sessions to a human tutor for human-to-human messaging that will help answer
-questions and verify the information given by the AI tutor.
+**Objective**: The objective of this research project is to develop a WLU themed chatbot tutor for introductory statistics. Our research plan aims to improve upon existing research conducted by undergraduate student Ms. Gwen Horzempa during the summer of 2025 [3]. Using theory and algorithms from machine learning and artificial intelligence, we aim to add image recognition functionality and improve response relevance. This chatbot tutor will have a web interface that students could log into and seek assistance from the AI tutor. 
 
 **Keywords**: _Retreival Augmented Generation, Language Model, Web Development,
 Data Management, API Integration._
 
 ## Introduction
-
-Universities across the nation are integrating generative-AI into their
-pedagicial tool belts. Some have developed specialized generative-AI systems for
-more specialized use. For example,
-
-- [Atlas at Stanford](https://gse-it.stanford.edu/project/atlas-chatbot);
-- [Harvard's CS50 Tutor](https://cs.harvard.edu/malan/publications/V1fp0567-liu.pdf);
-- [UC Irvine's ZotGPT](https://zotgpt.uci.edu/).
-
-The advantage of developing a specialized system lies in that the AI tutor may
-be more tuned to the needs of the institution. We therefore want to develop such
-an AI tutoring system for use at UC Riverside in order to meet the needs of our
-students, faculty, and institution. While addressing all needs of UC Riverside
-is the ultimate goal, for this project we will focus on one aspect of our
-learning environment: the
-[Undergraduate Learning Assistant (ULA) program](https://ula.cs.ucr.edu/).
-
-ULA offers peer tutoring for undergraduates in computer-science courses. ULA is
-staffed by former students of each supported course, positioning the tutors well
-to assist current students with the material. To receive aid with a
-ULA-supported course, a student may navigate to the ULA homepage and view the
-schedule of when tutors will be available for in-person tutoring.
-
-We want to develop an AI-powered system to help meet the learning needs of more
-students by assisting the ULAs.
-
-This document reflects a developing plan for the project and is changeable. We
-may, for example, decide to use a technology other than what is mentioned herein
-for a component.
+Many of WLU’s programs require students to take MATH 160 - Introduction to Statistics in order to complete their degrees. In addition, some students take this course to fulfill their General Education requirements. With an annual enrollment of around 200 students, MATH 160 is the most sought after math course for tutoring. The enrollment mentioned above is the number of students who finish the course, with dozens of students withdrawing from the course. The Student Success Center (SSC) employs only a few statistics tutors, who are themselves WLU students with busy schedules. One benefit of this proposed AI tutor is that students could use it from anywhere. Many students are hesitant to make appointments with a personal tutor for various reasons. Some are shy; some are embarrassed; some encounter difficulty with the online scheduling platform, or are simply unavailable during all of the available time slots. With this software students would not have to go to the SSC to get help. Increasing the statistics tutoring capability of WLU should increase the retention of students in this course and improve the grades of those who remain in the course.
 
 ## The Project
+The concept inspiration comes from the familiar AI chatbots that most of us are already familiar with, e.g., ChatGPT, Gemini, Copilot, etc. Most students are familiar with interacting with a chatbot, and many are now familiar with using generative AI to assist them in their education. Using a chatbot tutor is not the same as logging in to ChatGPT and asking it to do your statistics homework. The latter process will not foster long-term understanding and can produce spurious or hallucinatory responses. The AI tutor gives one-sentence responses and asks leading questions. Also, the proposed tutor will reference statistics content from authoritative sources uploaded to the tutor by WLU instructors, which increases the response relevance given to a student. This is known as  retrieval-augmented generation (RAG) [2]. RAG is an algorithmic way to optimize the output of a large language model (LLM) by referencing an authoritative knowledge database outside the LLM’s training dataset prior to generating an output response. Figure 1 (to the left) illustrates the process of using RAG with an LLM. This is a well understood procedure for improving LLM responses. Ms. Horzempa has already participated in research that successfully developed the proof of concept of this aspect of our proposed research.
 
-We are to develop a chatbot system that has the following features:
+Our proposed improvements lie mainly in improving the enhanced context input to the LLM by extending the repertoire of content modalities that may be input as a prompt or as an authoritative source. We plan to include handwritten content in the collection of files that may be parsed into segments and embeddings. The idea is that either a student or an instructor can scan handwritten notes, or images thereof, and the backend of the chatbot has the capability to convert the image (including mathematical symbols) into parseable information, similar to what can be parsed from a typed document, a .pdf file, or an audio file. This capability lies in the domain of computer vision, and specifically, computer image recognition and classification. For example, we want the algorithm to recognize the handwritten image of the word Variance and parse it as the text “Variance,” (Figure 2 to the left).  There is a tremendously important distinction between the two in terms of passing information to an LLM in order to elicit a response. We will do this using a deep convolutional neural network (CNN) [1]. CNNs emerged from the study of the human brain’s visual cortex and have been in use since the 1980s. CNNs have a layered architecture (hence, the word “deep”), with each layer consisting of a collection of artificial neurons. These neurons are not connected to all of the pixels in the entire image. Instead, they are only connected to the pixels in some receptive field, which is controlled by a parameter that needs to be learned during the training process. Each of these neural network layers is referred to as a “convolutional layer.” There is a sophisticated mathematical algorithm at play in this training process.
 
-- There should be a web endpoint for the chatbot with a user interface akin to
-  ChatGPT, Gemini, or any other chatbot.
-- An instructor for the course should be able to upload course materials for use
-  by the chatbot.
-- The chatbot should be able to answer student questions by referencing relevent
-  course materials.
-- If the chatbot cannot answer the student's question from the course materials,
-  the conversation should be elevated to a human tutor.
-  - Option one is to have a ULA join the conversation with abilities to read and
-    writes messages.
-  - The chatbot should also be able to provide the student with a schedule for
-    upcoming office hours/ULA hours for the course.
-- The system should be able to generate a report for the instructor across all
-  interactions to learn what students needed help with for any given course.
+The final aim for this project will be to create a well-defined metric and a sequence of measurable tests that permit us to evaluate the response relevance of our AI chatbot. This effort will balance the objective correctness of chatbot responses with the subjective quality of those responses, with increasing scores converging to some idealistic, perfect tutor.
 
-This system will take after virtual help desks, where a user is first presented
-with a chatbot. If the user's problem is too complex for the chatbot, the
-conversation is elevated to a human.
+## Expected Outcomes
+We expect to produce a local (on the researchers’ computers) operational version of the chatbot tutor by the end of the project. The chatbot will have a WLU theme and have all of the capabilities outlined in the Methods section of this proposal. Moreover, we expect that the chatbot will have successfully passed the evaluation sessions conducted by volunteer math students and faculty members. At the conclusion of this project the chatbot should be ready for deployment, but the logistics of integrating student authentication with an IT database, deploying on a WLU webpage for ease of student access, and any other required administrative tasks set forth by the institution are not included as part of this proposal. We are requesting funding only to create the chatbot tutor and make it ready for the process of deployment, which will likely need to be figured out over the Summer of 2026. Dr. Holsapple will assist in this process and work with IT, the SSC, and the Provost’s Office in his role as Chair of Physical Sciences and Mathematics.
 
+## References
+[1] Géron A. Hands-on machine learning with scikit-learn, keras, and tensorflow. 3rd ed. O’Reilly Media; 2022.  
+[2] Wikipedia contributors. Retrieval-augmented generation. Wikipedia, The Free Encyclopedia. 2025 Sept 8. https://en.wikipedia.org/w/index.php?title=Retrieval-augmented_generation&oldid=1310173852.  
+[3] Claborn C, Clark E, Horzempa G, et al. ScottGPT: A Generative-AI Instructional Chatbot for UCR. University of California, Riverside National Science Foundation Research Experience for Undergraduates. August 2025.
+
+## Past Work
+The following was written during the Pathway program, and this work is currently still implemented in the chatbot.
 ### Interaction Diagram
 
 Here is how an interaction might go for a student using the chatbot.
@@ -83,14 +46,6 @@ This project can be broken down into the following tasks:
   - Document Parsing
   - Retrieval of Relevent Course Documents/Segments
   - Chatbot Message Generation
-- Detecting Inadequate Chatbot Messages
-  - Absense of Relevent Course Documents
-  - Chatbot's Response's Divergence from Course Documents.
-- Learning from Interactions
-  - Log Conversations
-  - Organize Data
-  - Generate Reports about Common Misconceptions
-  - Learn When the Chatbot Most Fails
 
 After a look on the database schema, each of these tasks will be explained
 further.
@@ -146,23 +101,18 @@ all aspects of this project.
 
 ## Web Design
 
-Students, assistants (ULAs), and instructors will interface with the chatbot
+Students and instructors will interface with the chatbot
 system through a website. Users should be authenticated via a login procedure
-that links our users to students and faculty at UC Riverside.
+that links our users to students and faculty at West Liberty University.
 
 The chat interface is the central offering of this system. We want something
 that looks like any of the other chatbots out there, like Gemini, where the
 student can start a new conversation, write a message, and see past messages
-from himself and from the chatbot/ULAs. Additionally, the student should have a
-button/option to request help from a ULA. A ULA should be granted access to any
-conversation where help from a ULA was requested. The ULA should be able to
-enter the conversation and leave messages for the student.
+from himself and from the chatbot. 
 
 We also need an instructor portal, in which an instructor can upload documents
 to be used by the chatbot as context for answering questions.
 
-This website should be well styled to align with the existent
-[ULA landing page](https://ula.cs.ucr.edu/).
 
 ## Technologies
 
@@ -239,52 +189,3 @@ Schema** section.
 For the actual language-model-powered text generation, we will use the
 internally developed Language Model API.
 
-## Detecting Inadequate Chatbot Messages
-
-If the chatbot cannot answer a student's question well, we should rather have it
-refuse to answer the question than to hallucinate a response. For this reason,
-we must have a system in place for deciding when the language model has answered
-the students question well enough. One possibile direction is to compare the
-response to the context that it used to for generating the response.
-
-### Technologies
-
-Validating the correctness of a language model is an open research question.
-[This paper](https://openreview.net/pdf?id=LYx4w3CAgy) presents one method for
-identifying a possibly incorrect response and
-[this paper](https://arxiv.org/pdf/2409.11242v1) introduces a way to reduce
-hallucinations. These two papers are by no means include approaches that we have
-(or even want) to take up. They are simply starting points for an inquery into
-the topic.
-
-## Learning from Interactions
-
-There is much to be learned from interactions among students, the chatbot,
-assistants, and even the instructor. Therefore, we must strive to have good
-logging for our system.
-
-The instructor can benefit from knowing common questions that students ask.
-Along these lines, we want the ability to generate a report for an instructor
-about recent interactions with the chatbot for the instructor's course.
-
-Assistants, or ULAs specifically, could also benefit from quick summaries. For
-example, when a student's question cannot be answered by the chatbot, the
-student could indicate his coming to the ULA room at a specific time. The system
-then could send the chatlog or a summary thereof to the ULAs so that they can be
-prepared to answer the student's question when he arrives.
-
-The chabot could be fine-tuned or extra segments could be added to the database
-based on conversation histories. For example, if the chatbot fails to answer a
-student's question, we could analyze what text segments were used as context for
-the generation, which could be used to fine-tune the embeddings for our segments
-to ensure that the same segments are not used again for a similar question in
-the future.
-
-### Technologies
-
-One approach for developing conversation summaries would be to use a language
-model to summarize each conversation or to summarize all conversations for a
-course.
-
-The central database that we use will be vital for this section of the project.
-Refer to its technologies section.
