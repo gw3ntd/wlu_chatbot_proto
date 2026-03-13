@@ -178,6 +178,14 @@ function copyText() {
   alert("Copied the text: " + copyText.value.substring(0, 20) + "...");
 }
 
+function clearInput() {
+  // Get the input element by its ID
+  let inputField = document.getElementById("textToCopyButton");
+
+  // Set the value property to an empty string
+  inputField.value = "";
+}
+
 function uploadFile() {
     document.getElementById('fileInput').click();
 }
