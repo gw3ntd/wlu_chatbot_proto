@@ -294,7 +294,9 @@ async function sendMessage(e) {
       return response.json();
     }).then(async (data) => {
       appendMessage("bot", data.text, data.message_id);
-      conversationItemElement.textContent = data.title;
+      if (data.title) {
+        conversationItemElement.textContent = data.title;
+      }
     }).catch((error) => {
       console.error(error);
       appendMessage("system", "Could not fetch a response from the AI Tutor.");
@@ -348,6 +350,8 @@ function appendMessage(sender, text, message_id=null) {
   messageDiv.querySelectorAll("pre code").forEach((block) => {
     hljs.highlightElement(block);
   });
+
+  renderMath(messageDiv);
 
   if (sender == "bot") {
     const showSourcesButton = document.createElement("button");
@@ -438,7 +442,11 @@ async function showSources(sourcesDiv, showSourcesButton) {
 }
 
 function addSidebarMessage(label, convoId) {
-  if (document.querySelector(`[data-convo-id="${convoId}"]`)) return;
+  const existing = document.querySelector(`[data-convo-id="${convoId}"]`);
+  if (existing) {
+    existing.textContent = label;
+    return;
+  }
 
   const item = document.createElement("div");
   item.classList.add("conversation-item");
