@@ -6,10 +6,14 @@ block css %}
 />
 <link
   rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
+/>
+<link
+  rel="stylesheet"
   href="{{ url_for('static', filename='css/conversation.css') }}"
->
+/>
 {% endblock %} {% block body %}
-<div id="main-layout">
+<div id="main-layout" style="display: flex; height: 100vh; overflow: hidden;">
   <div id="sidebar" class="montserrat">
     <h2>CONVERSATIONS</h2>
     <button
@@ -90,5 +94,19 @@ block css %}
 {% endblock %} {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+  // Call this after every time you inject a new message into the DOM
+  function renderMath(element) {
+    renderMathInElement(element, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$',  right: '$',  inline: true  }
+      ],
+      throwOnError: false
+    });
+  }
+</script>
 <script src="{{ url_for('static', filename='js/conversation.js') }}"></script>
 {% endblock %}
