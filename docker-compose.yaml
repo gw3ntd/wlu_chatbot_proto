@@ -12,7 +12,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uv run wlu_chatbot quickstart
+    command: uv run wlu_chatbot quickstart --timeout 120
 
   db:
     image: pgvector/pgvector:pg17
